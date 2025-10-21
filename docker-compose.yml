@@ -1,0 +1,17 @@
+# docker-compose.yml
+version: '3.8'
+services:
+  postgres:
+    image: postgres:15 # PostgreSQL'in 15. versiyonunu kullan
+    restart: always
+    environment:
+      POSTGRES_USER: mark # Kullanıcı adını belirle
+      POSTGRES_PASSWORD: my.passwd # Şifreyi belirle
+      POSTGRES_DB: CoreDB # Veritabanı adını belirle
+    ports:
+      - '5432:5432' # Bilgisayarının 5432 portunu container'ın portuna bağla
+    volumes:
+      - postgres-data:/var/lib/postgresql/data # Verilerin kaybolmaması için
+
+volumes:
+  postgres-data:
