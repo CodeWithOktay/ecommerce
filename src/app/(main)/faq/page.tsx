@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { ChevronDown, ChevronUp, Search, Mail } from "lucide-react";
+import { ChevronDown, ChevronUp, Mail, Search } from 'lucide-react';
+import { useState } from 'react';
 
 type FAQ = {
   question: string;
@@ -11,64 +11,64 @@ type FAQ = {
 
 const faqs: FAQ[] = [
   {
-    category: "Sipariş & Teslimat",
-    question: "Siparişim ne zaman kargoya verilir?",
+    category: 'Sipariş & Teslimat',
+    question: 'Siparişim ne zaman kargoya verilir?',
     answer:
-      "Siparişleriniz genellikle 1-3 iş günü içinde kargoya teslim edilir. Stok durumu onaylanan ürünler aynı gün kargoya verilir. Resmî tatiller ve kampanya dönemlerinde bu süre 4-5 iş gününe kadar uzayabilir. Kargo takip numaranızı sipariş takip sayfanızdan görüntüleyebilirsiniz.",
+      'Siparişleriniz genellikle 1-3 iş günü içinde kargoya teslim edilir. Stok durumu onaylanan ürünler aynı gün kargoya verilir. Resmî tatiller ve kampanya dönemlerinde bu süre 4-5 iş gününe kadar uzayabilir. Kargo takip numaranızı sipariş takip sayfanızdan görüntüleyebilirsiniz.',
   },
   {
-    category: "Sipariş & Teslimat",
-    question: "Kargo ücreti ne kadar?",
+    category: 'Sipariş & Teslimat',
+    question: 'Kargo ücreti ne kadar?',
     answer:
-      "1500 TL ve üzeri alışverişlerde kargo ücretsizdir. Diğer siparişlerde sabit 49 TL kargo ücreti uygulanır. Anlaşmalı olduğumuz kargo firmaları ile en uygun fiyat garantisi sunuyoruz. Kapıda ödeme seçeneğinde ekstra 10 TL işlem ücreti alınmaktadır.",
+      '299 TL ve üzeri alışverişlerde kargo ücretsizdir. Diğer siparişlerde sabit 49 TL kargo ücreti uygulanır. Anlaşmalı olduğumuz kargo firmaları ile en uygun fiyat garantisi sunuyoruz. Kapıda ödeme seçeneğinde ekstra 10 TL işlem ücreti alınmaktadır.',
   },
   {
-    category: "İade & Değişim",
-    question: "Ürünü iade etmek istiyorum, nasıl yapabilirim?",
+    category: 'İade & Değişim',
+    question: 'Ürünü iade etmek istiyorum, nasıl yapabilirim?',
     answer:
       'Ürünü teslim aldıktan sonra 14 gün içinde iade talebinde bulunabilirsiniz. İade sürecini "Hesabım > Siparişlerim" bölümünden başlatabilirsiniz. Ürünün orijinal ambalajında ve etiketli olması gerekmektedir. İade onayı sonrası ödemeniz 3-5 iş günü içinde hesabınıza iade edilir.',
   },
   {
-    category: "Ödeme",
-    question: "Hangi ödeme yöntemlerini kabul ediyorsunuz?",
+    category: 'Ödeme',
+    question: 'Hangi ödeme yöntemlerini kabul ediyorsunuz?',
     answer:
-      "Kredi kartı (taksit seçenekleriyle), banka kartı, havale/EFT, kapıda ödeme ve dijital cüzdan seçeneklerini kullanabilirsiniz. 3D Secure güvenlik sistemi ile tüm ödeme işlemleriniz güvence altındadır. Taksit seçenekleri bankaların kampanyalarına göre değişiklik gösterebilir.",
+      'Kredi kartı (taksit seçenekleriyle), banka kartı, havale/EFT, kapıda ödeme ve dijital cüzdan seçeneklerini kullanabilirsiniz. 3D Secure güvenlik sistemi ile tüm ödeme işlemleriniz güvence altındadır. Taksit seçenekleri bankaların kampanyalarına göre değişiklik gösterebilir.',
   },
   {
-    category: "Fatura & Belge",
-    question: "Faturamı nasıl alabilirim?",
+    category: 'Fatura & Belge',
+    question: 'Faturamı nasıl alabilirim?',
     answer:
       'Faturalar siparişiniz onaylandıktan sonra e-posta adresinize dijital olarak gönderilir. Ayrıca "Hesabım > Faturalarım" bölümünden tüm faturalarınıza erişebilirsiniz. Kurumsal alımlarda e-fatura seçeneğimiz bulunmaktadır. Fatura düzenleme talepleriniz için müşteri hizmetlerimizle iletişime geçebilirsiniz.',
   },
   {
-    category: "Hesap & Üyelik",
-    question: "Hesabımı nasıl silebilirim?",
+    category: 'Hesap & Üyelik',
+    question: 'Hesabımı nasıl silebilirim?',
     answer:
       'Hesap silme işlemini "Hesap Ayarları > Hesabı Kapat" bölümünden gerçekleştirebilirsiniz. Hesap silme işlemi öncesinde aktif siparişlerinizin ve iade süreçlerinizin tamamlanmış olması gerekmektedir. Hesap silme işlemi geri alınamaz.',
   },
   {
-    category: "Ürün & Stok",
-    question: "Stokta olmayan ürünleri nasıl takip edebilirim?",
+    category: 'Ürün & Stok',
+    question: 'Stokta olmayan ürünleri nasıl takip edebilirim?',
     answer:
       'Stokta olmayan ürünlerin sayfasında "Stok Gelince Haber Ver" butonunu kullanabilirsiniz. Ürün stoğa girdiğinde e-posta ile bilgilendirileceksiniz. Ayrıca ürün sayfasında tahmini stok geliş tarihini görebilirsiniz.',
   },
   {
-    category: "Garanti & Destek",
-    question: "Ürün garantisi ve teknik destek hizmetiniz var mı?",
+    category: 'Garanti & Destek',
+    question: 'Ürün garantisi ve teknik destek hizmetiniz var mı?',
     answer:
-      "Tüm ürünlerimiz distribütör garantisi kapsamındadır. Garanti süreleri ürün kategorisine göre 1-3 yıl arasında değişmektedir. Teknik destek ve garanti işlemleri için müşteri hizmetlerimiz hafta içi 09:00-18:00 saatleri arasında hizmet vermektedir.",
+      'Tüm ürünlerimiz distribütör garantisi kapsamındadır. Garanti süreleri ürün kategorisine göre 1-3 yıl arasında değişmektedir. Teknik destek ve garanti işlemleri için müşteri hizmetlerimiz hafta içi 09:00-18:00 saatleri arasında hizmet vermektedir.',
   },
 ];
 
 const categories = [
-  "Tüm Kategoriler",
+  'Tüm Kategoriler',
   ...new Set(faqs.map((faq) => faq.category)),
 ];
 
 export default function FAQPage() {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("Tüm Kategoriler");
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('Tüm Kategoriler');
 
   const toggle = (index: number) => {
     setOpenIndex(openIndex === index ? null : index);
@@ -79,7 +79,7 @@ export default function FAQPage() {
       faq.question.toLowerCase().includes(searchTerm.toLowerCase()) ||
       faq.answer.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory =
-      selectedCategory === "Tüm Kategoriler" ||
+      selectedCategory === 'Tüm Kategoriler' ||
       faq.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
@@ -144,8 +144,8 @@ export default function FAQPage() {
               </p>
               <button
                 onClick={() => {
-                  setSearchTerm("");
-                  setSelectedCategory("Tüm Kategoriler");
+                  setSearchTerm('');
+                  setSelectedCategory('Tüm Kategoriler');
                 }}
                 className="bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700 transition-colors duration-200 font-medium"
               >

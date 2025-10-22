@@ -1,6 +1,4 @@
-import Footer from '@/components/layout/Footer';
-import Header from '@/components/layout/Header';
-import { PageLayout } from '@/components/layout/PageLayout';
+import MainLayout from '@/components/layout/MainLayout'; // Yeni component
 import AuthProvider from '@/components/shared/AuthProvider';
 import { BackToTopButton } from '@/components/shared/BackToTopButton';
 import { CartProvider } from '@/context/cart';
@@ -33,8 +31,11 @@ export default async function RootLayout({
       <body id="top" className={`${geist.variable}`}>
         <AuthProvider session={session}>
           <CartProvider>
-            <Header />
-            <PageLayout>{children}</PageLayout>
+            {/* Mevcut yapıyı koruyoruz, sadece MainLayout'u ekliyoruz */}
+            <MainLayout>
+              {children}
+            </MainLayout>
+            
             <Toaster
               position="top-right"
               toastOptions={{
@@ -56,7 +57,6 @@ export default async function RootLayout({
               }}
             />
             <BackToTopButton />
-            <Footer />
           </CartProvider>
         </AuthProvider>
       </body>
