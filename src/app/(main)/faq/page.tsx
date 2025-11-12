@@ -3,12 +3,20 @@
 import { ChevronDown, ChevronUp, Mail, Search } from 'lucide-react';
 import { useState } from 'react';
 
+/**
+ * SSS (Sıkça Sorulan Sorular) veri tipi
+ * Her soru için kategori, soru metni ve cevap içerir
+ */
 type FAQ = {
   question: string;
   answer: string;
   category: string;
 };
 
+/**
+ * SSS veri seti
+ * Kategorilere ayrılmış sık sorulan sorular ve detaylı cevapları
+ */
 const faqs: FAQ[] = [
   {
     category: 'Sipariş & Teslimat',
@@ -60,20 +68,40 @@ const faqs: FAQ[] = [
   },
 ];
 
+/**
+ * Kategori listesi - Tüm kategoriler ve benzersiz kategoriler
+ */
 const categories = [
   'Tüm Kategoriler',
   ...new Set(faqs.map((faq) => faq.category)),
 ];
 
+/**
+ * SSS (Sıkça Sorulan Sorular) Sayfası
+ *
+ * Kullanıcıların sık sorduğu soruları kategorilere ayırarak gösteren,
+ * arama ve filtreleme özellikleri olan interaktif sayfa.
+ */
 export default function FAQPage() {
+  // Açık olan sorunun index'ini tutan state
   const [openIndex, setOpenIndex] = useState<number | null>(0);
+  // Arama terimi state'i
   const [searchTerm, setSearchTerm] = useState('');
+  // Seçili kategori state'i
   const [selectedCategory, setSelectedCategory] = useState('Tüm Kategoriler');
 
+  /**
+   * Soruyu açma/kapama fonksiyonu
+   * @param index - Tıklanan sorunun index'i
+   */
   const toggle = (index: number) => {
     setOpenIndex(openIndex === index ? null : index);
   };
 
+  /**
+   * Filtrelenmiş SSS listesi
+   * Arama terimi ve kategoriye göre filtreleme yapar
+   */
   const filteredFaqs = faqs.filter((faq) => {
     const matchesSearch =
       faq.question.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -87,7 +115,7 @@ export default function FAQPage() {
   return (
     <main className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 py-12">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
+        {/* ✅ Başlık Bölümü */}
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold bg-gradient-to-r from-slate-800 to-blue-600 bg-clip-text text-transparent mb-4">
             Sıkça Sorulan Sorular
@@ -98,10 +126,10 @@ export default function FAQPage() {
           </p>
         </div>
 
-        {/* Search and Filter */}
+        {/* ✅ Arama ve Filtreleme Bölümü */}
         <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 mb-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Search Input */}
+            {/* Arama Input'u */}
             <div className="relative">
               <Search
                 className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
@@ -116,7 +144,7 @@ export default function FAQPage() {
               />
             </div>
 
-            {/* Category Filter */}
+            {/* Kategori Filtresi */}
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
@@ -131,9 +159,10 @@ export default function FAQPage() {
           </div>
         </div>
 
-        {/* FAQ List */}
+        {/* ✅ SSS Listesi */}
         <div className="space-y-4">
           {filteredFaqs.length === 0 ? (
+            // ✅ Boş Durum - sonuç bulunamadığında
             <div className="text-center py-12 bg-white rounded-2xl shadow-sm border border-gray-200">
               <Search className="mx-auto text-gray-400 mb-4" size={48} />
               <h3 className="text-xl font-semibold text-gray-800 mb-2">
@@ -153,25 +182,30 @@ export default function FAQPage() {
               </button>
             </div>
           ) : (
+            // ✅ Filtrelenmiş soruların listesi
             filteredFaqs.map((faq, index) => (
               <div
                 key={index}
                 className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden transition-all duration-300 hover:shadow-md"
               >
+                {/* Soru Butonu */}
                 <button
                   onClick={() => toggle(index)}
                   className="w-full flex justify-between items-center text-left p-6 hover:bg-gray-50 transition-colors duration-200"
                 >
                   <div className="flex-1">
+                    {/* Kategori Badge'i */}
                     <div className="flex items-center gap-3 mb-2">
                       <span className="inline-block px-3 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
                         {faq.category}
                       </span>
                     </div>
+                    {/* Soru Metni */}
                     <h3 className="font-semibold text-gray-800 text-lg pr-8">
                       {faq.question}
                     </h3>
                   </div>
+                  {/* Aç/Kapa Ok İkonu */}
                   <div className="flex-shrink-0 ml-4">
                     {openIndex === index ? (
                       <ChevronUp className="text-blue-600" size={24} />
@@ -181,6 +215,7 @@ export default function FAQPage() {
                   </div>
                 </button>
 
+                {/* Cevap Bölümü - sadece açık soruda görünür */}
                 {openIndex === index && (
                   <div className="px-6 pb-6 border-t border-gray-100">
                     <div className="pt-4 text-gray-600 leading-relaxed">
@@ -193,7 +228,7 @@ export default function FAQPage() {
           )}
         </div>
 
-        {/* Contact CTA */}
+        {/* ✅ İletişim Çağrısı (Call to Action) */}
         <div className="bg-white rounded-2xl border border-gray-200 p-8 mt-12 text-center">
           <Mail className="mx-auto text-gray-600 mb-4" size={40} />
           <h2 className="text-xl font-semibold text-gray-900 mb-3">
@@ -204,12 +239,14 @@ export default function FAQPage() {
             mutluluk duyarız.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            {/* E-posta Butonu */}
             <a
               href="mailto:destek@kervanpazar.com"
               className="bg-gray-900 text-white px-6 py-3 rounded-lg hover:bg-gray-800 transition-colors duration-200 font-medium"
             >
               E-posta Gönder
             </a>
+            {/* İletişim Formu Butonu */}
             <a
               href="/contact"
               className="border border-gray-300 text-gray-700 px-6 py-3 rounded-lg hover:border-gray-400 transition-colors duration-200 font-medium"
@@ -219,7 +256,7 @@ export default function FAQPage() {
           </div>
         </div>
 
-        {/* Quick Stats */}
+        {/* ✅ Hızlı İstatistikler */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-12 text-center">
           <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
             <div className="text-2xl font-bold text-blue-600 mb-1">

@@ -1,43 +1,51 @@
-import React from "react";
-
+/**
+ * KVKK (Kişisel Verilerin Korunması Kanunu) Aydınlatma Metni Sayfası
+ *
+ * 6698 sayılı KVKK kapsamında kullanıcıları kişisel veri işleme süreçleri
+ * hakkında bilgilendiren yasal zorunluluk sayfası.
+ */
 export default function KVKK() {
+  /**
+   * KVKK bölümleri ve maddeleri
+   * Her bölüm başlık ve detaylı madde listesi içerir
+   */
   const sections = [
     {
-      title: "Toplanan Kişisel Veriler",
+      title: 'Toplanan Kişisel Veriler',
       items: [
-        "Ad, soyad, e-posta ve iletişim bilgileri",
-        "Kullanıcı hesap bilgileri ve tercihleri",
-        "Sitemizdeki etkileşim ve alışveriş geçmişi",
-        "Teknik veriler (IP adresi, tarayıcı bilgileri)",
+        'Ad, soyad, e-posta ve iletişim bilgileri',
+        'Kullanıcı hesap bilgileri ve tercihleri',
+        'Sitemizdeki etkileşim ve alışveriş geçmişi',
+        'Teknik veriler (IP adresi, tarayıcı bilgileri)',
       ],
     },
     {
-      title: "Verilerin Kullanım Amaçları",
+      title: 'Verilerin Kullanım Amaçları',
       items: [
-        "Hizmetlerin sunulması ve iyileştirilmesi",
-        "Kampanya, duyuru ve bilgilendirme gönderimi",
-        "Müşteri memnuniyeti ve destek hizmetleri",
-        "Yasal yükümlülüklerin yerine getirilmesi",
-        "Kişiselleştirilmiş alışveriş deneyimi sunulması",
+        'Hizmetlerin sunulması ve iyileştirilmesi',
+        'Kampanya, duyuru ve bilgilendirme gönderimi',
+        'Müşteri memnuniyeti ve destek hizmetleri',
+        'Yasal yükümlülüklerin yerine getirilmesi',
+        'Kişiselleştirilmiş alışveriş deneyimi sunulması',
       ],
     },
     {
-      title: "Veri Paylaşımı ve Saklama",
+      title: 'Veri Paylaşımı ve Saklama',
       items: [
-        "Yalnızca yasal zorunluluklar ve hizmet sağlama kapsamında paylaşılır",
-        "Ödeme işlemleri için güvenli ödeme kuruluşlarıyla paylaşılır",
-        "Kargo ve teslimat hizmetleri için gerekli bilgiler paylaşılır",
-        "Veriler yasal saklama süreleri boyunca muhafaza edilir",
+        'Yalnızca yasal zorunluluklar ve hizmet sağlama kapsamında paylaşılır',
+        'Ödeme işlemleri için güvenli ödeme kuruluşlarıyla paylaşılır',
+        'Kargo ve teslimat hizmetleri için gerekli bilgiler paylaşılır',
+        'Veriler yasal saklama süreleri boyunca muhafaza edilir',
       ],
     },
     {
-      title: "Kullanıcı Hakları",
+      title: 'Kullanıcı Hakları',
       items: [
-        "Kişisel verilerinize erişim ve bilgi edinme hakkı",
-        "Verilerinizin düzeltilmesini veya güncellenmesini talep etme hakkı",
-        "Verilerinizin silinmesini talep etme hakkı",
-        "İşleme faaliyetine itiraz etme hakkı",
-        "Verilerinizin aktarılmasını talep etme hakkı",
+        'Kişisel verilerinize erişim ve bilgi edinme hakkı',
+        'Verilerinizin düzeltilmesini veya güncellenmesini talep etme hakkı',
+        'Verilerinizin silinmesini talep etme hakkı',
+        'İşleme faaliyetine itiraz etme hakkı',
+        'Verilerinizin aktarılmasını talep etme hakkı',
       ],
     },
   ];
@@ -45,7 +53,7 @@ export default function KVKK() {
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4">
       <div className="max-w-4xl mx-auto">
-        {/* Header */}
+        {/* ✅ Başlık Bölümü */}
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">
             KVKK Aydınlatma Metni
@@ -58,19 +66,21 @@ export default function KVKK() {
           </p>
         </div>
 
-        {/* Content Sections */}
+        {/* ✅ İçerik Bölümleri */}
         <div className="space-y-8">
           {sections.map((section, index) => (
             <section
               key={index}
               className="bg-white rounded-lg shadow-sm border border-gray-200 p-6"
             >
+              {/* Bölüm Başlığı */}
               <h2 className="text-2xl font-semibold text-gray-900 mb-4 flex items-center">
                 <span className="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm mr-3">
                   {index + 1}
                 </span>
                 {section.title}
               </h2>
+              {/* Madde Listesi */}
               <ul className="space-y-3">
                 {section.items.map((item, itemIndex) => (
                   <li key={itemIndex} className="flex items-start">
@@ -85,7 +95,7 @@ export default function KVKK() {
           ))}
         </div>
 
-        {/* Data Security */}
+        {/* ✅ Veri Güvenliği Bölümü */}
         <section className="bg-blue-50 rounded-lg border border-blue-200 p-6 mt-8">
           <h2 className="text-2xl font-semibold text-blue-900 mb-4">
             Veri Güvenliği
@@ -114,7 +124,7 @@ export default function KVKK() {
           </div>
         </section>
 
-        {/* Contact & Rights */}
+        {/* ✅ İletişim ve Hak Kullanımı Bölümü */}
         <section className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mt-8">
           <h2 className="text-2xl font-semibold text-gray-900 mb-4">
             Haklarınızı Kullanma
@@ -125,6 +135,7 @@ export default function KVKK() {
               kanallarından bize ulaşabilirsiniz:
             </p>
             <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+              {/* E-posta İletişim Butonu */}
               <a
                 href="mailto:info@kervanpazar.com"
                 className="inline-flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium"
@@ -138,7 +149,7 @@ export default function KVKK() {
           </div>
         </section>
 
-        {/* Footer */}
+        {/* ✅ Alt Bilgi (Footer) */}
         <div className="text-center mt-12 pt-6 border-t border-gray-200">
           <p className="text-sm text-gray-500">
             Son güncelleme: {new Date().getFullYear()} |

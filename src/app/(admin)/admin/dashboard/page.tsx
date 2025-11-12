@@ -1,5 +1,6 @@
 'use client';
 
+// Lucide React ikon kütüphanesinden ikonları import ediyoruz
 import {
   DollarSign,
   Eye,
@@ -8,6 +9,8 @@ import {
   TrendingUp,
   UserPlus,
 } from 'lucide-react';
+
+// Recharts kütüphanesinden grafik bileşenlerini import ediyoruz
 import {
   Bar,
   BarChart,
@@ -21,6 +24,7 @@ import {
   YAxis,
 } from 'recharts';
 
+// İstatistik kartları için interface tanımı
 interface StatCard {
   title: string;
   value: string;
@@ -30,12 +34,14 @@ interface StatCard {
   trend: 'up' | 'down';
 }
 
+// Satış verileri için interface tanımı
 interface SalesData {
   month: string;
   gelir: number;
   siparis: number;
 }
 
+// Sipariş verileri için interface tanımı
 interface Order {
   id: string;
   customer: string;
@@ -44,12 +50,14 @@ interface Order {
   date: string;
 }
 
+// Kategori verileri için interface tanımı
 interface CategoryData {
   name: string;
   value: number;
   [key: string]: string | number;
 }
 
+// İstatistik kartları için sabit veriler
 const STATS: StatCard[] = [
   {
     title: 'Toplam Gelir',
@@ -85,6 +93,7 @@ const STATS: StatCard[] = [
   },
 ];
 
+// Aylık satış verileri
 const SALES_DATA: SalesData[] = [
   { month: 'Ocak', gelir: 12000, siparis: 45 },
   { month: 'Şubat', gelir: 15000, siparis: 52 },
@@ -94,6 +103,7 @@ const SALES_DATA: SalesData[] = [
   { month: 'Haziran', gelir: 24000, siparis: 72 },
 ];
 
+// Son siparişler listesi
 const RECENT_ORDERS: Order[] = [
   {
     id: '#ORD1001',
@@ -132,6 +142,7 @@ const RECENT_ORDERS: Order[] = [
   },
 ];
 
+// Kategori dağılım verileri
 const CATEGORY_DATA: CategoryData[] = [
   { name: 'Elektronik', value: 35 },
   { name: 'Giyim', value: 25 },
@@ -140,8 +151,10 @@ const CATEGORY_DATA: CategoryData[] = [
   { name: 'Diğer', value: 5 },
 ];
 
+// Grafiklerde kullanılacak renk paleti
 const COLORS = ['#3B82F6', '#10B981', '#8B5CF6', '#F59E0B', '#EF4444'];
 
+// İstatistik kartları için gradient renk sınıfları
 const COLOR_CLASSES: Record<'blue' | 'green' | 'purple' | 'orange', string> = {
   blue: 'from-blue-500 to-blue-600',
   green: 'from-green-500 to-green-600',
@@ -149,13 +162,16 @@ const COLOR_CLASSES: Record<'blue' | 'green' | 'purple' | 'orange', string> = {
   orange: 'from-orange-500 to-orange-600',
 };
 
+// Sipariş durumları için CSS sınıfları
 const STATUS_CLASSES = {
   completed: 'bg-green-100 text-green-800 border-green-200',
   pending: 'bg-yellow-100 text-yellow-800 border-yellow-200',
   cancelled: 'bg-red-100 text-red-800 border-red-200',
 };
 
+// Ana dashboard bileşeni
 export default function DashboardPage() {
+  // Para birimi formatlama fonksiyonu
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('tr-TR', {
       style: 'currency',
@@ -165,16 +181,19 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-gray-50/30">
+      {/* Header bölümü */}
       <div className="mb-8">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-3">
               <div>
+                {/* Sayfa başlığı */}
                 <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
                 <p className="text-gray-600 mt-1">KervanPazar Yönetim Paneli</p>
               </div>
             </div>
           </div>
+          {/* Aksiyon butonları */}
           <div className="flex items-center gap-3">
             <button className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
               Rapor İndir
@@ -186,6 +205,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      {/* İstatistik kartları grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
         {STATS.map((stat) => {
           const Icon = stat.icon;
@@ -197,12 +217,14 @@ export default function DashboardPage() {
             >
               <div className="flex items-center justify-between">
                 <div>
+                  {/* Kart içeriği */}
                   <p className="text-sm font-medium text-gray-600 mb-2">
                     {stat.title}
                   </p>
                   <p className="text-2xl font-bold text-gray-900 mb-2">
                     {stat.value}
                   </p>
+                  {/* Değişim yüzdesi */}
                   <div
                     className={`flex items-center gap-1 text-sm font-medium ${
                       stat.trend === 'up' ? 'text-green-600' : 'text-red-600'
@@ -213,6 +235,7 @@ export default function DashboardPage() {
                     <span className="text-gray-500">geçen aya göre</span>
                   </div>
                 </div>
+                {/* İkon container */}
                 <div
                   className={`p-3 rounded-xl bg-gradient-to-r ${COLOR_CLASSES[stat.color]} text-white shadow-lg`}
                 >
@@ -224,12 +247,15 @@ export default function DashboardPage() {
         })}
       </div>
 
+      {/* Grafikler bölümü */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-8">
+        {/* Satış performansı grafiği - Bar Chart */}
         <div className="xl:col-span-2 bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-lg font-semibold text-gray-900">
               Satış Performansı
             </h2>
+            {/* Zaman periyodu seçenekleri */}
             <div className="flex items-center gap-2">
               <button className="px-3 py-1 text-sm text-blue-600 bg-blue-50 rounded-lg font-medium">
                 Aylık
@@ -267,6 +293,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
+        {/* Kategori dağılımı grafiği - Pie Chart */}
         <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
           <h2 className="text-lg font-semibold text-gray-900 mb-6">
             Kategori Dağılımı
@@ -305,6 +332,7 @@ export default function DashboardPage() {
               </PieChart>
             </ResponsiveContainer>
           </div>
+          {/* Kategori legend'ı */}
           <div className="grid grid-cols-2 gap-3 mt-4">
             {CATEGORY_DATA.map((item, index) => (
               <div key={item.name} className="flex items-center gap-2">
@@ -322,6 +350,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      {/* Son siparişler tablosu */}
       <div className="bg-white rounded-2xl border border-gray-200 shadow-sm">
         <div className="p-6 border-b border-gray-200">
           <div className="flex items-center justify-between">
@@ -376,6 +405,7 @@ export default function DashboardPage() {
                       </span>
                     </td>
                     <td className="py-4 px-4">
+                      {/* Durum badge'i */}
                       <span
                         className={`px-3 py-1 text-xs rounded-full border font-medium ${STATUS_CLASSES[order.status]}`}
                       >
@@ -392,6 +422,7 @@ export default function DashboardPage() {
                       </span>
                     </td>
                     <td className="py-4 px-4">
+                      {/* Detay görüntüleme butonu */}
                       <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
                         <Eye className="w-4 h-4 text-gray-400" />
                       </button>

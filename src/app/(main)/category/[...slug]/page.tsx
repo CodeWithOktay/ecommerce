@@ -1,102 +1,147 @@
 'use client';
 
+import { SortDropdown } from '@/components/forms/SortDropdown';
 import { ProductCard } from '@/components/product/ProductCard';
 import { mockCategories } from '@/lib/constants/categories';
 import { mockProducts } from '@/lib/data/mock-data';
 import { ChevronRight, Home, Search } from 'lucide-react';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
-import { SortDropdown } from '@/components/forms/SortDropdown';
 
+/**
+ * URL parametreleri tip tanımı
+ * Kategori ve alt kategori slug'larını içerebilir
+ */
 type Params = {
   slug?: string[] | string;
 };
 
+/**
+ * Kategori Sayfası Bileşeni
+ *
+ * Belirli bir kategori veya alt kategorideki ürünleri gösteren sayfa.
+ * Breadcrumb navigasyonu, sıralama ve filtreleme özellikleri içerir.
+ */
 export default function CategoryPage({ params }: { params: Params }) {
+  // Sıralama seçeneği state'i
   const [sortOption, setSortOption] = useState('recommended');
 
+  /**
+   * URL'den gelen slug parametresini işleme
+   * /category/elektronik/telefon → ['elektronik', 'telefon']
+   */
   const slugArr = Array.isArray(params?.slug)
     ? params.slug
     : typeof params?.slug === 'string'
       ? params.slug.split('/').filter(Boolean)
       : [];
 
+  // URL'den kategori ve alt kategori ID'lerini al
   const categoryId = slugArr[0]?.toLowerCase();
   const subCategoryId = slugArr[1]?.toLowerCase();
 
-  // Tüm hook'ları early return'lerden ÖNCE çağır
-  const { currentCategory, subCategory, filteredProducts, sortedProducts } = useMemo(() => {
-    const currentCategory = mockCategories.find(
-      (cat) => String(cat.id).toLowerCase() === categoryId
-    );
+  /**
+   * useMemo ile optimize edilmiş kategori ve ürün hesaplamaları
+   * categoryId, subCategoryId veya sortOption değiştiğinde yeniden hesaplanır
+   */
+  const { currentCategory, subCategory, filteredProducts, sortedProducts } =
+    useMemo(() => {
+      // Mevcut kategoriyi bul
+      const currentCategory = mockCategories.find(
+        (cat) => String(cat.id).toLowerCase() === categoryId
+      );
 
-    const subCategory = subCategoryId && currentCategory
-      ? currentCategory.subCategories?.find(
-          (sub) => String(sub.id).toLowerCase() === subCategoryId
-        )
-      : undefined;
+      // Alt kategoriyi bul (varsa)
+      const subCategory =
+        subCategoryId && currentCategory
+          ? currentCategory.subCategories?.find(
+              (sub) => String(sub.id).toLowerCase() === subCategoryId
+            )
+          : undefined;
 
-    const filteredProducts = currentCategory
-      ? mockProducts.filter((product) => {
-          const pCat = String(product.category_id ?? '').toLowerCase();
-          const pSubId = String(product.subcategory_id ?? '').toLowerCase();
-          const pSubName = String(product.subcategory_name ?? '').toLowerCase();
+      /**
+       * Kategoriye göre filtreleme
+       * - Alt kategori varsa: hem kategori hem alt kategori eşleşmeli
+       * - Sadece kategori varsa: sadece kategori eşleşmeli
+       */
+      const filteredProducts = currentCategory
+        ? mockProducts.filter((product) => {
+            const pCat = String(product.category_id ?? '').toLowerCase();
+            const pSubId = String(product.subcategory_id ?? '').toLowerCase();
+            const pSubName = String(
+              product.subcategory_name ?? ''
+            ).toLowerCase();
 
-          if (subCategory) {
-            if (pSubId) {
+            if (subCategory) {
+              // Alt kategori filtreleme
+              if (pSubId) {
+                return (
+                  pCat === currentCategory.id.toLowerCase() &&
+                  pSubId === subCategory.id.toLowerCase()
+                );
+              }
               return (
                 pCat === currentCategory.id.toLowerCase() &&
-                pSubId === subCategory.id.toLowerCase()
+                pSubName === subCategory.name.toLowerCase()
               );
             }
-            return (
-              pCat === currentCategory.id.toLowerCase() &&
-              pSubName === subCategory.name.toLowerCase()
-            );
-          }
 
-          return pCat === currentCategory.id.toLowerCase();
-        })
-      : [];
+            // Sadece ana kategori filtreleme
+            return pCat === currentCategory.id.toLowerCase();
+          })
+        : [];
 
-    const sortedProducts = [...filteredProducts];
-    switch (sortOption) {
-      case 'newest':
-        return {
-          currentCategory,
-          subCategory,
-          filteredProducts,
-          sortedProducts: sortedProducts.sort(
-            (a, b) =>
-              new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-          )
-        };
-      case 'price-asc':
-        return {
-          currentCategory,
-          subCategory,
-          filteredProducts,
-          sortedProducts: sortedProducts.sort((a, b) => a.price - b.price)
-        };
-      case 'price-desc':
-        return {
-          currentCategory,
-          subCategory,
-          filteredProducts,
-          sortedProducts: sortedProducts.sort((a, b) => b.price - a.price)
-        };
-      case 'recommended':
-      default:
-        return {
-          currentCategory,
-          subCategory,
-          filteredProducts,
-          sortedProducts: filteredProducts
-        };
-    }
-  }, [categoryId, subCategoryId, sortOption]);
+      /**
+       * Sıralama işlemi
+       * Filtrelenmiş ürünleri kopyalayarak sıralama yap
+       */
+      const sortedProducts = [...filteredProducts];
+      switch (sortOption) {
+        case 'newest':
+          // En yeni ürünler (created_at'e göre)
+          return {
+            currentCategory,
+            subCategory,
+            filteredProducts,
+            sortedProducts: sortedProducts.sort(
+              (a, b) =>
+                new Date(b.created_at).getTime() -
+                new Date(a.created_at).getTime()
+            ),
+          };
+        case 'price-asc':
+          // Fiyat artan
+          return {
+            currentCategory,
+            subCategory,
+            filteredProducts,
+            sortedProducts: sortedProducts.sort((a, b) => a.price - b.price),
+          };
+        case 'price-desc':
+          // Fiyat azalan
+          return {
+            currentCategory,
+            subCategory,
+            filteredProducts,
+            sortedProducts: sortedProducts.sort((a, b) => b.price - a.price),
+          };
+        case 'recommended':
+        default:
+          // Önerilen (filtrelenmiş sırada)
+          return {
+            currentCategory,
+            subCategory,
+            filteredProducts,
+            sortedProducts: filteredProducts,
+          };
+      }
+    }, [categoryId, subCategoryId, sortOption]);
 
-  // Early return'ler hook'lardan SONRA
+  // ✅ Early return'ler - hook'lardan SONRA gelmeli
+
+  /**
+   * Kategori ID yoksa - hata sayfası
+   */
   if (!categoryId) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-purple-900 flex items-center justify-center p-8">
@@ -122,6 +167,9 @@ export default function CategoryPage({ params }: { params: Params }) {
     );
   }
 
+  /**
+   * Kategori bulunamazsa - 404 sayfası
+   */
   if (!currentCategory) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-purple-900 flex items-center justify-center p-8">
@@ -146,20 +194,25 @@ export default function CategoryPage({ params }: { params: Params }) {
     );
   }
 
+  /**
+   * Sayfa başlığını belirle
+   * Alt kategori varsa: "Elektronik - Telefon"
+   * Sadece kategori varsa: "Elektronik"
+   */
   const title = subCategory
     ? `${currentCategory.name} - ${subCategory.name}`
     : currentCategory.name;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50">
-      {/* Header Section */}
+      {/* ✅ Header Bölümü - Breadcrumb ve sayfa bilgileri */}
       <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200/60">
         <div className="max-w-7xl mx-auto px-6 py-8">
-          {/* Breadcrumb */}
+          {/* Breadcrumb Navigasyon */}
           <nav className="mb-6">
             <div className="flex items-center gap-2 text-sm text-gray-600">
-              <Link 
-                href="/" 
+              <Link
+                href="/"
                 className="flex items-center gap-1 hover:text-blue-600 transition-colors duration-200 font-medium"
               >
                 <Home size={16} />
@@ -183,7 +236,7 @@ export default function CategoryPage({ params }: { params: Params }) {
             </div>
           </nav>
 
-          {/* Page Header */}
+          {/* Sayfa Başlığı ve Kontroller */}
           <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
             <div className="flex-1">
               <h1 className="text-4xl font-bold bg-gradient-to-r from-slate-800 to-blue-600 bg-clip-text text-transparent mb-3">
@@ -191,7 +244,10 @@ export default function CategoryPage({ params }: { params: Params }) {
               </h1>
               <div className="flex items-center gap-4">
                 <p className="text-gray-600 text-lg">
-                  <span className="font-semibold text-slate-800">{sortedProducts.length}</span> ürün listeleniyor
+                  <span className="font-semibold text-slate-800">
+                    {sortedProducts.length}
+                  </span>{' '}
+                  ürün listeleniyor
                 </p>
                 <div className="w-px h-6 bg-gray-300"></div>
                 <p className="text-gray-500 text-sm">
@@ -199,7 +255,8 @@ export default function CategoryPage({ params }: { params: Params }) {
                 </p>
               </div>
             </div>
-            
+
+            {/* Sıralama Dropdown */}
             <div className="w-full lg:w-80">
               <SortDropdown value={sortOption} onChange={setSortOption} />
             </div>
@@ -207,9 +264,9 @@ export default function CategoryPage({ params }: { params: Params }) {
         </div>
       </div>
 
-      {/* Content Section */}
+      {/* ✅ İçerik Bölümü */}
       <div className="max-w-7xl mx-auto px-6 py-8">
-        {/* Sub Categories Grid */}
+        {/* ✅ Alt Kategoriler Grid - Sadece ana kategori sayfasında gösterilir */}
         {!subCategoryId && currentCategory.subCategories && (
           <div className="mb-12">
             <div className="flex items-center justify-between mb-8">
@@ -236,9 +293,9 @@ export default function CategoryPage({ params }: { params: Params }) {
                       <span className="text-sm text-gray-500 group-hover:text-blue-500 transition-colors duration-300">
                         Ürünleri gör
                       </span>
-                      <ChevronRight 
-                        size={16} 
-                        className="text-gray-400 group-hover:text-blue-500 group-hover:translate-x-1 transition-all duration-300" 
+                      <ChevronRight
+                        size={16}
+                        className="text-gray-400 group-hover:text-blue-500 group-hover:translate-x-1 transition-all duration-300"
                       />
                     </div>
                   </div>
@@ -248,7 +305,7 @@ export default function CategoryPage({ params }: { params: Params }) {
           </div>
         )}
 
-        {/* Products Section */}
+        {/* ✅ Ürünler Bölümü */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-2xl font-bold text-slate-800">
@@ -259,8 +316,9 @@ export default function CategoryPage({ params }: { params: Params }) {
             </div>
           </div>
 
-          {/* Products Grid */}
+          {/* ✅ Ürün Grid veya Boş Durum */}
           {sortedProducts.length === 0 ? (
+            // Boş durum - ürün yoksa
             <div className="text-center py-20">
               <div className="w-32 h-32 bg-white/80 backdrop-blur-sm rounded-3xl flex items-center justify-center mx-auto mb-8 border border-gray-200 shadow-2xl">
                 <div className="text-4xl">📦</div>
@@ -269,8 +327,8 @@ export default function CategoryPage({ params }: { params: Params }) {
                 Ürün Bulunamadı
               </h2>
               <p className="text-gray-600 mb-10 max-w-md mx-auto text-lg">
-                Bu kategoride henüz ürün bulunmuyor. 
-                Farklı kategorileri keşfederek alışverişe başlayabilirsiniz.
+                Bu kategoride henüz ürün bulunmuyor. Farklı kategorileri
+                keşfederek alışverişe başlayabilirsiniz.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Link
@@ -288,10 +346,11 @@ export default function CategoryPage({ params }: { params: Params }) {
               </div>
             </div>
           ) : (
+            // Ürün grid - ürünler varsa
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
               {sortedProducts.map((product) => (
-                <div 
-                  key={product.id} 
+                <div
+                  key={product.id}
                   className="group hover:-translate-y-3 transition-all duration-500"
                 >
                   <div className="relative bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500">

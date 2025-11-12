@@ -1,12 +1,12 @@
-import MainLayout from '@/components/layout/MainLayout'; // Yeni component
-import AuthProvider from '@/components/shared/AuthProvider';
-import { BackToTopButton } from '@/components/shared/BackToTopButton';
-import { CartProvider } from '@/context/cart';
-import { authOptions } from '@/lib/auth/options';
-import type { Metadata } from 'next';
-import { getServerSession } from 'next-auth';
+// src/app/layout.tsx
 import { Geist } from 'next/font/google';
 import { Toaster } from 'react-hot-toast';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth/options';
+import AuthProvider from '@/components/shared/AuthProvider';
+import { CartProvider } from '@/context/cart';
+import { BackToTopButton } from '@/components/shared/BackToTopButton';
+import type { Metadata } from 'next';
 import './globals.css';
 
 const geist = Geist({
@@ -31,11 +31,7 @@ export default async function RootLayout({
       <body id="top" className={`${geist.variable}`}>
         <AuthProvider session={session}>
           <CartProvider>
-            {/* Mevcut yapıyı koruyoruz, sadece MainLayout'u ekliyoruz */}
-            <MainLayout>
-              {children}
-            </MainLayout>
-            
+            {children}
             <Toaster
               position="top-right"
               toastOptions={{

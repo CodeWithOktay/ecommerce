@@ -1,5 +1,6 @@
 'use client';
 
+// Gerekli ikon ve bileşen importları
 import { ArrowRight, Eye, EyeOff, Lock, Mail, Shield } from 'lucide-react';
 import { signIn } from 'next-auth/react';
 import Image from 'next/image';
@@ -7,14 +8,18 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 export default function ManagementLogin() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const router = useRouter();
-  const searchParams = useSearchParams();
+  // State'lerin tanımlanması
+  const [email, setEmail] = useState(''); // Email state'i
+  const [password, setPassword] = useState(''); // Şifre state'i
+  const [showPassword, setShowPassword] = useState(false); // Şifre görünürlük state'i
+  const [loading, setLoading] = useState(false); // Yükleme state'i
+  const [error, setError] = useState(''); // Hata mesajı state'i
 
+  // Next.js hook'ları
+  const router = useRouter(); // Yönlendirme için router
+  const searchParams = useSearchParams(); // URL parametrelerini okumak için
+
+  // URL'den hata parametresini kontrol etme
   useEffect(() => {
     const errorParam = searchParams.get('error');
     if (errorParam === 'credentialsSignin') {
@@ -22,55 +27,63 @@ export default function ManagementLogin() {
     }
   }, [searchParams]);
 
+  // Form submit işlemi
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
+    e.preventDefault(); // Sayfa yenilenmesini engelle
+    setLoading(true); // Yükleme state'ini aktif et
+    setError(''); // Önceki hataları temizle
 
     try {
+      // NextAuth ile giriş yapma
       const result = await signIn('credentials', {
         email,
         password,
-        redirect: false,
-        callbackUrl: '/admin/dashboard',
+        redirect: false, // Manuel yönlendirme yapacağız
+        callbackUrl: '/admin/dashboard', // Başarılı girişte yönlendirilecek URL
       });
 
+      // Hata kontrolü
       if (result?.error) {
         setError('Geçersiz email veya şifre');
         return;
       }
 
+      // Başarılı giriş - yönlendirme
       if (result?.url) {
         router.push(result.url);
       } else {
         router.push('/admin/dashboard');
       }
     } catch (error) {
+      // Beklenmeyen hata durumu
       setError('Giriş sırasında bir hata oluştu');
     } finally {
+      // Yükleme state'ini kapat
       setLoading(false);
     }
   };
 
   return (
     <div className="min-h-screen bg-neutral-50 flex items-center justify-center p-4">
-      {/* Background Elements */}
+      {/* Arkaplan dekoratif elementleri */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-100 rounded-full blur-3xl opacity-60"></div>
         <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-indigo-100 rounded-full blur-3xl opacity-60"></div>
       </div>
 
+      {/* Ana içerik container'ı */}
       <div className="max-w-md w-full relative">
-        {/* Header Section */}
+        {/* Başlık bölümü */}
         <div className="text-center mb-10">
           <div className="flex justify-center mb-6"></div>
+          {/* Logo */}
           <Image
             src="/kervanpazar-logo.png"
             alt="KervanPazar Logo"
             width={500}
             height={10}
             className="object-cemter group-hover:scale-105 transition-transform"
-            priority
+            priority // Öncelikli yükleme
           />
           <br />
           <p className="text-gray-600 text-lg leading-relaxed">
@@ -78,9 +91,10 @@ export default function ManagementLogin() {
           </p>
         </div>
 
-        {/* Login Card */}
+        {/* Giriş kartı */}
         <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8 backdrop-blur-sm">
           <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Hata mesajı gösterimi */}
             {error && (
               <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm flex items-center">
                 <div className="w-2 h-2 bg-red-500 rounded-full mr-3"></div>
@@ -88,7 +102,7 @@ export default function ManagementLogin() {
               </div>
             )}
 
-            {/* Email Field */}
+            {/* Email alanı */}
             <div className="space-y-2">
               <label
                 htmlFor="email"
@@ -97,9 +111,11 @@ export default function ManagementLogin() {
                 E-posta Adresi
               </label>
               <div className="relative group">
+                {/* Email ikonu */}
                 <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                   <Mail className="w-5 h-5 text-gray-400 group-focus-within:text-blue-500 transition-colors" />
                 </div>
+                {/* Email input */}
                 <input
                   id="email"
                   type="email"
@@ -112,7 +128,7 @@ export default function ManagementLogin() {
               </div>
             </div>
 
-            {/* Password Field */}
+            {/* Şifre alanı */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <label
@@ -121,6 +137,7 @@ export default function ManagementLogin() {
                 >
                   Şifre
                 </label>
+                {/* Şifre göster/gizle butonu */}
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
@@ -130,9 +147,11 @@ export default function ManagementLogin() {
                 </button>
               </div>
               <div className="relative group">
+                {/* Şifre ikonu */}
                 <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                   <Lock className="w-5 h-5 text-gray-400 group-focus-within:text-blue-500 transition-colors" />
                 </div>
+                {/* Şifre input */}
                 <input
                   id="password"
                   type={showPassword ? 'text' : 'password'}
@@ -142,6 +161,7 @@ export default function ManagementLogin() {
                   placeholder="••••••••"
                   required
                 />
+                {/* Şifre görünürlük toggle butonu */}
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
@@ -156,18 +176,20 @@ export default function ManagementLogin() {
               </div>
             </div>
 
-            {/* Submit Button */}
+            {/* Giriş butonu */}
             <button
               type="submit"
               disabled={loading}
               className="w-full  bg-gradient-to-r from-blue-500 to-purple-600  text-white py-4 px-6 rounded-xl font-semibold hover:from-blue-600 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 group"
             >
               {loading ? (
+                // Yükleme durumu
                 <div className="flex items-center justify-center">
                   <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-3"></div>
                   Giriş Yapılıyor...
                 </div>
               ) : (
+                // Normal durum
                 <div className="flex items-center justify-center">
                   <span>Panele Giriş Yap</span>
                   <ArrowRight className="w-5 h-5 ml-2 transform group-hover:translate-x-1 transition-transform" />
@@ -176,9 +198,10 @@ export default function ManagementLogin() {
             </button>
           </form>
 
-          {/* Security Info */}
+          {/* Güvenlik bilgisi bölümü */}
           <div className="mt-8 pt-6 border-t border-gray-100">
             <div className="flex items-start space-x-3">
+              {/* Güvenlik ikonu */}
               <div className="flex-shrink-0 w-5 h-5 bg-green-100 rounded-full flex items-center justify-center mt-0.5">
                 <Shield className="w-3 h-3 text-green-600" />
               </div>
@@ -195,7 +218,7 @@ export default function ManagementLogin() {
           </div>
         </div>
 
-        {/* Footer */}
+        {/* Footer bölümü */}
         <div className="text-center mt-8">
           <div className="flex items-center justify-center space-x-4 text-sm text-gray-500 mb-2">
             <span>v2.4.1</span>

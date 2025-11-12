@@ -1,5 +1,3 @@
-// src/app/urun/[id]/_components/AddToCartButton.tsx (YENİ TASARIM)
-
 'use client';
 
 import { useCart } from '@/context/cart';
@@ -7,16 +5,30 @@ import { Product } from '@/types';
 import { Loader2, ShoppingCart } from 'lucide-react';
 import { useState } from 'react';
 
+/**
+ * Sepete Ekle Butonu Bileşeni
+ *
+ * Ürün detay sayfasında kullanılan sepete ekleme butonu.
+ * Loading state, stok kontrolü ve animasyonlu feedback içerir.
+ */
 export default function AddToCartButton({ product }: { product: Product }) {
+  // Sepet context'inden sepete ekleme fonksiyonunu al
   const { addToCart } = useCart();
+  // Yükleme durumu state'i
   const [loading, setLoading] = useState(false);
 
+  /**
+   * Sepete ekleme işlemini yöneten fonksiyon
+   * Loading state'i yönetir ve sepete ekleme işlemini gerçekleştirir
+   */
   const handleAddToCart = () => {
     setLoading(true);
     addToCart(product);
-    setTimeout(() => setLoading(false), 1000); // Toast bildirimi ile senkronize edilebilir
+    // Loading state'ini 1 saniye sonra kapat (toast bildirimi ile senkronize edilebilir)
+    setTimeout(() => setLoading(false), 1000);
   };
 
+  // Stok durumu kontrolü
   const isOutOfStock = product.stock === 0;
 
   return (
@@ -30,12 +42,15 @@ export default function AddToCartButton({ product }: { product: Product }) {
                  active:scale-95
                  flex items-center justify-center gap-3
                  disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed disabled:hover:translate-y-0"
+      aria-label={isOutOfStock ? 'Ürün stokta yok' : 'Sepete ekle'}
     >
+      {/* Loading durumunda spinner, normal durumda sepet ikonu */}
       {loading ? (
         <Loader2 size={24} className="animate-spin" />
       ) : (
         <ShoppingCart size={24} />
       )}
+      {/* Duruma göre değişen buton metni */}
       <span>
         {isOutOfStock ? 'Stokta Yok' : loading ? 'Ekleniyor...' : 'Sepete Ekle'}
       </span>

@@ -1,6 +1,16 @@
 import React from "react";
 
+/**
+ * Üyelik Sözleşmesi Sayfası
+ * 
+ * Kullanıcıların platformu kullanmadan önce kabul etmesi gereken
+ * üyelik sözleşmesi şartlarını gösteren statik sayfa.
+ */
 export default function MembershipAgreement() {
+  /**
+   * Sözleşme bölümleri ve maddeleri
+   * Her bölüm başlık ve madde listesi içerir
+   */
   const sections = [
     {
       title: "Üyelik Koşulları",
@@ -68,7 +78,7 @@ export default function MembershipAgreement() {
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4">
       <div className="max-w-4xl mx-auto">
-        {/* Header */}
+        {/* ✅ Başlık Bölümü */}
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">
             Üyelik Sözleşmesi
@@ -81,7 +91,7 @@ export default function MembershipAgreement() {
           </p>
         </div>
 
-        {/* Important Notice */}
+        {/* ✅ Önemli Uyarı Kutusu */}
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 mb-8">
           <div className="flex items-start">
             <span className="text-yellow-600 text-xl mr-3">⚠️</span>
@@ -99,19 +109,21 @@ export default function MembershipAgreement() {
           </div>
         </div>
 
-        {/* Content Sections */}
+        {/* ✅ Sözleşme Bölümleri */}
         <div className="space-y-8">
           {sections.map((section, index) => (
             <section
               key={index}
               className="bg-white rounded-lg shadow-sm border border-gray-200 p-6"
             >
+              {/* Bölüm Başlığı */}
               <h2 className="text-2xl font-semibold text-gray-900 mb-4 flex items-center">
                 <span className="w-8 h-8 bg-green-600 text-white rounded-full flex items-center justify-center text-sm mr-3">
                   {index + 1}
                 </span>
                 {section.title}
               </h2>
+              {/* Madde Listesi */}
               <ul className="space-y-3">
                 {section.items.map((item, itemIndex) => (
                   <li key={itemIndex} className="flex items-start">
@@ -126,7 +138,7 @@ export default function MembershipAgreement() {
           ))}
         </div>
 
-        {/* Legal Section */}
+        {/* ✅ Yasal Hükümler Bölümü */}
         <section className="bg-gray-50 rounded-lg border border-gray-200 p-6 mt-8">
           <h2 className="text-2xl font-semibold text-gray-900 mb-4">
             Yasal Hükümler
@@ -157,7 +169,7 @@ export default function MembershipAgreement() {
           </div>
         </section>
 
-        {/* Agreement Acceptance */}
+        {/* ✅ Sözleşme Kabulü ve Tarih Bölümü */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mt-8">
           <div className="flex items-center justify-between">
             <div>

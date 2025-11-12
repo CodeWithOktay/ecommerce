@@ -10,7 +10,17 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 
+/**
+ * Güvenli Alışveriş Kılavuzu Sayfası
+ *
+ * Kullanıcılara güvenli alışveriş yapmaları için rehberlik eden bilgilendirici sayfa.
+ * Güvenlik özellikleri, ipuçları, uyarı işaretleri ve adım adım kılavuz içerir.
+ */
 export default function SafeShoppingGuide() {
+  /**
+   * Platform güvenlik özellikleri listesi
+   * Kullanıcıya sunulan teknik güvenlik altyapısını gösterir
+   */
   const securityFeatures = [
     {
       icon: <Lock size={32} />,
@@ -34,6 +44,10 @@ export default function SafeShoppingGuide() {
     },
   ];
 
+  /**
+   * Güvenli alışveriş için kullanıcı ipuçları
+   * Kullanıcının alması gereken güvenlik önlemleri
+   */
   const safetyTips = [
     {
       title: 'Güçlü Şifre Kullanın',
@@ -69,6 +83,10 @@ export default function SafeShoppingGuide() {
     },
   ];
 
+  /**
+   * Şüpheli durumlar için uyarı işaretleri
+   * Kullanıcıların kaçınması gereken riskli senaryolar
+   */
   const warningSigns = [
     {
       icon: <AlertCircle size={24} className="text-red-500" />,
@@ -88,6 +106,10 @@ export default function SafeShoppingGuide() {
     },
   ];
 
+  /**
+   * Adım adım güvenli alışveriş süreci
+   * Kullanıcıya rehberlik eden sıralı işlemler
+   */
   const steps = [
     {
       step: 1,
@@ -119,7 +141,7 @@ export default function SafeShoppingGuide() {
   return (
     <main className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 py-12">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
+        {/* ✅ Başlık Bölümü */}
         <div className="text-center mb-16">
           <div className="flex justify-center mb-6">
             <div className="w-20 h-20 bg-green-100 rounded-2xl flex items-center justify-center">
@@ -136,7 +158,7 @@ export default function SafeShoppingGuide() {
           </p>
         </div>
 
-        {/* Security Features */}
+        {/* ✅ Güvenlik Özellikleri Bölümü */}
         <section className="mb-16">
           <h2 className="text-3xl font-bold text-center text-gray-900 mb-12">
             Güvenlik Özelliklerimiz
@@ -161,7 +183,7 @@ export default function SafeShoppingGuide() {
           </div>
         </section>
 
-        {/* Safety Tips */}
+        {/* ✅ Güvenlik İpuçları Bölümü */}
         <section className="mb-16">
           <h2 className="text-3xl font-bold text-center text-gray-900 mb-12">
             Güvenli Alışveriş İpuçları
@@ -191,7 +213,7 @@ export default function SafeShoppingGuide() {
           </div>
         </section>
 
-        {/* Warning Signs */}
+        {/* ✅ Uyarı İşaretleri Bölümü */}
         <section className="mb-16">
           <div className="bg-red-50 border border-red-200 rounded-2xl p-8">
             <h2 className="text-2xl font-bold text-red-900 mb-6 text-center">
@@ -213,13 +235,13 @@ export default function SafeShoppingGuide() {
           </div>
         </section>
 
-        {/* Step by Step Guide */}
+        {/* ✅ Adım Adım Kılavuz Bölümü */}
         <section className="mb-16">
           <h2 className="text-3xl font-bold text-center text-gray-900 mb-12">
             Güvenli Alışveriş Adımları
           </h2>
           <div className="flex flex-col md:flex-row justify-between items-center relative">
-            {/* Connection Lines */}
+            {/* Bağlantı Çizgileri - sadece desktop'ta görünür */}
             <div className="hidden md:block absolute top-1/2 left-0 right-0 h-0.5 bg-gray-200 -translate-y-1/2 z-0" />
 
             {steps.map((step, index) => (
@@ -227,9 +249,11 @@ export default function SafeShoppingGuide() {
                 key={index}
                 className="relative z-10 flex flex-col items-center text-center mb-8 md:mb-0"
               >
+                {/* Adım Numarası */}
                 <div className="w-16 h-16 bg-green-600 text-white rounded-full flex items-center justify-center font-bold text-lg mb-4 shadow-lg">
                   {step.step}
                 </div>
+                {/* Adım Açıklaması */}
                 <div className="bg-white rounded-xl p-4 shadow-lg border border-gray-200 max-w-[200px]">
                   <h3 className="font-semibold text-gray-900 mb-2">
                     {step.title}
@@ -241,7 +265,7 @@ export default function SafeShoppingGuide() {
           </div>
         </section>
 
-        {/* FAQ Section */}
+        {/* ✅ SSS (Sıkça Sorulan Sorular) Bölümü */}
         <section className="bg-white rounded-2xl shadow-lg border border-gray-200 p-8">
           <h2 className="text-2xl font-bold text-center text-gray-900 mb-8">
             Sıkça Sorulan Sorular
@@ -288,7 +312,7 @@ export default function SafeShoppingGuide() {
           </div>
         </section>
 
-        {/* Final CTA */}
+        {/* ✅ Son Çağrı (Call to Action) Bölümü */}
         <div className="text-center mt-12">
           <div className="bg-green-50 border border-green-200 rounded-2xl p-8 max-w-2xl mx-auto">
             <h3 className="text-xl font-semibold text-green-900 mb-3">
@@ -299,12 +323,14 @@ export default function SafeShoppingGuide() {
               şekilde sunuyoruz.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              {/* Ana Sayfaya Dön Butonu */}
               <Link
                 href="/"
                 className="bg-green-600 text-white px-8 py-3 rounded-lg hover:bg-green-700 transition-colors duration-200 font-semibold"
               >
                 Alışverişe Başla
               </Link>
+              {/* İletişim Butonu */}
               <a
                 href="/contact"
                 className="border border-green-600 text-green-600 px-8 py-3 rounded-lg hover:bg-green-600 hover:text-white transition-colors duration-200 font-semibold"
@@ -315,7 +341,7 @@ export default function SafeShoppingGuide() {
           </div>
         </div>
 
-        {/* Footer Note */}
+        {/* ✅ Alt Bilgi (Footer) Bölümü */}
         <div className="text-center mt-12 pt-8 border-t border-gray-200">
           <p className="text-sm text-gray-500">
             Son güncelleme: {new Date().getFullYear()} |

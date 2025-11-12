@@ -15,9 +15,18 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 
+/**
+ * Kargo ve İade Sayfası
+ *
+ * Müşterilere kargo seçenekleri ve iade politikaları hakkında
+ * detaylı bilgi sunan sayfa. İade talebi formu içerir.
+ */
 export default function KargoVeIadePage() {
+  // Aktif sekme state'i - 'kargo' veya 'iade'
   const [activeTab, setActiveTab] = useState<'kargo' | 'iade'>('kargo');
+  // İade formu görünürlük state'i
   const [showReturnForm, setShowReturnForm] = useState(false);
+  // İade formu veri state'i
   const [formData, setFormData] = useState({
     orderNumber: '',
     email: '',
@@ -25,6 +34,10 @@ export default function KargoVeIadePage() {
     description: '',
   });
 
+  /**
+   * İade formu submit işleyicisi
+   * @param e - Form event'i
+   */
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // Form submission logic here
@@ -34,6 +47,10 @@ export default function KargoVeIadePage() {
     setFormData({ orderNumber: '', email: '', reason: '', description: '' });
   };
 
+  /**
+   * Form input değişikliklerini takip eden fonksiyon
+   * @param e - Input change event'i
+   */
   const handleInputChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
@@ -46,7 +63,7 @@ export default function KargoVeIadePage() {
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="container mx-auto px-4 max-w-6xl">
-        {/* Header */}
+        {/* ✅ Başlık Bölümü */}
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">
             Kargo & İade Bilgileri
@@ -56,7 +73,7 @@ export default function KargoVeIadePage() {
           </p>
         </div>
 
-        {/* Tab Navigation */}
+        {/* ✅ Sekme Navigasyonu */}
         <div className="flex justify-center mb-8">
           <div className="bg-white rounded-lg shadow-sm border p-1">
             <button
@@ -82,10 +99,10 @@ export default function KargoVeIadePage() {
           </div>
         </div>
 
-        {/* Kargo Tab Content */}
+        {/* ✅ Kargo Sekme İçeriği */}
         {activeTab === 'kargo' && (
           <div className="space-y-8">
-            {/* Features */}
+            {/* Özellikler Grid */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="bg-white p-6 rounded-lg shadow-sm border text-center">
                 <Truck className="w-12 h-12 text-blue-600 mx-auto mb-4" />
@@ -108,7 +125,7 @@ export default function KargoVeIadePage() {
               </div>
             </div>
 
-            {/* Shipping Methods */}
+            {/* Kargo Yöntemleri Listesi */}
             <div className="space-y-6">
               <h2 className="text-2xl font-semibold text-gray-900 mb-4">
                 Kargo Seçenekleri
@@ -167,7 +184,7 @@ export default function KargoVeIadePage() {
               ))}
             </div>
 
-            {/* Additional Info */}
+            {/* Ek Bilgiler */}
             <div className="bg-blue-50 rounded-lg p-6 border border-blue-200">
               <h3 className="text-lg font-semibold text-blue-900 mb-3">
                 Önemli Bilgiler
@@ -195,10 +212,10 @@ export default function KargoVeIadePage() {
           </div>
         )}
 
-        {/* İade Tab Content */}
+        {/* ✅ İade Sekme İçeriği */}
         {activeTab === 'iade' && (
           <div className="space-y-8">
-            {/* Return Process Steps */}
+            {/* İade Süreci Adımları */}
             <div className="bg-white rounded-lg shadow-md p-6">
               <h2 className="text-2xl font-semibold mb-6 text-gray-900">
                 İade Süreci
@@ -223,7 +240,7 @@ export default function KargoVeIadePage() {
               </div>
             </div>
 
-            {/* Return Policies */}
+            {/* İade Politikaları */}
             <div className="space-y-6">
               <h2 className="text-2xl font-semibold text-gray-900">
                 İade Politikaları
@@ -270,7 +287,7 @@ export default function KargoVeIadePage() {
               ))}
             </div>
 
-            {/* Return Form Trigger */}
+            {/* İade Formu Tetikleyici Butonu */}
             <div className="text-center">
               <button
                 onClick={() => setShowReturnForm(true)}
@@ -280,7 +297,7 @@ export default function KargoVeIadePage() {
               </button>
             </div>
 
-            {/* Contact Info */}
+            {/* İletişim Bilgileri */}
             <div className="bg-gray-100 rounded-lg p-6">
               <h3 className="text-lg font-semibold mb-4 text-gray-900">
                 İade İletişim
@@ -305,11 +322,12 @@ export default function KargoVeIadePage() {
           </div>
         )}
 
-        {/* Return Form Modal */}
+        {/* ✅ İade Formu Modal'ı */}
         {showReturnForm && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
             <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
               <div className="p-6">
+                {/* Modal Başlık ve Kapatma Butonu */}
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-xl font-semibold text-gray-900">
                     İade Talebi
@@ -322,7 +340,9 @@ export default function KargoVeIadePage() {
                   </button>
                 </div>
 
+                {/* İade Formu */}
                 <form onSubmit={handleSubmit} className="space-y-4">
+                  {/* Sipariş Numarası */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Sipariş Numarası *
@@ -338,6 +358,7 @@ export default function KargoVeIadePage() {
                     />
                   </div>
 
+                  {/* E-posta */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       E-posta *
@@ -353,6 +374,7 @@ export default function KargoVeIadePage() {
                     />
                   </div>
 
+                  {/* İade Nedeni */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       İade Nedeni *
@@ -372,6 +394,7 @@ export default function KargoVeIadePage() {
                     </select>
                   </div>
 
+                  {/* Açıklama */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Açıklama
@@ -386,6 +409,7 @@ export default function KargoVeIadePage() {
                     />
                   </div>
 
+                  {/* Form Aksiyon Butonları */}
                   <div className="flex gap-3 pt-4">
                     <button
                       type="button"
