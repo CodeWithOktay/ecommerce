@@ -37,6 +37,7 @@ Bu proje, modern JavaScript ekosisteminin güçlü araçlarıyla geliştirilmiş
 Proje aktif olarak geliştirme aşamasındadır. Şu anki temel özellikler ve üzerinde çalıştığım alanlar:
 
 * **Kullanıcı Kimlik Doğrulama:** JWT ile güvenli kayıt ve giriş sistemi.
+* **Ürün Yönetimi:** Ürün ekleme, güncelleme, silme ve listeleme (admin paneli).
 * **Kategori Yönetimi:** Ürünlerin kategorilere ayrılması.
 * **Sepet & Sipariş Sistemi:** Kullanıcıların sepetine ürün ekleyip sipariş oluşturabilmesi.
 * **Güvenli Ödeme Entegrasyonu:** (Stripe/Iyzico entegrasyonu devam ediyor.)
