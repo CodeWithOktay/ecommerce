@@ -98,4 +98,4 @@ Sorularınız veya işbirliği teklifleriniz için bana ulaşmaktan çekinmeyin:
 
 ---
 
-Bu proje MIT Lisansı ile lisanslanmıştır.
+Bu proje ** MIT ** Lisansı ile lisanslanmıştır.
