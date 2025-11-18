@@ -1,7 +1,8 @@
 # 🚀 KervanPazar: KOBİ'ler İçin Modern E-ticaret Platformu
 
 <p align="center">
-  <img src="https://via.placeholder.com/600x300?text=KervanPazar+Demo+Ekran+Goruntusu" alt="KervanPazar Ekran Görüntüsü - Buraya projenin çalışan bir ekran görüntüsünü ekleyebilirsin.">
+  <img width="1919" height="941" alt="image" src="https://github.com/user-attachments/assets/e34ccc96-d79e-470d-a41d-6233f1304d6f" />
+
   <br>
   <em></em>
 </p>
