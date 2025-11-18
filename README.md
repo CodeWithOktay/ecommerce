@@ -1,138 +1,99 @@
-<<<<<<< HEAD
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🚀 KervanPazar: KOBİ'ler İçin Modern E-ticaret Platformu
 
-## Getting Started
+<p align="center">
+  <img src="https://via.placeholder.com/600x300?text=KervanPazar+Demo+Ekran+Goruntusu" alt="KervanPazar Ekran Görüntüsü - Buraya projenin çalışan bir ekran görüntüsünü ekleyebilirsin.">
+  <br>
+  <em></em>
+</p>
 
-First, run the development server:
+## ✨ Proje Hakkında
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+**KervanPazar**, küçük ve orta ölçekli işletmeler (KOBİ'ler) için tasarlanmış, **SEO dostu** ve **ölçeklenebilir** bir e-ticaret platformudur. İşletmelerin dijital dünyaya kolayca adım atmalarını ve ürünlerini geniş kitlelere ulaştırmalarını sağlamayı hedefler. Modern web teknolojileriyle geliştirilmiş olup, hem kullanıcı dostu bir arayüz hem de güçlü bir altyapı sunar.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🛠️ Teknolojiler
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Bu proje, modern JavaScript ekosisteminin güçlü araçlarıyla geliştirilmiştir:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+**Frontend:**
+* **React / Next.js:** Hızlı ve dinamik kullanıcı arayüzleri için.
+* **Tailwind CSS:** Hızlı ve esnek UI geliştirme için Utility-First CSS framework'ü.
+* **JavaScript (ES6+)**: Frontend mantığı ve etkileşimler için.
 
-## Learn More
+**Backend:**
+* **Node.js / Express.js:** Güçlü, ölçeklenebilir ve hızlı API servisleri için.
+* **MongoDB (Mongoose ile):** NoSQL veritabanı, esnek şema yapısı ve yüksek performans için.
+    * *(Alternatif olarak: **PostgreSQL (Sequelize/Prisma ile):** İlişkisel veriler için güçlü ve güvenilir bir seçenek.)*
 
-To learn more about Next.js, take a look at the following resources:
+**Diğer:**
+* **Git / GitHub:** Versiyon kontrolü ve takım çalışması için.
+* **Stripe / Iyzico:** Güvenli ödeme entegrasyonları için.
+* **JWT (JSON Web Tokens):** Kullanıcı kimlik doğrulama ve yetkilendirme için.
+* **Cloudinary / AWS S3:** Güvenli ve ölçeklenebilir dosya (ürün görselleri vb.) depolama için.
+* **NPM / Yarn:** Paket yönetimi için.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 🚀 Mevcut Durum & Özellikler (Beta Geliştirmesinde)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Proje aktif olarak geliştirme aşamasındadır. Şu anki temel özellikler ve üzerinde çalıştığım alanlar:
 
-## Deploy on Vercel
+* **Kullanıcı Kimlik Doğrulama:** JWT ile güvenli kayıt ve giriş sistemi.
+* **Kategori Yönetimi:** Ürünlerin kategorilere ayrılması.
+* **Sepet & Sipariş Sistemi:** Kullanıcıların sepetine ürün ekleyip sipariş oluşturabilmesi.
+* **Güvenli Ödeme Entegrasyonu:** (Stripe/Iyzico entegrasyonu devam ediyor.)
+* **Arama & Filtreleme:** Kullanıcıların ürünleri kolayca bulabilmesi için.
+* **Responsive Tasarım:** Tüm cihazlarda sorunsuz bir kullanıcı deneyimi.
+* **Durum Yönetimi:** Redux Toolkit / React Context API ile merkezi state yönetimi.
+* **API Endpointleri:** Ürün, kullanıcı, sipariş yönetimi için RESTful API'ler.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 🏃 Yerel Ortamda Çalıştırma
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-=======
-Proje Başlığı: TrendSepet E-Ticaret Platformu
+Projeyi kendi bilgisayarınızda çalıştırmak için aşağıdaki adımları takip edin:
 
-Küçük ve Orta Ölçekli İşletmeler İçin Modern E-Ticaret Çözümü
+1.  **Depoyu Klonlayın:**
+    ```bash
+    git clone [https://github.com/CodeWithOktay/KervanPazar.git](https://github.com/CodeWithOktay/KervanPazar.git)
+    cd KervanPazar
+    ```
+2.  **Bağımlılıkları Yükleyin:**
+    ```bash
+    npm install  # veya yarn install
+    ```
+3.  **Ortam Değişkenlerini Ayarlayın:**
+    * `.env.example` dosyasını `backend/.env` (veya projenin root'unda) olarak kopyalayın.
+    * Gerekli API anahtarlarını, veritabanı bağlantı bilgilerini vb. kendi değerlerinizle doldurun.
+        ```
+        MONGO_URI=your_mongodb_connection_string
+        JWT_SECRET=your_jwt_secret
+        # ... diğer değişkenler ...
+        ```
+4.  **Uygulamayı Başlatın:**
+    * Backend için ayrı bir terminalde:
+        ```bash
+        cd backend
+        npm start # veya node server.js
+        ```
+    * Frontend için ayrı bir terminalde:
+        ```bash
+        cd frontend
+        npm start # veya npm run dev (Next.js ise)
+        ```
+    Proje genellikle `http://localhost:3000` (frontend) ve `http://localhost:5000` (backend) adreslerinde çalışacaktır.
 
+## 🤝 Katkıda Bulunma
 
-🚀 Proje Hakkında
+Açık kaynak projelerine katkıda bulunmaya her zaman açığım! Eğer bu projeye katkıda bulunmak isterseniz:
 
-Bu proje, küçük ve orta ölçekli işletmelerin (KOBİ'ler) dijital dönüşümünü hızlandırmak amacıyla tasarlanmış, tamamen responsive ve performans odaklı bir e-ticaret platformudur. Temel amaç, basit bir yönetim paneli (Admin Dashboard) üzerinden kolay ürün yönetimi ve sezgisel bir alışveriş deneyimi sunmaktır.
+1.  Depoyu forklayın.
+2.  Yeni bir dal (branch) oluşturun: `git checkout -b feature/YeniOzellik`
+3.  Değişikliklerinizi yapın ve commit'leyin: `git commit -m 'feat: Yeni özellik eklendi'`
+4.  Dalı push'layın: `git push origin feature/YeniOzellik`
+5.  Bir Pull Request (PR) açın.
 
-✨ Ana Özellikler
+## ✉️ İletişim
 
-    Ürün Yönetimi: Admin panelinden ürün ekleme, düzenleme ve silme.
+Sorularınız veya işbirliği teklifleriniz için bana ulaşmaktan çekinmeyin:
 
-    Sepet ve Ödeme Akışı: Tam entegre alışveriş sepeti ve adım adım ödeme süreci.
+* **E-posta:** Oktayyorulmaz89@gmail.com
 
-    Kullanıcı Kimlik Doğrulama: JWT (JSON Web Tokens) tabanlı güvenli kullanıcı kaydı ve girişi.
+---
 
-    Filtreleme ve Arama: Ürün listelerinde kategori, fiyat aralığı ve anahtar kelimeye göre gelişmiş filtreleme.
-
-    Durum Yönetimi: Global durum yönetimi için Redux Toolkit veya Zustand kullanımı.
-
-    Responsive Tasarım: Tüm cihazlarda (mobil, tablet, masaüstü) sorunsuz görüntülenme.
-
-🛠 Kullanılan Teknolojiler
-
-Bu proje, modern web geliştirme standartlarını karşılamak üzere tasarlanmıştır.
-Kategori	Teknoloji	Açıklama
-Frontend Çatısı	React.js	Hızlı ve dinamik kullanıcı arayüzleri oluşturmak için temel yapı.
-Styling/CSS	Tailwind CSS / Styled Components	Hızlı ve ölçeklenebilir tasarım için yardımcı CSS çatısı.
-Durum Yönetimi	Redux Toolkit / Zustand	Uygulamanın karmaşık durumlarını merkezi olarak yönetmek.
-API İletişimi	Fetch	Backend API'lerle veri alışverişi için.
-Routing	React Router DOM	Tek sayfalık uygulama (SPA) navigasyonunu yönetmek.
-Test	Jest / React Testing Library	Temel bileşenlerin ve işlevlerin birim testleri.
-
-Backend/API 
-
-    Diller: [Node.js]
-
-    Veritabanı: [MongoDB]
-
-⚙️ Kurulum ve Çalıştırma
-
-Bu projeyi yerel makinenizde çalıştırmak için aşağıdaki adımları takip edin.
-
-Ön Koşullar
-
-    Node.js (LTS Sürümü Önerilir)
-
-    npm (Node Package Manager) veya yarn
-
-Adımlar
-
-    Depoyu Klonlayın:
-    Bash
-
-git clone https://github.com/KullaniciAdiniz/repo-adi.git
-cd repo-adi
-
-Bağımlılıkları Yükleyin:
-Bash
-
-npm install
-# veya
-yarn install
-
-Çevre Değişkenlerini Ayarlayın:
-
-    Kök dizinde .env adında bir dosya oluşturun.
-
-    Backend API URL'si gibi gerekli bilgileri buraya ekleyin:
-
-    REACT_APP_API_URL=http://localhost:5000/api/
-
-    (Not: .env dosyası, .gitignore sayesinde Git'e gönderilmeyecektir.)
-
-Uygulamayı Başlatın:
-Bash
-
-    npm start
-    # veya
-    yarn start
-
-    Uygulama genellikle http://localhost:3000 adresinde açılacaktır.
-
-🤝 Katkıda Bulunma
-
-Açık kaynak katkılarına açığım! Hata raporları ve özellik istekleri her zaman beklerim. Katkıda bulunmak isterseniz lütfen [CONTRIBUTING.md] dosyasını inceleyin.
-
-📜 Lisans
-
-Bu proje MIT Lisansı altında yayımlanmıştır. Daha fazla bilgi için LICENSE dosyasına bakınız.
-
-👤 İletişim
-
-    Oktay YORULMAZ
-
-    LinkedIn: []
-
-    E-posta: [oktayyorulmaz89@gmail.com]
->>>>>>> 9ab203496994a00073501d179ab496931b6662ba
+Bu proje MIT Lisansı ile lisanslanmıştır.
