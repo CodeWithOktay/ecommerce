@@ -1,0 +1,85 @@
+// Prisma şema dosyası - Veritabanı modellerini tanımlar
+
+// Prisma Client üreteci - JavaScript/TypeScript istemcisi oluşturur
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Veritabanı bağlantı ayarları
+datasource db {
+  provider = "postgresql"  // PostgreSQL veritabanı kullanılıyor
+  url      = env("DATABASE_URL")  // Bağlantı URL'si environment variable'dan alınır
+}
+
+// Kullanıcı modeli - Kullanıcı bilgilerini tutar
+model User {
+  id            String    @id @default(cuid())  // Benzersiz ID (cuid formatında)
+  firstName     String?   // İsteğe bağlı kullanıcı adı
+  lastName      String?
+  email         String?   @unique  // Benzersiz email (isteğe bağlı)
+  emailVerified DateTime? // Email doğrulama tarihi
+  image         String?   // Profil resmi URL'si
+  passwordHash  String?   // Şifre hash'i (OAuth kullanıcılar için null olabilir)
+  role          Role      @default(USER)  // Kullanıcı rolü (varsayılan: USER)
+  accounts      Account[] // Kullanıcının bağlı hesapları (ilişki)
+  sessions      Session[] // Kullanıcının oturumları (ilişki)
+  createdAt     DateTime  @default(now()) // Kayıt tarihi (otomatik dolar)
+  updatedAt     DateTime  @updatedAt      // Güncelleme tarihi (otomatik güncellenir)
+}
+
+// Ürün modeli - E-ticaret ürünlerini tutar
+model Product {
+  id          String   @id @default(cuid())  // Benzersiz ürün ID'si
+  name        String   // Ürün adı
+  description String   // Ürün açıklaması
+  price       Float    // Ürün fiyatı
+  images      String[] // Ürün resimleri (array)
+  isActive    Boolean  @default(true)  // Ürün aktif/pasif durumu
+  createdAt   DateTime @default(now()) // Oluşturulma tarihi
+  updatedAt   DateTime @updatedAt      // Son güncelleme tarihi
+  categoryId  String   // Kategori ID'si (foreign key)
+  category    Category @relation(fields: [categoryId], references: [id]) // Kategori ilişkisi
+}
+
+// Kategori modeli - Ürün kategorilerini tutar
+model Category {
+  id       String    @id @default(cuid())  // Benzersiz kategori ID'si
+  name     String    @unique  // Benzersiz kategori adı
+  slug     String    @unique  // Benzersiz URL slug'ı
+  products Product[] // Kategoriye ait ürünler (ilişki)
+}
+
+// Hesap modeli - OAuth ve diğer kimlik sağlayıcı hesapları
+model Account {
+  id                String  @id @default(cuid())  // Benzersiz hesap ID'si
+  userId            String  // Kullanıcı ID'si (foreign key)
+  type              String  // Hesap türü (oauth, email, vb.)
+  provider          String  // Sağlayıcı (google, github, vb.)
+  providerAccountId String  // Sağlayıcıdaki hesap ID'si
+  refresh_token     String? // Yenileme token'ı
+  access_token      String? // Erişim token'ı
+  expires_at        Int?    // Token son kullanma süresi
+  token_type        String? // Token türü
+  scope             String? // Yetki kapsamı
+  id_token          String? // ID token
+  session_state     String? // Oturum durumu
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade) // Kullanıcı ilişkisi
+
+  // Provider ve providerAccountId kombinasyonu benzersiz olmalı
+  @@unique([provider, providerAccountId])
+}
+
+// Oturum modeli - Kullanıcı oturumlarını yönetir
+model Session {
+  id           String   @id @default(cuid())  // Benzersiz oturum ID'si
+  sessionToken String   @unique  // Benzersiz oturum token'ı
+  userId       String   // Kullanıcı ID'si (foreign key)
+  expires      DateTime // Oturum son kullanma tarihi
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade) // Kullanıcı ilişkisi
+}
+
+// Kullanıcı rolleri enum'ı
+enum Role {
+  USER   // Normal kullanıcı
+  ADMIN  // Yönetici kullanıcı
+}

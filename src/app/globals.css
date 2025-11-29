@@ -1,0 +1,24 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /* Smooth scroll davranışı - tüm sayfa için */
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* CSS Custom Properties (CSS Variables) tanımları */
+  :root {
+    /* Gradient renk tanımları */
+    --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --gradient-secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    
+    /* Renk paleti tanımları */
+    --dark: #1e293b;        /* Koyu gri - başlıklar ve önemli metinler */
+    --light: #f8fafc;       /* Açık gri - arkaplanlar */
+    --text: #334155;        /* Orta gri - normal metinler */
+    --border: #e2e8f0;      /* Border gri - çizgiler ve ayraçlar */
+    --accent: #3b82f6;      /* Vurgu mavisi - butonlar ve linkler */
+  }
+}
