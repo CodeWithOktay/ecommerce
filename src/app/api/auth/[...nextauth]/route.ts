@@ -1,62 +1,53 @@
-import { PrismaAdapter } from '@next-auth/prisma-adapter';
-import { PrismaClient } from '@prisma/client';
-import { compare } from 'bcrypt';
-import NextAuth, { type NextAuthOptions } from 'next-auth';
-import CredentialsProvider from 'next-auth/providers/credentials';
-
-// Prisma client instance'ı oluştur
-const prisma = new PrismaClient();
+import { PrismaAdapter } from "@next-auth/prisma-adapter";
+import { compare } from "bcrypt";
+import NextAuth, { type NextAuthOptions } from "next-auth";
+import CredentialsProvider from "next-auth/providers/credentials";
+import prisma from "@/lib/prisma-client";
 
 /**
  * NextAuth Yapılandırma Seçenekleri
- * 
+ *
  * Kimlik doğrulama sistemi için gerekli ayarlar ve provider'lar
  */
 export const authOptions: NextAuthOptions = {
-  // Prisma adapter - veritabanı işlemleri için
   adapter: PrismaAdapter(prisma),
-  // Güvenlik secret'ı - environment variable'dan alınır
   secret: process.env.NEXTAUTH_SECRET,
-  // Session stratejisi - JWT tabanlı
   session: {
-    strategy: 'jwt',
+    strategy: "jwt",
   },
-  // Özel sayfa yolları
   pages: {
-    signIn: '/admin/login', // Özel giriş sayfası
+    signIn: "/login",
   },
-  // Kimlik doğrulama provider'ları
   providers: [
-    // Email/şifre ile giriş provider'ı
     CredentialsProvider({
-      name: 'Credentials', // Provider adı
+      name: "Credentials",
       credentials: {
-        email: { label: 'Email', type: 'email' }, // Email alanı
-        password: { label: 'Password', type: 'password' }, // Şifre alanı
+        email: { label: "Email", type: "email" }, // Email alanı
+        password: { label: "Password", type: "password" }, // Şifre alanı
       },
       // Kullanıcı doğrulama fonksiyonu
       async authorize(credentials) {
         // Email ve şifre kontrolü
         if (!credentials?.email || !credentials.password) {
-          return null; // Eksik bilgi
+          return null;
         }
-        
+
         // Veritabanından kullanıcıyı bul
         const user = await prisma.user.findUnique({
           where: { email: credentials.email },
         });
-        
+
         // Kullanıcı veya şifre hash'i yoksa
         if (!user || !user.passwordHash) {
           return null; // Yetkilendirme başarısız
         }
-        
+
         // Şifre doğrulama - bcrypt ile hash karşılaştırma
         const isPasswordValid = await compare(
           credentials.password,
           user.passwordHash
         );
-        
+
         // Şifre yanlışsa
         if (!isPasswordValid) {
           return null; // Yetkilendirme başarısız
@@ -66,7 +57,9 @@ export const authOptions: NextAuthOptions = {
         return {
           id: user.id,
           email: user.email,
-          name: user.name,
+          name: user.firstName
+            ? `${user.firstName} ${user.lastName}`
+            : user.email,
           role: user.role,
         };
       },
@@ -92,14 +85,8 @@ export const authOptions: NextAuthOptions = {
       }
       return session;
     },
-    // Yönlendirme callback - giriş sonrası yönlendirme
-    async redirect({ url, baseUrl }) {
-      // Admin dashboard'a yönlendir
-      return `${baseUrl}/admin/dashboard`;
-    },
   },
 };
-
-// NextAuth handler'ını oluştur ve export et
 const handler = NextAuth(authOptions);
+
 export { handler as GET, handler as POST };

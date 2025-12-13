@@ -1,21 +1,33 @@
-'use client';
+// 'use client' ARTIK YOK! Burası bir Server Component.
 
+import { prisma } from "@/lib/prisma-client"; // Senin dosya yapına göre import
+import Image from "next/image";
+import Link from "next/link";
+
+// Bileşen Importları
 import UserMenu from "./UserMenu";
-import { SearchBar } from '@/components/forms/SearchBar';
-import { useCart } from '@/context/cart/index';
-import { ShoppingCart } from 'lucide-react';
-import Image from 'next/image';
-import Link from 'next/link';
+import { SearchBar } from "@/components/forms/SearchBar";
+import CartButton from "./CartButton"; // Az önce oluşturduğumuz buton
+import CategoryHeader from "./category-nav/CategoryHeader"; // Senin yeni nav sistemi
 
-export default function Header() {
-  const { totalItems } = useCart();
+export default async function Header() {
+  // 1. VERİYİ ÇEKİYORUZ 🥩
+  // Sadece ana kategorileri (babası olmayanları) getiriyoruz
+  const categories = await prisma.category.findMany({
+    where: { parentId: null },
+    include: { children: true },
+    orderBy: { name: "asc" },
+  });
 
   return (
     <header className="bg-white/90 backdrop-blur-md border-b border-gray-100 sticky top-0 z-50">
+      {/* --- ÜST KATMAN (Logo, Search, User, Cart) --- */}
       <div className="container mx-auto flex justify-between items-center py-3 px-6 h-20">
-        
         {/* Logo */}
-        <Link href="/" className="flex-shrink-0 hover:opacity-90 transition-opacity">
+        <Link
+          href="/"
+          className="flex-shrink-0 hover:opacity-90 transition-opacity"
+        >
           <Image
             src="/kervanpazar-logo.png"
             alt="KervanPazar"
@@ -26,46 +38,32 @@ export default function Header() {
           />
         </Link>
 
-        {/* Arama */}
+        {/* Arama (Desktop) */}
         <div className="hidden md:block flex-1 max-w-xl mx-8">
-           <SearchBar />
+          <SearchBar />
         </div>
 
-        {/* SAĞ TARAF: UserMenu ve Sepet */}
+        {/* SAĞ TARAF */}
         <div className="flex items-center gap-3">
-          
-          {/* UserMenu (Masaüstü) - Wrapper kaldırıldı */}
+          {/* UserMenu (Masaüstü) */}
           <div className="hidden md:block">
             <UserMenu />
           </div>
 
-          {/* Sepet Butonu */}
-          <Link
-            href="/cart"
-            className="flex items-center gap-2 bg-gradient-to-r from-[#667EEA] to-[#764BA2] text-white px-5 py-2.5 rounded-xl hover:shadow-lg hover:opacity-95 transition-all font-semibold text-sm"
-          >
-            <ShoppingCart size={20} />
-            <span className="hidden sm:inline">Sepetim</span>
-            <span className="bg-white/20 px-2 py-0.5 rounded-full text-xs font-bold min-w-[20px] text-center">
-              {totalItems}
-            </span>
-          </Link>
+          {/* Sepet Butonu (Client Component olarak ayrıldı) */}
+          <CartButton />
         </div>
       </div>
 
-      {/* Mobil Menü */}
-      <div className="md:hidden bg-white border-t border-gray-50">
-        <div className="p-4"><SearchBar /></div>
-        <div className="px-6 pb-4 flex flex-col gap-4">
-           <div className="flex justify-center border-b pb-4"><UserMenu /></div>
-           <div className="flex justify-between text-sm font-medium text-gray-600 overflow-x-auto gap-4">
-              {['elektronik', 'giyim', 'ev-yasam', 'kozmetik'].map((cat) => (
-                <Link key={cat} href={`/category/${cat}`} className="capitalize whitespace-nowrap hover:text-[#667EEA]">
-                  {cat.replace('-', ' ')}
-                </Link>
-              ))}
-           </div>
-        </div>
+      {/* --- ALT KATMAN (Kategori Navigasyonu) --- */}
+      {/* Mobil menü ve masaüstü menü artık bu bileşenin içinde yönetiliyor */}
+      <div className="border-t border-gray-100">
+        <CategoryHeader categories={categories} />
+      </div>
+
+      {/* Mobil için Arama Çubuğu (Sadece mobilde görünür) */}
+      <div className="md:hidden p-4 border-t border-gray-50">
+        <SearchBar />
       </div>
     </header>
   );

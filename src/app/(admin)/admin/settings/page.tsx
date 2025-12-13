@@ -1,8 +1,8 @@
-export default function AdminSettings() {
-  return (
-    <div>
-      <h1 className="text-2xl font-bold mb-4">Ayarlar</h1>
-      <p>Sistem ayarları burada yapılacak.</p>
-    </div>
-  );
+import { getSettings } from "@/lib/actions/settings-actions";
+import SettingsClient from "@/components/admin/settings/SettingsClient";
+
+export default async function AdminSettingsPage() {
+  const settings = await getSettings();
+
+  return <SettingsClient initialData={settings} />;
 }

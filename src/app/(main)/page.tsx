@@ -1,80 +1,124 @@
-'use client';
-import { Lock, Star, Truck } from 'lucide-react';
-import Image from 'next/image';
-import { ProductCard } from '@/components/product/ProductCard';
-import { mockProducts } from '@/lib/data/mock-data';
+import { Lock, Star, Truck, AlertCircle } from "lucide-react";
+import Image from "next/image";
+import prisma from "@/lib/prisma-client";
+import ProductCard from "@/components/product/ProductCard";
 
-/**
- * Ana Sayfa Bileşeni
- * 
- * E-ticaret sitesinin ana sayfası.
- * Logo, ürün grid'i ve özellikler bölümünden oluşur.
- */
-export default function HomePage() {
+// Sayfanın belirli aralıklarla (örn: 60 saniye) yenilenmesini sağlar (ISR)
+// veya '0' yaparak her istekte güncel veri çekmesini sağlayabilirsin.
+export const revalidate = 0;
+
+export default async function HomePage() {
+  // 1. Veritabanından Canlı Ürünleri Çek
+  // Sadece aktif olan, arşivlenmemiş ve stokta olanları getiriyoruz.
+  const products = await prisma.product.findMany({
+    where: {
+      isActive: true,
+      isArchived: false,
+    },
+    orderBy: {
+      createdAt: "desc", // En yeniler en başta
+    },
+    take: 12, // Ana sayfada çok yığılma olmasın diye limit koyduk
+  });
+
   return (
     <main className="min-h-screen bg-white">
       {/* Ana Container */}
-      <div className="max-w-6xl mx-auto px-4 py-8">
-        {/* ✅ Header Bölümü - Logo ve Açıklama */}
-        <div className="text-center mb-12">
-          <div className="flex justify-center items-center mb-6">
+      <div className="max-w-7xl mx-auto px-4 py-12">
+        {/* ✅ Header Bölümü */}
+        <div className="text-center mb-16 space-y-4">
+          <div className="flex justify-center items-center mb-6 relative h-24">
             <Image
               src="/kervanpazar-logo.png"
               alt="KervanPazar Logo"
-              width={280}
-              height={90}
+              width={300}
+              height={100}
               className="object-contain"
-              priority // Öncelikli yükleme
+              priority
             />
           </div>
-          <p className="text-gray-600 text-lg max-w-md mx-auto mb-6">
-            Binlerce ürün, tek platform. Güvenli alışverişin yeni adresi.
+          <h1 className="text-4xl font-bold text-gray-900 tracking-tight">
+            Güvenli Alışverişin Adresi
+          </h1>
+          <p className="text-gray-500 text-lg max-w-2xl mx-auto">
+            Binlerce ürün, tek platform. KervanPazar güvencesiyle ihtiyacınız
+            olan her şey kapınızda.
           </p>
-          {/* Dekoratif çizgi */}
-          <div className="w-20 h-1 bg-gradient-to-r from-blue-500 to-purple-600 mx-auto rounded-full"></div>
+          <div className="w-24 h-1.5 bg-black mx-auto rounded-full mt-6"></div>
         </div>
 
-        {/* ✅ Ürün Grid Bölümü - Öne çıkan ürünler */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-16">
-          {mockProducts.map((product) => (
-            <div
-              key={product.id}
-              className="bg-white rounded-lg border border-gray-200 hover:shadow-md transition-shadow duration-300"
-            >
-              <ProductCard product={product} />
+        {/* ✅ Ürün Grid Bölümü */}
+        <div className="mb-20">
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="text-2xl font-bold text-gray-900">
+              Öne Çıkan Ürünler
+            </h2>
+            {/* İleride 'Tümünü Gör' linki eklenebilir */}
+          </div>
+
+          {products.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+              {products.map((product) => (
+                <ProductCard key={product.id} data={product} />
+              ))}
             </div>
-          ))}
+          ) : (
+            // Ürün Yoksa Gösterilecek State
+            <div className="text-center py-20 bg-gray-50 rounded-2xl border border-gray-100">
+              <div className="bg-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
+                <AlertCircle className="text-gray-400" size={32} />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900">
+                Henüz Ürün Eklenmedi
+              </h3>
+              <p className="text-gray-500 mt-2">
+                Çok yakında yeni ürünlerimizle buradayız.
+              </p>
+            </div>
+          )}
         </div>
 
-        {/* ✅ Özellikler Bölümü - Firma avantajları */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+        {/* ✅ Özellikler Bölümü (Features) */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
           {/* Hızlı Teslimat */}
-          <div className="text-center p-6">
-            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Truck className="text-blue-600" size={24} />
+          <div className="flex flex-col items-center text-center p-8 rounded-2xl bg-blue-50 border border-blue-100 transition-transform hover:-translate-y-1 duration-300">
+            <div className="w-14 h-14 bg-blue-600 text-white rounded-xl flex items-center justify-center mb-4 shadow-lg shadow-blue-200">
+              <Truck size={28} />
             </div>
-            <h3 className="font-semibold text-gray-900 mb-2">Hızlı Teslimat</h3>
-            <p className="text-gray-600 text-sm">Aynı gün kargo imkanı</p>
+            <h3 className="text-lg font-bold text-gray-900 mb-2">
+              Hızlı Teslimat
+            </h3>
+            <p className="text-gray-600">
+              Siparişleriniz aynı gün kargoya verilir, en kısa sürede kapınıza
+              ulaşır.
+            </p>
           </div>
 
           {/* Güvenli Ödeme */}
-          <div className="text-center p-6">
-            <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Lock className="text-green-600" size={24} />
+          <div className="flex flex-col items-center text-center p-8 rounded-2xl bg-green-50 border border-green-100 transition-transform hover:-translate-y-1 duration-300">
+            <div className="w-14 h-14 bg-green-600 text-white rounded-xl flex items-center justify-center mb-4 shadow-lg shadow-green-200">
+              <Lock size={28} />
             </div>
-            <h3 className="font-semibold text-gray-900 mb-2">Güvenli Ödeme</h3>
-            <p className="text-gray-600 text-sm">256-bit SSL güvenliği</p>
+            <h3 className="text-lg font-bold text-gray-900 mb-2">
+              Güvenli Ödeme
+            </h3>
+            <p className="text-gray-600">
+              256-bit SSL sertifikası ve 3D Secure ile ödemeleriniz %100
+              güvende.
+            </p>
           </div>
 
           {/* Kalite Garantisi */}
-          <div className="text-center p-6">
-            <div className="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Star className="text-amber-600" size={24} />
+          <div className="flex flex-col items-center text-center p-8 rounded-2xl bg-amber-50 border border-amber-100 transition-transform hover:-translate-y-1 duration-300">
+            <div className="w-14 h-14 bg-amber-500 text-white rounded-xl flex items-center justify-center mb-4 shadow-lg shadow-amber-200">
+              <Star size={28} />
             </div>
-            <h3 className="font-semibold text-gray-900 mb-2">
-              Kalite Garantisi
+            <h3 className="text-lg font-bold text-gray-900 mb-2">
+              Müşteri Memnuniyeti
             </h3>
-            <p className="text-gray-600 text-sm">15 gün iade garantisi</p>
+            <p className="text-gray-600">
+              Koşulsuz iade garantisi ve 7/24 müşteri desteği ile yanınızdayız.
+            </p>
           </div>
         </div>
       </div>

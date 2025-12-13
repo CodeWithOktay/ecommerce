@@ -1,85 +1,266 @@
-// Prisma şema dosyası - Veritabanı modellerini tanımlar
-
-// Prisma Client üreteci - JavaScript/TypeScript istemcisi oluşturur
 generator client {
   provider = "prisma-client-js"
 }
 
-// Veritabanı bağlantı ayarları
 datasource db {
-  provider = "postgresql"  // PostgreSQL veritabanı kullanılıyor
-  url      = env("DATABASE_URL")  // Bağlantı URL'si environment variable'dan alınır
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
-// Kullanıcı modeli - Kullanıcı bilgilerini tutar
+// --------------------------------------
+// ENUM TANIMLARI
+// --------------------------------------
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum CouponType {
+  PERCENTAGE
+  FIXED
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+// --------------------------------------
+// MODELLER
+// --------------------------------------
+
 model User {
-  id            String    @id @default(cuid())  // Benzersiz ID (cuid formatında)
-  firstName     String?   // İsteğe bağlı kullanıcı adı
+  id            String    @id @default(cuid())
+  firstName     String?
   lastName      String?
-  email         String?   @unique  // Benzersiz email (isteğe bağlı)
-  emailVerified DateTime? // Email doğrulama tarihi
-  image         String?   // Profil resmi URL'si
-  passwordHash  String?   // Şifre hash'i (OAuth kullanıcılar için null olabilir)
-  role          Role      @default(USER)  // Kullanıcı rolü (varsayılan: USER)
-  accounts      Account[] // Kullanıcının bağlı hesapları (ilişki)
-  sessions      Session[] // Kullanıcının oturumları (ilişki)
-  createdAt     DateTime  @default(now()) // Kayıt tarihi (otomatik dolar)
-  updatedAt     DateTime  @updatedAt      // Güncelleme tarihi (otomatik güncellenir)
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  passwordHash  String?
+  role          Role      @default(USER)
+  
+  phoneNumber   String?
+  addresses     Address[]
+
+  accounts      Account[]
+  sessions      Session[]
+  orders        Order[]
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 }
 
-// Ürün modeli - E-ticaret ürünlerini tutar
+model Address {
+  id          String   @id @default(cuid())
+  title       String   
+  firstName   String
+  lastName    String
+  phone       String   
+  addressLine String   @db.Text
+  city        String   
+  district    String   
+  zipCode     String?  
+  country     String   @default("Türkiye")
+
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
 model Product {
-  id          String   @id @default(cuid())  // Benzersiz ürün ID'si
-  name        String   // Ürün adı
-  description String   // Ürün açıklaması
-  price       Float    // Ürün fiyatı
-  images      String[] // Ürün resimleri (array)
-  isActive    Boolean  @default(true)  // Ürün aktif/pasif durumu
-  createdAt   DateTime @default(now()) // Oluşturulma tarihi
-  updatedAt   DateTime @updatedAt      // Son güncelleme tarihi
-  categoryId  String   // Kategori ID'si (foreign key)
-  category    Category @relation(fields: [categoryId], references: [id]) // Kategori ilişkisi
+  id          String    @id @default(cuid())
+  name        String
+  description String?   @db.Text
+  
+  // Ana Fiyat ve Stok (Varyant yoksa bu geçerli)
+  price       Decimal   @db.Decimal(10, 2)
+  salePrice   Decimal?  @db.Decimal(10, 2)
+  stock       Int       @default(0)
+
+  images      ProductImage[]
+  isActive    Boolean   @default(true)
+  isArchived  Boolean   @default(false)
+  
+  categoryId  String
+  category    Category  @relation(fields: [categoryId], references: [id])
+  
+  brandId     String?
+  brand       Brand?    @relation(fields: [brandId], references: [id])
+
+  // 🟢 YENİ: Varyantlar (Renk/Beden Stokları)
+  variants    ProductVariant[]
+
+  // 🟢 YENİ: Ürün Özellik Değerleri (Örn: "İşlemci: M1")
+  attributeValues ProductAttributeValue[]
+  
+  orderItems  OrderItem[]
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 }
 
-// Kategori modeli - Ürün kategorilerini tutar
+// 🟢 YENİ MODEL: Ürün Varyantları
+model ProductVariant {
+  id          String   @id @default(cuid())
+  
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  
+  name        String   // Varyant Adı (Örn: "Kırmızı - Large")
+  color       String?  // Renk Kodu veya Adı
+  size        String?  // Beden
+  
+  stock       Int      @default(0) 
+  price       Decimal? @db.Decimal(10, 2) // Farklı fiyatı varsa (Opsiyonel)
+  
+  image       String?  // Varyant görseli (Opsiyonel)
+}
+
+// 🟢 YENİ MODEL: Özellik Tanımı (Attribute)
+// Örn: Kategori="Bilgisayar", İsim="İşlemci"
+model Attribute {
+  id          String   @id @default(cuid())
+  name        String   // Örn: "Ekran Boyutu"
+  
+  categoryId  String
+  category    Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  
+  values      ProductAttributeValue[]
+}
+
+// 🟢 YENİ MODEL: Ürüne Girilen Özellik Değeri
+// Örn: Product="Macbook", Attribute="İşlemci", Value="M1 Pro"
+model ProductAttributeValue {
+  id          String    @id @default(cuid())
+  value       String    
+  
+  productId   String
+  product     Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  
+  attributeId String
+  attribute   Attribute @relation(fields: [attributeId], references: [id], onDelete: Cascade)
+}
+
+model Coupon {
+  id          String     @id @default(cuid())
+  code        String     @unique 
+  type        CouponType @default(PERCENTAGE)
+  value       Decimal    @db.Decimal(10, 2) 
+  
+  minAmount   Decimal?   @db.Decimal(10, 2) 
+  isActive    Boolean    @default(true)
+  
+  startDate   DateTime?  
+  endDate     DateTime?  
+  
+  usageLimit  Int?       
+  usedCount   Int        @default(0) 
+
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+model Brand {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  slug      String   @unique
+  logo      String?
+  products  Product[]
+  
+  categories Category[] @relation("CategoryToBrand")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ProductImage {
+  id        String   @id @default(cuid())
+  url       String   
+  isMain    Boolean  @default(false)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+
 model Category {
-  id       String    @id @default(cuid())  // Benzersiz kategori ID'si
-  name     String    @unique  // Benzersiz kategori adı
-  slug     String    @unique  // Benzersiz URL slug'ı
-  products Product[] // Kategoriye ait ürünler (ilişki)
+  id        String   @id @default(cuid())
+  name      String   @unique
+  slug      String   @unique
+  
+  parentId  String?
+  parent    Category? @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children  Category[] @relation("CategoryHierarchy")
+  products  Product[]
+  brands    Brand[]   @relation("CategoryToBrand")
+  attributes Attribute[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
-// Hesap modeli - OAuth ve diğer kimlik sağlayıcı hesapları
-model Account {
-  id                String  @id @default(cuid())  // Benzersiz hesap ID'si
-  userId            String  // Kullanıcı ID'si (foreign key)
-  type              String  // Hesap türü (oauth, email, vb.)
-  provider          String  // Sağlayıcı (google, github, vb.)
-  providerAccountId String  // Sağlayıcıdaki hesap ID'si
-  refresh_token     String? // Yenileme token'ı
-  access_token      String? // Erişim token'ı
-  expires_at        Int?    // Token son kullanma süresi
-  token_type        String? // Token türü
-  scope             String? // Yetki kapsamı
-  id_token          String? // ID token
-  session_state     String? // Oturum durumu
-  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade) // Kullanıcı ilişkisi
+model Order {
+  id            String      @id @default(cuid())
+  userId        String?
+  user          User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+  total         Decimal     @db.Decimal(10, 2)
+  status        OrderStatus @default(PENDING)
+  items         OrderItem[]
+  customerName  String
+  customerEmail String
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+}
 
-  // Provider ve providerAccountId kombinasyonu benzersiz olmalı
+model OrderItem {
+  id        String  @id @default(cuid())
+  orderId   String
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+  quantity  Int
+  price     Decimal @db.Decimal(10, 2)
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   @@unique([provider, providerAccountId])
 }
 
-// Oturum modeli - Kullanıcı oturumlarını yönetir
 model Session {
-  id           String   @id @default(cuid())  // Benzersiz oturum ID'si
-  sessionToken String   @unique  // Benzersiz oturum token'ı
-  userId       String   // Kullanıcı ID'si (foreign key)
-  expires      DateTime // Oturum son kullanma tarihi
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade) // Kullanıcı ilişkisi
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-// Kullanıcı rolleri enum'ı
-enum Role {
-  USER   // Normal kullanıcı
-  ADMIN  // Yönetici kullanıcı
+model Settings {
+  id           String  @id @default("general_settings")
+  siteTitle    String  @default("KervanPazar")
+  slogan       String?
+  description  String? @db.Text
+  contactEmail String?
+  contactPhone String?
+  address      String? @db.Text
+  instagram    String?
+  facebook     String?
+  twitter      String?
+  maintenance  Boolean @default(false)
 }

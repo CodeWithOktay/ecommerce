@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { Building2, Shield } from 'lucide-react';
+import { Building2, Shield } from "lucide-react";
 
 /**
  * Admin Footer Bileşeni

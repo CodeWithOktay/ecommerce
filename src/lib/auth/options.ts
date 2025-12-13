@@ -1,111 +1,106 @@
-// src/lib/auth/options.ts (veya senin dosya yolun)
-
-import { Role, User } from '@prisma/client';
-import bcrypt from 'bcrypt';
-import { NextAuthOptions } from 'next-auth';
-import CredentialsProvider from 'next-auth/providers/credentials';
-// 'prisma' import yolunu kendi projenize göre (örn: '@/lib/prisma-client') ayarlayın
-import { prisma } from '../prisma-client';
+import { Role, User } from "@prisma/client";
+import bcrypt from "bcrypt";
+import { NextAuthOptions } from "next-auth";
+import CredentialsProvider from "next-auth/providers/credentials";
+import { prisma } from "../prisma-client";
 
 // NextAuth yapılandırma ayarları
 export const authOptions: NextAuthOptions = {
-  // Kimlik doğrulama sağlayıcıları
   providers: [
-    // Credentials (email/şifre) sağlayıcısı
     CredentialsProvider({
-      name: 'credentials', // Sağlayıcı adı
+      name: "credentials", 
       credentials: {
-        email: { label: 'Email', type: 'email' },
-        password: { label: 'Password', type: 'password' },
+        email: { label: "Email", type: "email" },
+        password: { label: "Password", type: "password" },
+        loginType: { label: "Login Type", type: "text" },
       },
-      // Kullanıcı doğrulama fonksiyonu
       async authorize(credentials) {
-        // Email ve şifre kontrolü
         if (!credentials?.email || !credentials?.password) {
-          return null; // Eksik bilgi durumunda null döndür
+          throw new Error("E-posta ve şifre gereklidir.");
         }
 
         try {
-          // Veritabanından kullanıcıyı bulma
           const user = await prisma.user.findUnique({
             where: { email: credentials.email.toLowerCase().trim() },
           });
 
-          // Kullanıcı veya şifre hash'i yoksa
           if (!user || !user.passwordHash) {
-            return null; // Yetkilendirme başarısız
+            throw new Error("Kullanıcı bulunamadı.");
           }
 
-          // Şifre doğrulama
+          if (credentials.loginType === "USER") {
+            if (user.role === "ADMIN") {
+              throw new Error("Kullanıcı bulunamadı.");
+            }
+          }
+
+          if (credentials.loginType === "ADMIN") {
+            if (user.role !== "ADMIN") {
+              throw new Error("Bu alana erişim yetkiniz yok.");
+            }
+          }
+
           const isPasswordValid = await bcrypt.compare(
-            credentials.password, // Giriş yapılan şifre
-            user.passwordHash // Veritabanındaki hash'lenmiş şifre
+            credentials.password,
+            user.passwordHash
           );
 
-          // Şifre doğruysa kullanıcı bilgilerini döndür
-          if (isPasswordValid) {
-            // --- GÜNCELLEME BURADA ---
-            // 'name' alanı artık veritabanında yok.
-            // Onu 'firstName' ve 'lastName' alanlarından bizim oluşturmamız gerekiyor.
-            return {
-              id: user.id,
-              email: user.email,
-              // name: user.name, // <-- ESKİSİ
-              name: `${user.firstName} ${user.lastName}`, // <-- YENİSİ
-              role: user.role,
-              image: user.image, // image'ı da ekleyelim
-            };
+          if (!isPasswordValid) {
+            throw new Error("Geçersiz şifre.");
           }
 
-          return null; // Şifre yanlışsa null döndür
+          return {
+            id: user.id,
+            email: user.email,
+            name:
+              [user.firstName, user.lastName].filter(Boolean).join(" ") ||
+              user.email?.split("@")[0] ||
+              "User",
+            role: user.role,
+            image: user.image || null,
+            firstName: user.firstName || undefined,
+            lastName: user.lastName || undefined,
+          };
         } catch (error) {
-          console.error('Auth error:', error);
-          return null;
+          console.error("Auth error:", error);
+          throw error;
         }
       },
     }),
   ],
 
-  // Auth callback'leri
   callbacks: {
-    // JWT token callback'i - token oluşturulurken/güncellenirken çalışır
     jwt: async ({ token, user }) => {
-      // İlk girişte (user objesi varken) kullanıcı bilgilerini token'a ekle
       if (user) {
-        token.role = (user as User).role; // 'user' tipini User olarak cast et
+        token.role = (user as any).role;
         token.id = user.id;
-        // --- GÜNCELLEME BURADA ---
-        // 'name' alanını da token'a ekleyelim ki session'a aktarılabilsin
         token.name = user.name;
+        token.firstName = (user as any).firstName;
+        token.lastName = (user as any).lastName;
       }
-      return token; // Güncellenmiş token'ı döndür
+      return token;
     },
 
-    // Session callback'i - session oluşturulurken çalışır
     session: async ({ session, token }) => {
-      // Token'daki bilgileri session'a ekle
-      if (token) {
+      if (token && session.user) {
         session.user.id = token.id as string;
         session.user.role = token.role as Role;
-        // --- GÜNCELLEME BURADA ---
-        // NextAuth varsayılan olarak 'name'i token'dan alır,
-        // ama biz yine de garantileyelim.
-        if (token.name) {
-          session.user.name = token.name;
-        }
+        session.user.name = token.name;
+        session.user.firstName = token.firstName as string;
+        session.user.lastName = token.lastName as string;
       }
-      return session; // Güncellenmiş session'ı döndür
+      return session;
     },
   },
 
-  // Özel sayfa yolları
   pages: {
-    signIn: '/admin/login', // Özel admin giriş sayfası yolu
-    // Normal kullanıcı girişi '/login' olacak (NextAuth varsayılanı)
+    signIn: "/login",
+    error: "/login",
   },
 
-  // Session stratejisi
   session: {
-    strategy: 'jwt', // JWT tabanlı session kullan
+    strategy: "jwt",
   },
+
+  secret: process.env.NEXTAUTH_SECRET,
 };

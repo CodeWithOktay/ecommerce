@@ -1,64 +1,116 @@
-'use client';
-import { ShoppingCart } from 'lucide-react';
-import Image from 'next/image';
-import Link from 'next/link';
-import React from 'react';
-import { useCart } from '@/context/cart/index';
-import { Product } from '@/types/index';
+"use client";
+
+import { ShoppingCart, Check } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import React, { useState } from "react";
+import useCart from "@/hooks/use-cart";
+import { Product } from "@prisma/client";
+
+// ✅ DÜZELTME: Prop ismi 'data' yerine 'product' yapıldı.
+// Parent component (ProductGrid) bu ismi kullanıyor.
 interface ProductCardProps {
-  product: Product;
+  product: Omit<Product, "price"> & { price: string | number | any };
 }
 
-export function ProductCard({ product }: ProductCardProps) {
-  const { addToCart } = useCart();
+export default function ProductCard({ product }: ProductCardProps) {
+  const cart = useCart();
+  const [isAdded, setIsAdded] = useState(false);
+
+  // 'data' yerine 'product' kullanıyoruz
+  const priceNumber = Number(product.price);
+  const mainImage = product.images?.[0] || "/placeholder.png";
 
   const handleAddToCart = (e: React.MouseEvent) => {
-    e.preventDefault(); // Link'e tıklanmasını engelle
-    e.stopPropagation(); // Event'in yayılmasını durdur
-    addToCart(product);
+    e.preventDefault();
+    e.stopPropagation();
+
+    cart.addItem({
+      id: product.id,
+      name: product.name,
+      price: priceNumber,
+      imageUrl: mainImage,
+    });
+
+    setIsAdded(true);
+    setTimeout(() => setIsAdded(false), 2000);
   };
 
   return (
-    <div className="group bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 p-4 border border-gray-100 hover:border-transparent relative overflow-hidden">
-      {/* Product Image */}
-      <div className="relative overflow-hidden rounded-xl mb-3">
+    <div className="group bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 p-4 border border-gray-100 hover:border-indigo-100 relative overflow-hidden h-full flex flex-col">
+      <div className="relative aspect-[3/4] overflow-hidden rounded-xl mb-3 bg-gray-50">
         <Link href={`/urun/${product.id}`}>
           <Image
-            src={product.image_url}
+            src={mainImage}
             alt={product.name}
-            width={192}
-            height={226}
-            className="w-full h-48 object-cover rounded-xl group-hover:scale-105 transition-transform duration-300"
+            fill
+            className="object-cover group-hover:scale-105 transition-transform duration-500"
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           />
         </Link>
+
+        {product.stock <= 0 && (
+          <div className="absolute inset-0 bg-white/60 backdrop-blur-[2px] flex items-center justify-center z-10">
+            <span className="bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider transform -rotate-12 shadow-md">
+              Tükendi
+            </span>
+          </div>
+        )}
       </div>
 
-      {/* Product Info */}
-      <Link href={`/urun/${product.id}`}>
-        <h3 className="font-semibold text-gray-800 truncate mb-2">
-          {product.name}
-        </h3>
-      </Link>
+      <div className="flex flex-col flex-1">
+        <Link href={`/urun/${product.id}`} className="flex-1">
+          <h3 className="font-semibold text-gray-900 truncate mb-1 text-lg group-hover:text-indigo-600 transition-colors">
+            {product.name}
+          </h3>
+          <p className="text-sm text-gray-500 line-clamp-2 mb-3 min-h-[40px]">
+            {product.description || "Açıklama bulunmuyor."}
+          </p>
+        </Link>
 
-      {/* Price */}
-      <p className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#667EEA] to-[#764BA2]">
-        {product.price.toLocaleString('tr-TR', {
-          // style: 'currency' yerine 'decimal' kullanıyoruz
-          style: 'decimal',
-          // Kuruşları (ondalık kısmı) her zaman göstermek için bu ayarları ekliyoruz
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2,
-        })}{' '}
-        ₺
-      </p>
+        <div className="mb-4">
+          <p className="text-xl font-bold text-gray-900 flex items-center gap-1">
+            {priceNumber.toLocaleString("tr-TR", {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}
+            <span className="text-xs font-medium text-gray-500 relative top-0.5">
+              TL
+            </span>
+          </p>
+        </div>
 
-      {/* Add to Cart Button */}
-      <button
-        onClick={handleAddToCart}
-        className="mt-3 w-full bg-gradient-to-r from-[#667EEA] to-[#764BA2] text-white py-3 rounded-xl hover:shadow-lg hover:scale-[1.02] transition-all duration-300 font-semibold flex items-center justify-center gap-2"
-      >
-        <ShoppingCart /> Sepete Ekle
-      </button>
+        <button
+          onClick={handleAddToCart}
+          disabled={product.stock <= 0}
+          className={`
+            w-full py-3 rounded-xl font-semibold flex items-center justify-center gap-2 transition-all duration-200
+            ${
+              product.stock > 0
+                ? isAdded
+                  ? "bg-green-600 text-white hover:bg-green-700"
+                  : "bg-black text-white hover:bg-gray-800 hover:shadow-lg active:scale-95"
+                : "bg-gray-100 text-gray-400 cursor-not-allowed"
+            }
+          `}
+        >
+          {product.stock > 0 ? (
+            isAdded ? (
+              <>
+                <Check size={18} className="animate-bounce" />
+                Eklendi
+              </>
+            ) : (
+              <>
+                <ShoppingCart size={18} />
+                Sepete Ekle
+              </>
+            )
+          ) : (
+            "Stokta Yok"
+          )}
+        </button>
+      </div>
     </div>
   );
 }

@@ -1,30 +1,33 @@
-'use client';
+"use client";
 
-import { useCart } from '@/context/cart';
-import Link from 'next/link';
+import useCart from "@/hooks/use-cart";
+import { ShoppingBag } from "lucide-react";
+import Link from "next/link";
+import { useEffect, useState } from "react";
 
-/**
- * Navbar Bileşeni
- *
- * Basit navigasyon bileşeni - logo ve sepet gösterimi
- * Sepet ürün sayısını context'ten alarak dinamik olarak gösterir
- */
-export default function Navbar() {
-  // Sepet context'inden toplam ürün adedini al
-  const { totalItems } = useCart();
+export default function NavbarCartActions() {
+  const [isMounted, setIsMounted] = useState(false);
+  const cart = useCart();
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  if (!isMounted) {
+    return null; // Sunucuda render edilirken boş dön (Hata önleyici)
+  }
 
   return (
-    <nav>
-      {/* Ana sayfaya yönlendiren logo/link */}
-      <Link href="/">KervanPazar</Link>
-
-      {/* Sepet sayfasına yönlendiren link */}
-      <Link href="/cart">
-        {/* Sepet ikonu */}
-        🛒
-        {/* Sepette ürün varsa sayıyı göster */}
-        {totalItems > 0 && <span>{totalItems}</span>}
+    <div className="ml-auto flex items-center gap-x-4">
+      <Link
+        href="/cart"
+        className="flex items-center gap-x-2 bg-black text-white p-2 px-4 rounded-full hover:opacity-75 transition"
+      >
+        <ShoppingBag size={20} />
+        <span className="text-sm font-medium text-white">
+          {cart.items.length} {/* Veya cart.getTotalItems() */}
+        </span>
       </Link>
-    </nav>
+    </div>
   );
 }

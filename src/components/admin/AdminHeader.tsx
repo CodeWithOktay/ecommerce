@@ -1,168 +1,173 @@
-'use client';
+"use client";
 
-import { Bell, LogOut, Menu, Settings } from 'lucide-react';
-import { signOut, useSession } from 'next-auth/react';
-import Image from 'next/image';
-import { useState } from 'react';
+import {
+  Bell,
+  LogOut,
+  Menu,
+  Settings,
+  Search,
+  User as UserIcon,
+  ChevronDown,
+} from "lucide-react";
+import { signOut, useSession } from "next-auth/react";
+import Image from "next/image";
+import { useState, useRef, useEffect } from "react";
+import Link from "next/link"; // Link eklendi
 
 // Kullanıcı bilgileri için interface
 interface User {
   id?: string;
-  name?: string | null;
-  email?: string | null;
-  image?: string | null;
+  name?: string;
+  email?: string;
+  image?: string;
   role?: string;
 }
 
-// Props interface'i - admin header bileşeninin alacağı props'lar
 interface AdminHeaderProps {
-  onMenuToggle?: () => void; // Menü açma/kapama fonksiyonu (mobile için)
-  user?: User; // Opsiyonel: Kullanıcı bilgileri
+  onMenuToggle?: () => void;
+  user?: User;
 }
 
-/**
- * Admin Header Bileşeni
- *
- * Admin panelinin üst navigasyon çubuğu.
- * Logo, mobil menü butonu, bildirimler, ayarlar ve kullanıcı menüsü içerir.
- * Responsive tasarım ile mobil ve desktop uyumludur.
- */
-export default function AdminHeader({ onMenuToggle, user }: AdminHeaderProps) {
-  // NextAuth session bilgilerini al
+export default function AdminHeader({ onMenuToggle }: AdminHeaderProps) {
   const { data: session } = useSession();
-  // Kullanıcı menüsünün açık/kapalı durumu
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null); // Dışarı tıklamayı algılamak için
 
-  /**
-   * Kullanıcı adının baş harfini alır
-   * @returns {string} Kullanıcı adı veya email'in ilk harfi
-   */
+  // Menü açıkken dışarı tıklanırsa kapat
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setShowUserMenu(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   const getInitials = (): string => {
     return (
-      session?.user?.name?.charAt(0) || // İsim varsa ilk harf
-      session?.user?.email?.charAt(0) || // Email varsa ilk harf
-      'A' // Varsayılan harf
-    );
+      session?.user?.name?.charAt(0) ||
+      session?.user?.email?.charAt(0) ||
+      "A"
+    ).toUpperCase();
   };
 
-  /**
-   * Çıkış yapma fonksiyonu
-   * NextAuth ile güvenli çıkış ve login sayfasına yönlendirme
-   */
   const handleLogout = async () => {
-    await signOut({ callbackUrl: '/admin/login' });
+    await signOut({ callbackUrl: "/admin/login" });
   };
 
   return (
-    <header className="bg-white border-b border-gray-200">
-      <div className="flex items-start justify-between">
-        {/* ✅ Logo */}
-        <Image
-          src="/kervanpazar-logo.png"
-          alt="KervanPazar Logo"
-          width={250}
-          height={10}
-          className="object-contain group-hover:scale-105 transition-transform"
-          priority // Öncelikli yükleme
-        />
-
-        {/* ✅ Mobil Menü Butonu - sadece mobilde görünür */}
-        <div className="flex items-center gap-1">
+    // ✨ Sticky Header & Glass Effect
+    <header className="sticky top-0 z-40 w-full bg-white/80 backdrop-blur-md border-b border-gray-200 transition-all">
+      <div className="h-16 px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4">
+        {/* --- SOL TARTAF: LOGO & MOBİL MENÜ --- */}
+        <div className="flex items-center gap-4">
           <button
             onClick={onMenuToggle}
-            className="p-2 rounded-lg hover:bg-gray-100 transition-colors lg:hidden"
+            className="p-2 -ml-2 rounded-lg hover:bg-gray-100 transition-colors lg:hidden text-gray-600"
             aria-label="Menüyü aç"
           >
-            <Menu className="w-5 h-5 text-gray-600" />
+            <Menu className="w-6 h-6" />
           </button>
         </div>
 
-        {/* ✅ Sağ Üst Aksiyon Butonları */}
-        <div className="flex items-center gap-4">
-          {/* ✅ Bildirim Butonu */}
-          <button
-            className="relative p-2 rounded-lg hover:bg-gray-100 transition-colors group"
-            aria-label="Bildirimler"
-          >
-            <Bell className="w-5 h-5 text-gray-600 group-hover:text-gray-700" />
-            {/* Bildirim göstergesi - yeni bildirim varsa kırmızı nokta */}
-            <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full"></span>
+        {/* --- ORTA: GLOBAL ARAMA (Sadece Desktop) --- */}
+        <div className="hidden md:flex flex-1 max-w-md mx-auto">
+          <div className="relative w-full text-gray-500 focus-within:text-indigo-600">
+            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none"></div>
+            <div className="absolute inset-y-0 right-0 flex items-center pr-3"></div>
+          </div>
+        </div>
+
+        {/* --- SAĞ TARAF: AKSİYONLAR --- */}
+        <div className="flex items-center gap-2 sm:gap-4">
+          {/* Mobil Arama İkonu (Sadece Mobilde Görünür) */}
+
+          {/* Bildirimler */}
+          <button className="relative p-2 text-gray-500 hover:bg-gray-100 rounded-lg hover:text-indigo-600 transition-colors">
+            <span className="sr-only">Bildirimleri Gör</span>
+            <Bell className="w-5 h-5" />
+            {/* 🔥 Pulse Animasyonu */}
+            <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-red-500 rounded-full animate-pulse ring-2 ring-white"></span>
           </button>
 
-          {/* ✅ Ayarlar Butonu */}
-          <button
-            className="p-2 rounded-lg hover:bg-gray-100 transition-colors group"
-            aria-label="Ayarlar"
-          >
-            <Settings className="w-5 h-5 text-gray-600 group-hover:text-gray-700" />
-          </button>
+          {/* Ayırıcı Çizgi */}
+          <div className="h-8 w-px bg-gray-200 hidden sm:block"></div>
 
-          {/* ✅ Kullanıcı Menüsü */}
-          <div className="relative">
-            {/* Kullanıcı Butonu - tıklamada menüyü açar/kapatır */}
+          {/* Kullanıcı Menüsü */}
+          <div className="relative" ref={menuRef}>
             <button
               onClick={() => setShowUserMenu(!showUserMenu)}
-              className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100 transition-colors group"
-              aria-label="Kullanıcı menüsü"
-              aria-expanded={showUserMenu}
+              className="flex items-center gap-3 p-1.5 sm:pl-3 sm:pr-2 rounded-xl hover:bg-gray-50 border border-transparent hover:border-gray-200 transition-all"
             >
-              {/* Kullanıcı Avatarı - ismin baş harfi ile gradient daire */}
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-semibold text-sm">
-                {getInitials()}
+              {session?.user?.image ? (
+                <Image
+                  src={session.user.image}
+                  alt="Profil"
+                  width={32}
+                  height={32}
+                  className="w-8 h-8 rounded-full object-cover border border-gray-200"
+                />
+              ) : (
+                <div className="w-8 h-8 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center font-bold text-sm border border-indigo-200">
+                  {getInitials()}
+                </div>
+              )}
+
+              <div className="hidden lg:flex flex-col items-start">
+                <span className="text-sm font-semibold text-gray-700 leading-none">
+                  {session?.user?.name || "Admin User"}
+                </span>
+                <span className="text-[11px] text-gray-400 font-medium mt-1">
+                  {/* Role yoksa fallback */}
+                  {(session?.user as any)?.role || "Süper Admin"}
+                </span>
               </div>
-              {/* Kullanıcı Bilgileri - sadece desktop'ta görünür */}
-              <div className="hidden lg:block text-left">
-                <p className="text-sm font-medium text-gray-900 group-hover:text-gray-700">
-                  {session?.user?.name || 'Admin'}
-                </p>
-                <p className="text-xs text-gray-500">
-                  {session?.user?.role || 'Sistem Yöneticisi'}
-                </p>
-              </div>
+
+              <ChevronDown
+                className={`w-4 h-4 text-gray-400 hidden lg:block transition-transform ${showUserMenu ? "rotate-180" : ""}`}
+              />
             </button>
 
-            {/* ✅ Kullanıcı Açılır Menüsü - sadece açıkken görünür */}
+            {/* Dropdown Menü */}
             {showUserMenu && (
-              <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-lg border border-gray-200 py-2 z-50">
-                {/* Kullanıcı Bilgi Bölümü */}
-                <div className="px-4 py-3 border-b border-gray-100">
-                  <p className="text-sm font-medium text-gray-900 truncate">
-                    {session?.user?.name || 'Admin'}
-                  </p>
-                  <p className="text-xs text-gray-500 truncate mt-1">
+              <div className="absolute right-0 mt-3 w-72 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                {/* Header Kısmı */}
+                <div className="px-5 py-4 border-b border-gray-50 bg-gray-50/50 rounded-t-2xl">
+                  <p className="text-sm font-bold text-gray-900">Hesabım</p>
+                  <p className="text-xs text-gray-500 mt-0.5 truncate">
                     {session?.user?.email}
                   </p>
-                  {/* Çevrimiçi Durum Göstergesi */}
-                  <div className="flex items-center gap-2 mt-2">
-                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                    <span className="text-xs text-gray-500">Çevrimiçi</span>
-                  </div>
                 </div>
 
-                {/* Menü Öğeleri */}
-                <div className="py-2">
-                  {/* Hesap Ayarları */}
-                  <button className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition-colors">
+                {/* Linkler */}
+                <div className="p-2 space-y-1">
+                  <Link
+                    href="/admin/profile"
+                    className="flex items-center gap-3 px-3 py-2.5 text-sm text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-colors"
+                  >
+                    <UserIcon className="w-4 h-4" />
+                    Profil Bilgileri
+                  </Link>
+                  <Link
+                    href="/admin/settings"
+                    className="flex items-center gap-3 px-3 py-2.5 text-sm text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-colors"
+                  >
                     <Settings className="w-4 h-4" />
-                    <span>Hesap Ayarları</span>
-                  </button>
-                  {/* Profilim */}
-                  <button className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition-colors">
-                    <div className="w-4 h-4 flex items-center justify-center">
-                      <div className="w-3 h-3 bg-gray-400 rounded-full"></div>
-                    </div>
-                    <span>Profilim</span>
-                  </button>
+                    Sistem Ayarları
+                  </Link>
                 </div>
 
-                {/* Çıkış Butonu */}
-                <div className="border-t border-gray-100 pt-2">
+                <div className="h-px bg-gray-100 my-1 mx-2"></div>
+
+                {/* Çıkış */}
+                <div className="p-2">
                   <button
                     onClick={handleLogout}
-                    className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-3 transition-colors rounded-lg mx-2"
+                    className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-red-600 hover:bg-red-50 rounded-xl transition-colors font-medium"
                   >
                     <LogOut className="w-4 h-4" />
-                    <span>Çıkış Yap</span>
+                    Güvenli Çıkış
                   </button>
                 </div>
               </div>
@@ -170,15 +175,6 @@ export default function AdminHeader({ onMenuToggle, user }: AdminHeaderProps) {
           </div>
         </div>
       </div>
-
-      {/* ✅ Mobile Overlay - kullanıcı menüsü açıkken arkaplan karartması */}
-      {showUserMenu && (
-        <div
-          className="fixed inset-0 z-30"
-          onClick={() => setShowUserMenu(false)}
-          aria-hidden="true"
-        />
-      )}
     </header>
   );
 }

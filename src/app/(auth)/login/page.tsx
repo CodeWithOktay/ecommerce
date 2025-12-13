@@ -1,60 +1,63 @@
 // src/app/(auth)/login/page.tsx
-'use client';
+"use client";
 
-import { AlertCircle, ArrowRight, Eye, EyeOff, Lock, Mail } from 'lucide-react';
-import { signIn } from 'next-auth/react';
-import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { FormEvent, useEffect, useState } from 'react';
+import { AlertCircle, ArrowRight, Eye, EyeOff, Lock, Mail } from "lucide-react";
+import { signIn } from "next-auth/react";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import { FormEvent, useEffect, useState } from "react";
 
 export default function LoginPage() {
-  // ... (Tüm state'ler ve logic'ler (useState, useEffect, handleSubmit) aynı kalıyor)
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   const router = useRouter();
   const searchParams = useSearchParams();
 
   useEffect(() => {
-    const errorParam = searchParams.get('error');
-    if (errorParam === 'CredentialsSignin') {
-      setError('Geçersiz parola veya şifre.');
+    const errorParam = searchParams.get("error");
+    if (errorParam === "CredentialsSignin") {
+      setError("Geçersiz e-posta veya şifre.");
     }
   }, [searchParams]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    setError('');
+    setError("");
     setIsLoading(true);
+
     try {
-      const result = await signIn('credentials', {
+      // ✅ KRİTİK GÜNCELLEME BURADA
+      const result = await signIn("credentials", {
         email: email.toLowerCase().trim(),
         password: password,
+        loginType: "USER", // <--- Bu formun Müşteri Kapısı olduğunu belirtiyoruz
         redirect: false,
       });
+
       if (result?.error) {
-        setError('Geçersiz e-posta veya şifre.');
+        // Backend'den "Kullanıcı bulunamadı" veya "Hatalı şifre" dönebilir
+        // Admin buradan girmeye çalışırsa da hata alacak
+        setError("Giriş başarısız. Bilgilerinizi kontrol edin.");
         setIsLoading(false);
       } else if (result?.ok) {
-        router.push('/');
+        // Başarılıysa müşteri ana sayfasına yönlendir
+        router.push("/");
         router.refresh();
       }
     } catch (err) {
-      setError('Giriş sırasında bir hata oluştu. Lütfen tekrar deneyin.');
+      setError("Giriş sırasında bir hata oluştu. Lütfen tekrar deneyin.");
       setIsLoading(false);
     }
   };
 
-  // --- RETURN KISMI SADELEŞTİ ---
-  // Dıştaki wrapper'lar (min-h-screen, max-w-md) ve footer
-  // layout'tan geldiği için kaldırıldı.
   return (
     <>
-      {/* Sayfaya özel başlık (Logo layout'tan geliyor) */}
+      {/* Başlık */}
       <div className="text-center mb-8">
         <h2 className="text-3xl font-bold text-gray-900">
           Tekrar Hoş Geldiniz!
@@ -69,7 +72,7 @@ export default function LoginPage() {
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Hata Mesajı */}
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm flex items-center">
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm flex items-center animate-pulse">
               <AlertCircle className="w-5 h-5 mr-3 flex-shrink-0" />
               {error}
             </div>
@@ -93,7 +96,7 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full pl-10 pr-4 py-3.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 text-gray-900 placeholder-gray-400 bg-white hover:border-gray-300"
-                placeholder="examle@mail.com"
+                placeholder="ornek@mail.com"
                 required
               />
             </div>
@@ -115,7 +118,7 @@ export default function LoginPage() {
               </div>
               <input
                 id="password"
-                type={showPassword ? 'text' : 'password'}
+                type={showPassword ? "text" : "password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full pl-10 pr-12 py-3.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 text-gray-900 placeholder-gray-400 bg-white hover:border-gray-300"
@@ -126,6 +129,7 @@ export default function LoginPage() {
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors p-1"
+                aria-label={showPassword ? "Şifreyi gizle" : "Şifreyi göster"}
               >
                 {showPassword ? (
                   <EyeOff className="w-5 h-5" />
@@ -140,7 +144,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-4 px-6 rounded-xl font-semibold hover:from-blue-600 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 group"
+            className="w-full bg-black text-white py-4 px-6 rounded-xl font-semibold hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl group"
           >
             {isLoading ? (
               <div className="flex items-center justify-center">
@@ -159,10 +163,10 @@ export default function LoginPage() {
         {/* Kayıt Sayfasına Link */}
         <div className="text-center mt-8">
           <p className="text-sm text-gray-600">
-            Henüz bir hesabın yok mu?{' '}
+            Henüz bir hesabın yok mu?{" "}
             <Link
               href="/register"
-              className="font-medium text-blue-600 hover:text-blue-700"
+              className="font-medium text-blue-600 hover:text-blue-700 underline-offset-4 hover:underline"
             >
               Hemen Kayıt Ol
             </Link>
