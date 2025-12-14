@@ -1,14 +1,14 @@
-import { Role, User } from "@prisma/client";
+import { Role } from "@prisma/client";
 import bcrypt from "bcrypt";
 import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "../prisma-client";
+import { createLog } from "@/lib/logger"; // 👈 Log fonksiyonumuz
 
-// NextAuth yapılandırma ayarları
 export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
-      name: "credentials", 
+      name: "credentials",
       credentials: {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
@@ -19,23 +19,44 @@ export const authOptions: NextAuthOptions = {
           throw new Error("E-posta ve şifre gereklidir.");
         }
 
+        const email = credentials.email.toLowerCase().trim();
+
         try {
           const user = await prisma.user.findUnique({
-            where: { email: credentials.email.toLowerCase().trim() },
+            where: { email },
           });
 
+          // 🚨 1. KULLANICI BULUNAMADI
           if (!user || !user.passwordHash) {
+            await createLog({
+              action: "LOGIN_FAILED",
+              details: `Kullanıcı bulunamadı: ${email}`,
+              success: false,
+            });
             throw new Error("Kullanıcı bulunamadı.");
           }
 
+          // 🚨 2. ADMIN GİZLİLİĞİ (Admin, Müşteri Girişinden Giremesin)
           if (credentials.loginType === "USER") {
             if (user.role === "ADMIN") {
-              throw new Error("Kullanıcı bulunamadı.");
+              // Admin müşteri kapısından girmeye çalışırsa logla ama kullanıcıya belli etme
+              await createLog({
+                action: "WRONG_PORTAL",
+                details: `Admin hesabı (${email}) müşteri panelinden girmeye çalıştı.`,
+                success: false,
+              });
+              throw new Error("Kullanıcı bulunamadı."); // Güvenlik için genel hata
             }
           }
 
+          // 🚨 3. YETKİSİZ GİRİŞ (Müşteri, Admin Paneline Giremesin)
           if (credentials.loginType === "ADMIN") {
             if (user.role !== "ADMIN") {
+              await createLog({
+                action: "UNAUTHORIZED_ACCESS",
+                details: `Yetkisiz Admin Paneli Erişimi Denemesi: ${email}`,
+                success: false,
+              });
               throw new Error("Bu alana erişim yetkiniz yok.");
             }
           }
@@ -45,10 +66,17 @@ export const authOptions: NextAuthOptions = {
             user.passwordHash
           );
 
+          // 🚨 4. HATALI ŞİFRE
           if (!isPasswordValid) {
+            await createLog({
+              action: "LOGIN_FAILED",
+              details: `Hatalı şifre denemesi: ${email}`,
+              success: false,
+            });
             throw new Error("Geçersiz şifre.");
           }
 
+          // Giriş Başarılı (Burada loglamıyoruz, events kısmında logluyoruz)
           return {
             id: user.id,
             email: user.email,
@@ -62,21 +90,42 @@ export const authOptions: NextAuthOptions = {
             lastName: user.lastName || undefined,
           };
         } catch (error) {
-          console.error("Auth error:", error);
+          // Hataları olduğu gibi fırlat (NextAuth yakalasın diye)
           throw error;
         }
       },
     }),
   ],
 
+  // ✅ EVENTLER: Başarılı işlemler burada loglanır (Token oluştuğunda)
+  events: {
+    async signIn({ user }) {
+      const role = user.role;
+      const action = role === "ADMIN" ? "ADMIN_LOGIN" : "USER_LOGIN";
+
+      await createLog({
+        action: action,
+        details: `${user.email} başarıyla giriş yaptı.`,
+        success: true,
+      });
+    },
+    async signOut({ token }) {
+      await createLog({
+        action: "LOGOUT",
+        details: `Kullanıcı (${token?.email || "Bilinmiyor"}) çıkış yaptı.`,
+        success: true,
+      });
+    },
+  },
+
   callbacks: {
     jwt: async ({ token, user }) => {
       if (user) {
-        token.role = (user as any).role;
+        token.role = user.role;
         token.id = user.id;
         token.name = user.name;
-        token.firstName = (user as any).firstName;
-        token.lastName = (user as any).lastName;
+        token.firstName = user.firstName;
+        token.lastName = user.lastName;
       }
       return token;
     },
@@ -84,10 +133,10 @@ export const authOptions: NextAuthOptions = {
     session: async ({ session, token }) => {
       if (token && session.user) {
         session.user.id = token.id as string;
-        session.user.role = token.role as Role;
+        session.user.role = token.role;
         session.user.name = token.name;
-        session.user.firstName = token.firstName as string;
-        session.user.lastName = token.lastName as string;
+        session.user.firstName = token.firstName;
+        session.user.lastName = token.lastName;
       }
       return session;
     },

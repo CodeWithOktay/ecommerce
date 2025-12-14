@@ -5,16 +5,16 @@ import {
   LogOut,
   Menu,
   Settings,
-  Search,
   User as UserIcon,
   ChevronDown,
+  LayoutDashboard,
+  HelpCircle,
 } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
 import Image from "next/image";
 import { useState, useRef, useEffect } from "react";
-import Link from "next/link"; // Link eklendi
+import Link from "next/link";
 
-// Kullanıcı bilgileri için interface
 interface User {
   id?: string;
   name?: string;
@@ -31,7 +31,7 @@ interface AdminHeaderProps {
 export default function AdminHeader({ onMenuToggle }: AdminHeaderProps) {
   const { data: session } = useSession();
   const [showUserMenu, setShowUserMenu] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null); // Dışarı tıklamayı algılamak için
+  const menuRef = useRef<HTMLDivElement>(null);
 
   // Menü açıkken dışarı tıklanırsa kapat
   useEffect(() => {
@@ -57,121 +57,144 @@ export default function AdminHeader({ onMenuToggle }: AdminHeaderProps) {
   };
 
   return (
-    // ✨ Sticky Header & Glass Effect
-    <header className="sticky top-0 z-40 w-full bg-white/80 backdrop-blur-md border-b border-gray-200 transition-all">
+    <header className="sticky top-0 z-40 w-full bg-white/90 backdrop-blur-xl border-b border-gray-200/80 shadow-sm transition-all supports-[backdrop-filter]:bg-white/60">
       <div className="h-16 px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4">
-        {/* --- SOL TARTAF: LOGO & MOBİL MENÜ --- */}
-        <div className="flex items-center gap-4">
+        {/* --- SOL TARAF: MOBİL MENÜ & BREADCRUMB --- */}
+        <div className="flex items-center gap-4 lg:gap-6">
           <button
             onClick={onMenuToggle}
-            className="p-2 -ml-2 rounded-lg hover:bg-gray-100 transition-colors lg:hidden text-gray-600"
+            className="p-2 -ml-2 rounded-xl hover:bg-gray-100 text-gray-500 hover:text-gray-900 transition-all lg:hidden active:scale-95"
             aria-label="Menüyü aç"
           >
             <Menu className="w-6 h-6" />
           </button>
-        </div>
 
-        {/* --- ORTA: GLOBAL ARAMA (Sadece Desktop) --- */}
-        <div className="hidden md:flex flex-1 max-w-md mx-auto">
-          <div className="relative w-full text-gray-500 focus-within:text-indigo-600">
-            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none"></div>
-            <div className="absolute inset-y-0 right-0 flex items-center pr-3"></div>
+          {/* Breadcrumb / Page Title */}
+          <div className="hidden sm:flex items-center gap-2 text-sm text-gray-500 font-medium">
+            <LayoutDashboard className="w-4 h-4 text-gray-400" />
+            <span className="text-gray-300">/</span>
+            <span className="text-gray-900">Yönetim Paneli</span>
           </div>
         </div>
 
-        {/* --- SAĞ TARAF: AKSİYONLAR --- */}
-        <div className="flex items-center gap-2 sm:gap-4">
-          {/* Mobil Arama İkonu (Sadece Mobilde Görünür) */}
+        {/* --- ORTA: ARAMA ÇUBUĞU KALDIRILDI --- */}
+        {/* Buradaki div'i sildik, justify-between sayesinde sağ ve sol yaslandı */}
 
-          {/* Bildirimler */}
-          <button className="relative p-2 text-gray-500 hover:bg-gray-100 rounded-lg hover:text-indigo-600 transition-colors">
-            <span className="sr-only">Bildirimleri Gör</span>
-            <Bell className="w-5 h-5" />
-            {/* 🔥 Pulse Animasyonu */}
-            <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-red-500 rounded-full animate-pulse ring-2 ring-white"></span>
+        {/* --- SAĞ TARAF: AKSİYONLAR --- */}
+        <div className="flex items-center gap-1.5 sm:gap-3">
+          {/* Yardım Butonu (Opsiyonel) */}
+          <button className="hidden sm:flex p-2 text-gray-400 hover:bg-gray-50 hover:text-indigo-600 rounded-full transition-all">
+            <HelpCircle className="w-5 h-5" />
           </button>
 
-          {/* Ayırıcı Çizgi */}
-          <div className="h-8 w-px bg-gray-200 hidden sm:block"></div>
+          {/* ✅ BİLDİRİMLER (SİPARİŞLER LİNKİ) */}
+          <Link
+            href="/admin/orders"
+            className="relative p-2 text-gray-400 hover:bg-gray-50 hover:text-indigo-600 rounded-full transition-all group"
+            title="Siparişlere Git"
+          >
+            <span className="sr-only">Sipariş Bildirimleri</span>
+            <Bell className="w-5 h-5 group-hover:animate-swing" />
+
+            {/* Bildirim Işığı (Pulse) */}
+            <span className="absolute top-2 right-2.5 flex h-2.5 w-2.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500 border-2 border-white"></span>
+            </span>
+          </Link>
+
+          {/* Ayırıcı */}
+          <div className="h-6 w-px bg-gray-200 hidden sm:block mx-1"></div>
 
           {/* Kullanıcı Menüsü */}
           <div className="relative" ref={menuRef}>
             <button
               onClick={() => setShowUserMenu(!showUserMenu)}
-              className="flex items-center gap-3 p-1.5 sm:pl-3 sm:pr-2 rounded-xl hover:bg-gray-50 border border-transparent hover:border-gray-200 transition-all"
+              className={`flex items-center gap-3 p-1 pl-1.5 pr-2 rounded-full border border-transparent transition-all duration-200
+                ${showUserMenu ? "bg-gray-50 border-gray-200 ring-2 ring-gray-100" : "hover:bg-gray-50 hover:border-gray-100"}
+              `}
             >
               {session?.user?.image ? (
                 <Image
                   src={session.user.image}
                   alt="Profil"
-                  width={32}
-                  height={32}
-                  className="w-8 h-8 rounded-full object-cover border border-gray-200"
+                  width={36}
+                  height={36}
+                  className="w-9 h-9 rounded-full object-cover border-2 border-white shadow-sm"
                 />
               ) : (
-                <div className="w-8 h-8 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center font-bold text-sm border border-indigo-200">
+                <div className="w-9 h-9 bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-full flex items-center justify-center font-bold text-sm shadow-md shadow-indigo-200">
                   {getInitials()}
                 </div>
               )}
 
-              <div className="hidden lg:flex flex-col items-start">
-                <span className="text-sm font-semibold text-gray-700 leading-none">
-                  {session?.user?.name || "Admin User"}
+              <div className="hidden lg:flex flex-col items-start pr-1">
+                <span className="text-sm font-semibold text-gray-700 leading-tight">
+                  {session?.user?.firstName || "Admin"}
                 </span>
-                <span className="text-[11px] text-gray-400 font-medium mt-1">
-                  {/* Role yoksa fallback */}
-                  {(session?.user as any)?.role || "Süper Admin"}
+                <span className="text-[10px] font-medium text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded-full mt-0.5">
+                  {(session?.user as any)?.role || "Yönetici"}
                 </span>
               </div>
 
               <ChevronDown
-                className={`w-4 h-4 text-gray-400 hidden lg:block transition-transform ${showUserMenu ? "rotate-180" : ""}`}
+                className={`w-4 h-4 text-gray-400 hidden lg:block transition-transform duration-300 ${showUserMenu ? "rotate-180 text-indigo-500" : ""}`}
               />
             </button>
 
             {/* Dropdown Menü */}
-            {showUserMenu && (
-              <div className="absolute right-0 mt-3 w-72 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
-                {/* Header Kısmı */}
-                <div className="px-5 py-4 border-b border-gray-50 bg-gray-50/50 rounded-t-2xl">
-                  <p className="text-sm font-bold text-gray-900">Hesabım</p>
-                  <p className="text-xs text-gray-500 mt-0.5 truncate">
-                    {session?.user?.email}
-                  </p>
-                </div>
-
-                {/* Linkler */}
-                <div className="p-2 space-y-1">
-                  <Link
-                    href="/admin/profile"
-                    className="flex items-center gap-3 px-3 py-2.5 text-sm text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-colors"
-                  >
-                    <UserIcon className="w-4 h-4" />
-                    Profil Bilgileri
-                  </Link>
-                  <Link
-                    href="/admin/settings"
-                    className="flex items-center gap-3 px-3 py-2.5 text-sm text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-colors"
-                  >
-                    <Settings className="w-4 h-4" />
-                    Sistem Ayarları
-                  </Link>
-                </div>
-
-                <div className="h-px bg-gray-100 my-1 mx-2"></div>
-
-                {/* Çıkış */}
-                <div className="p-2">
-                  <button
-                    onClick={handleLogout}
-                    className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-red-600 hover:bg-red-50 rounded-xl transition-colors font-medium"
-                  >
-                    <LogOut className="w-4 h-4" />
-                    Güvenli Çıkış
-                  </button>
-                </div>
+            <div
+              className={`absolute right-0 mt-3 w-72 bg-white rounded-2xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.08)] border border-gray-100 py-2 z-50 transform transition-all duration-200 origin-top-right
+                ${showUserMenu ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 -translate-y-2 pointer-events-none"}
+              `}
+            >
+              {/* Header */}
+              <div className="px-5 py-4 border-b border-gray-50 bg-gradient-to-r from-gray-50 to-white rounded-t-2xl">
+                <p className="text-sm font-bold text-gray-900">Hesabım</p>
+                <p className="text-xs text-gray-500 mt-1 truncate font-medium">
+                  {session?.user?.email}
+                </p>
               </div>
-            )}
+
+              {/* Linkler */}
+              <div className="p-2 space-y-1">
+                <Link
+                  href="/admin/profile"
+                  className="group flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-gray-600 hover:text-indigo-600 hover:bg-indigo-50/50 rounded-xl transition-all"
+                  onClick={() => setShowUserMenu(false)}
+                >
+                  <div className="p-1.5 bg-gray-100 text-gray-500 rounded-lg group-hover:bg-white group-hover:text-indigo-600 group-hover:shadow-sm transition-all">
+                    <UserIcon className="w-4 h-4" />
+                  </div>
+                  Profil Bilgileri
+                </Link>
+                <Link
+                  href="/admin/settings"
+                  className="group flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-gray-600 hover:text-indigo-600 hover:bg-indigo-50/50 rounded-xl transition-all"
+                  onClick={() => setShowUserMenu(false)}
+                >
+                  <div className="p-1.5 bg-gray-100 text-gray-500 rounded-lg group-hover:bg-white group-hover:text-indigo-600 group-hover:shadow-sm transition-all">
+                    <Settings className="w-4 h-4" />
+                  </div>
+                  Sistem Ayarları
+                </Link>
+              </div>
+
+              <div className="h-px bg-gray-100 my-1 mx-4"></div>
+
+              {/* Çıkış */}
+              <div className="p-2">
+                <button
+                  onClick={handleLogout}
+                  className="group w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 rounded-xl transition-all"
+                >
+                  <div className="p-1.5 bg-red-50 text-red-500 rounded-lg group-hover:bg-white group-hover:shadow-sm transition-all">
+                    <LogOut className="w-4 h-4" />
+                  </div>
+                  Güvenli Çıkış
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>

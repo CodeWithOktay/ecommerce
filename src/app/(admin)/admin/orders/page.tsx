@@ -1,93 +1,169 @@
 // app/admin/orders/page.tsx
 import Link from "next/link";
-import prisma from "@/lib/prisma-client";
-import { Eye } from "lucide-react";
-
-// Durum renkleri için yardımcı fonksiyon
-const getStatusColor = (status: string) => {
-  switch (status) {
-    case "PENDING":
-      return "bg-yellow-100 text-yellow-800 border-yellow-200";
-    case "PAID":
-      return "bg-blue-100 text-blue-800 border-blue-200";
-    case "SHIPPED":
-      return "bg-purple-100 text-purple-800 border-purple-200";
-    case "DELIVERED":
-      return "bg-green-100 text-green-800 border-green-200";
-    case "CANCELLED":
-      return "bg-red-100 text-red-800 border-red-200";
-    default:
-      return "bg-gray-100 text-gray-800";
-  }
-};
+import { prisma } from "@/lib/prisma-client";
+import { Eye, ShoppingBag, Clock, CreditCard } from "lucide-react";
+import OrderStatusUpdater from "@/components/order/OrderStatusUpdater";
 
 export default async function AdminOrdersPage() {
   const orders = await prisma.order.findMany({
     orderBy: { createdAt: "desc" },
     include: {
       user: true,
-      _count: { select: { items: true } }, // Kaç parça ürün var?
+      _count: { select: { items: true } },
     },
   });
 
-  return (
-    <div className="p-8 max-w-7xl mx-auto">
-      <h1 className="text-3xl font-bold text-gray-900 mb-8">Siparişler</h1>
+  // Basit İstatistikler
+  const totalRevenue = orders.reduce(
+    (acc, order) => acc + Number(order.total),
+    0
+  );
+  const pendingCount = orders.filter((o) => o.status === "PENDING").length;
 
-      <div className="bg-white border rounded-xl shadow-sm overflow-hidden">
-        <table className="w-full text-left text-sm">
-          <thead className="bg-gray-50 border-b text-gray-600 uppercase font-semibold">
-            <tr>
-              <th className="p-4">Sipariş No</th>
-              <th className="p-4">Müşteri</th>
-              <th className="p-4">Tarih</th>
-              <th className="p-4">Ürün Sayısı</th>
-              <th className="p-4">Tutar</th>
-              <th className="p-4">Durum</th>
-              <th className="p-4 text-right">İncele</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100">
-            {orders.map((order) => (
-              <tr key={order.id} className="hover:bg-gray-50 transition">
-                <td className="p-4 font-mono text-gray-500">
-                  #{order.id.slice(-6).toUpperCase()}
-                </td>
-                <td className="p-4 font-medium text-gray-900">
-                  {order.user
-                    ? `${order.user.firstName} ${order.user.lastName}`
-                    : order.customerName}
-                </td>
-                <td className="p-4 text-gray-600">
-                  {order.createdAt.toLocaleDateString("tr-TR")}
-                </td>
-                <td className="p-4 text-center w-24">{order._count.items}</td>
-                <td className="p-4 font-bold text-gray-900">
-                  {Number(order.total).toFixed(2)} ₺
-                </td>
-                <td className="p-4">
-                  <span
-                    className={`px-3 py-1 rounded-full text-xs font-bold border ${getStatusColor(order.status)}`}
-                  >
-                    {order.status}
-                  </span>
-                </td>
-                <td className="p-4 text-right">
-                  <Link
-                    href={`/admin/orders/${order.id}`}
-                    className="inline-flex items-center justify-center p-2 text-gray-400 hover:text-black hover:bg-gray-100 rounded-lg transition"
-                  >
-                    <Eye size={20} />
-                  </Link>
-                </td>
+  return (
+    <div className="p-6 md:p-10 max-w-[1600px] mx-auto min-h-screen bg-gray-50/50">
+      {/* --- HEADER & İSTATİSTİKLER --- */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
+        <div>
+          <h1 className="text-3xl font-black text-gray-900 tracking-tight">
+            Sipariş Yönetimi
+          </h1>
+          <p className="text-gray-500 mt-1">
+            Tüm siparişleri buradan takip edip yönetebilirsiniz.
+          </p>
+        </div>
+
+        <div className="flex gap-4">
+          <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-3">
+            <div className="p-2 bg-green-50 text-green-600 rounded-lg">
+              <CreditCard size={20} />
+            </div>
+            <div>
+              <p className="text-xs text-gray-400 font-bold uppercase">
+                Toplam Ciro
+              </p>
+              <p className="text-lg font-black text-gray-900">
+                {totalRevenue.toLocaleString("tr-TR")} ₺
+              </p>
+            </div>
+          </div>
+          <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-3">
+            <div className="p-2 bg-yellow-50 text-yellow-600 rounded-lg">
+              <Clock size={20} />
+            </div>
+            <div>
+              <p className="text-xs text-gray-400 font-bold uppercase">
+                Bekleyen
+              </p>
+              <p className="text-lg font-black text-gray-900">{pendingCount}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* --- TABLO --- */}
+      <div className="bg-white border border-gray-200 rounded-3xl shadow-xl shadow-gray-200/40 overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm border-collapse">
+            <thead className="bg-gray-50/50 border-b border-gray-100 text-gray-400 uppercase font-bold text-xs tracking-wider">
+              {/* 🟢 DÜZELTME: tr içinde sadece th var, yorum satırı veya boşluk yok */}
+              <tr>
+                <th className="p-5 pl-8">Sipariş No</th>
+                <th className="p-5">Müşteri</th>
+                <th className="p-5">Tarih</th>
+                <th className="p-5 text-center">Adet</th>
+                <th className="p-5">Tutar</th>
+                <th className="p-5 w-[220px]">Durum</th>
+                <th className="p-5 text-right pr-8">Detay</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-gray-50">
+              {orders.map((order) => (
+                <tr
+                  key={order.id}
+                  className="hover:bg-blue-50/30 transition-colors group"
+                >
+                  {/* ID */}
+                  <td className="p-5 pl-8">
+                    <span className="font-mono font-bold text-gray-600 bg-gray-100 px-2 py-1 rounded-md text-xs">
+                      #{order.id.slice(-6).toUpperCase()}
+                    </span>
+                  </td>
+
+                  {/* MÜŞTERİ */}
+                  <td className="p-5">
+                    <div className="flex flex-col">
+                      <span className="font-bold text-gray-900">
+                        {order.user
+                          ? `${order.user.firstName} ${order.user.lastName}`
+                          : order.customerName || "Misafir"}
+                      </span>
+                      <span className="text-xs text-gray-400">
+                        {order.userId ? "Üye Müşteri" : "Misafir"}
+                      </span>
+                    </div>
+                  </td>
+
+                  {/* TARİH */}
+                  <td className="p-5 text-gray-500 font-medium">
+                    {new Date(order.createdAt).toLocaleDateString("tr-TR", {
+                      day: "numeric",
+                      month: "short",
+                      year: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </td>
+
+                  {/* ADET */}
+                  <td className="p-5 text-center">
+                    <div className="inline-flex items-center justify-center w-8 h-8 bg-gray-50 rounded-full text-gray-600 font-bold border border-gray-100">
+                      {order._count.items}
+                    </div>
+                  </td>
+
+                  {/* TUTAR */}
+                  <td className="p-5">
+                    <span className="font-black text-gray-900 text-base">
+                      {Number(order.total).toLocaleString("tr-TR", {
+                        minimumFractionDigits: 2,
+                      })}{" "}
+                      ₺
+                    </span>
+                  </td>
+
+                  {/* DURUM GÜNCELLEME */}
+                  <td className="p-5">
+                    <div className="w-[180px]">
+                      <OrderStatusUpdater
+                        orderId={order.id}
+                        currentStatus={order.status}
+                      />
+                    </div>
+                  </td>
+
+                  {/* İNCELE BUTONU */}
+                  <td className="p-5 text-right pr-8">
+                    <Link
+                      href={`/admin/orders/${order.id}`}
+                      className="inline-flex items-center justify-center p-2.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all active:scale-95"
+                      title="Detayları Gör"
+                    >
+                      <Eye size={20} />
+                    </Link>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
 
         {orders.length === 0 && (
-          <div className="p-12 text-center text-gray-500">
-            Henüz hiç sipariş yok.
+          <div className="p-20 flex flex-col items-center justify-center text-gray-400 bg-gray-50/30">
+            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+              <ShoppingBag size={32} className="opacity-20" />
+            </div>
+            <p className="font-medium">Henüz hiç sipariş yok.</p>
           </div>
         )}
       </div>

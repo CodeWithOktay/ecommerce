@@ -85,6 +85,11 @@ export default function AdminSidebar({
       icon: Settings,
       label: "Ayarlar",
     },
+    {
+      href: "/admin/logs",
+      icon: Settings,
+      label: "Loglar",
+    },
   ];
 
   const handleLogout = async () => {

@@ -5,8 +5,8 @@ import { revalidatePath } from "next/cache";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { v4 as uuidv4 } from "uuid";
+import { createLog } from "@/lib/logger";
 
-// --- TİP TANIMLAMALARI ---
 interface CreateProductFormState {
   name: string;
   categoryId: string;
@@ -18,13 +18,11 @@ interface CreateProductFormState {
   isActive: boolean;
   isArchived: boolean;
 
-  // Resimler
   images: {
     base64Data: string;
     isMain: boolean;
   }[];
 
-  // Varyantlar
   variants: {
     name: string;
     size?: string;
@@ -33,14 +31,12 @@ interface CreateProductFormState {
     price?: number;
   }[];
 
-  // Özellik Değerleri
   attributeValues: {
     attributeId: string;
     value: string;
   }[];
 }
 
-// 🟢 1. ÜRÜN OLUŞTURMA
 export async function createProductWithImages(data: CreateProductFormState) {
   try {
     const uploadDir = path.join(process.cwd(), "public", "uploads");
@@ -52,9 +48,7 @@ export async function createProductWithImages(data: CreateProductFormState) {
 
     const savedImageUrls: { url: string; isMain: boolean }[] = [];
 
-    // Resimleri Diske Kaydet
     for (const img of data.images) {
-      // Base64 header temizle
       const base64Data = img.base64Data.includes("base64,")
         ? img.base64Data.split("base64,")[1]
         : img.base64Data;
@@ -65,9 +59,8 @@ export async function createProductWithImages(data: CreateProductFormState) {
       savedImageUrls.push({ url: `/uploads/${fileName}`, isMain: img.isMain });
     }
 
-    // Veritabanı İşlemi
-    await prisma.$transaction(async (tx) => {
-      await tx.product.create({
+    const newProduct = await prisma.$transaction(async (tx) => {
+      return await tx.product.create({
         data: {
           name: data.name,
           description: data.description,
@@ -106,10 +99,23 @@ export async function createProductWithImages(data: CreateProductFormState) {
       });
     });
 
+    await createLog({
+      action: "CREATE_PRODUCT",
+      details: `Ürün oluşturuldu: ${newProduct.name} (ID: ${newProduct.id}) - Fiyat: ${newProduct.price}`,
+      success: true,
+    });
+
     revalidatePath("/admin/products");
     return { success: true, message: "Ürün başarıyla oluşturuldu! 🎉" };
   } catch (error) {
     console.error("Kayıt Hatası:", error);
+
+    await createLog({
+      action: "CREATE_PRODUCT_ERROR",
+      details: `Ürün oluşturulamadı. Hata: ${(error as Error).message}`,
+      success: false,
+    });
+
     return {
       success: false,
       message: "Bir hata oluştu: " + (error as Error).message,
@@ -117,7 +123,6 @@ export async function createProductWithImages(data: CreateProductFormState) {
   }
 }
 
-// 🟢 2. ÜRÜN GÜNCELLEME
 export async function updateProductWithImages(
   productId: string,
   data: CreateProductFormState
@@ -126,16 +131,13 @@ export async function updateProductWithImages(
     const uploadDir = path.join(process.cwd(), "public", "uploads");
     const savedImageUrls: { url: string; isMain: boolean }[] = [];
 
-    // Görselleri İşle (Eskileri koru, yenileri yükle)
     for (const img of data.images) {
       if (
         img.base64Data.startsWith("/uploads") ||
         img.base64Data.startsWith("http")
       ) {
-        // Zaten yüklü olan resim (URL geldi)
         savedImageUrls.push({ url: img.base64Data, isMain: img.isMain });
       } else {
-        // Yeni yüklenen resim (Base64 geldi)
         try {
           const base64Data = img.base64Data.includes("base64,")
             ? img.base64Data.split("base64,")[1]
@@ -154,16 +156,12 @@ export async function updateProductWithImages(
       }
     }
 
-    await prisma.$transaction(async (tx) => {
-      // 1. Önceki İlişkileri Temizle
+    const updatedProduct = await prisma.$transaction(async (tx) => {
       await tx.productVariant.deleteMany({ where: { productId } });
       await tx.productAttributeValue.deleteMany({ where: { productId } });
-
-      // ✅ DOĞRU OLAN: Şemana göre 'productImage' tablosunu siliyoruz
       await tx.productImage.deleteMany({ where: { productId } });
 
-      // 2. Ürünü Güncelle ve Yeni İlişkileri Ekle
-      await tx.product.update({
+      return await tx.product.update({
         where: { id: productId },
         data: {
           name: data.name,
@@ -176,7 +174,6 @@ export async function updateProductWithImages(
           categoryId: data.categoryId,
           brandId: data.brandId || null,
 
-          // Resimler (Yeniden oluşturuyoruz)
           images: {
             create: savedImageUrls.map((img) => ({
               url: img.url,
@@ -184,7 +181,6 @@ export async function updateProductWithImages(
             })),
           },
 
-          // Varyantlar (Yeniden oluşturuyoruz)
           variants: {
             create: data.variants.map((v) => ({
               name: v.name,
@@ -195,7 +191,6 @@ export async function updateProductWithImages(
             })),
           },
 
-          // Özellikler (Yeniden oluşturuyoruz)
           attributeValues: {
             create: data.attributeValues.map((attr) => ({
               attributeId: attr.attributeId,
@@ -206,21 +201,48 @@ export async function updateProductWithImages(
       });
     });
 
+    await createLog({
+      action: "UPDATE_PRODUCT",
+      details: `Ürün güncellendi: ${updatedProduct.name} (ID: ${productId})`,
+      success: true,
+    });
+
     revalidatePath("/admin/products");
     return { success: true, message: "Ürün başarıyla güncellendi! 🔄" };
   } catch (error) {
     console.error("Güncelleme Hatası:", error);
+
+    await createLog({
+      action: "UPDATE_PRODUCT_ERROR",
+      details: `Ürün güncelleme hatası (ID: ${productId}): ${(error as Error).message}`,
+      success: false,
+    });
+
     return { success: false, message: "Güncelleme sırasında hata oluştu." };
   }
 }
 
-// 🟢 3. ÜRÜN SİLME
 export async function deleteProduct(productId: string) {
   try {
-    await prisma.product.delete({ where: { id: productId } });
+    const deletedProduct = await prisma.product.delete({
+      where: { id: productId },
+    });
+
+    await createLog({
+      action: "DELETE_PRODUCT",
+      details: `Ürün silindi: ${deletedProduct.name} (ID: ${productId})`,
+      success: true,
+    });
+
     revalidatePath("/admin/products");
     return { success: true, message: "Ürün silindi. 🗑️" };
   } catch (error) {
+    await createLog({
+      action: "DELETE_PRODUCT_ERROR",
+      details: `Ürün silinemedi (ID: ${productId}). Muhtemelen siparişlerde kullanılıyor.`,
+      success: false,
+    });
+
     return {
       success: false,
       message: "Silinemedi. Siparişlerde kullanılıyor olabilir.",
@@ -228,22 +250,36 @@ export async function deleteProduct(productId: string) {
   }
 }
 
-// 🟢 4. ARŞİVLEME / YAYINA ALMA
 export async function toggleProductArchive(
   productId: string,
   isArchived: boolean
 ) {
   try {
-    await prisma.product.update({
+    const updatedProduct = await prisma.product.update({
       where: { id: productId },
       data: { isArchived: !isArchived },
     });
+
+    const actionText = !isArchived ? "arşivlendi" : "yayına alındı";
+
+    await createLog({
+      action: !isArchived ? "ARCHIVE_PRODUCT" : "UNARCHIVE_PRODUCT",
+      details: `Ürün ${actionText}: ${updatedProduct.name} (ID: ${productId})`,
+      success: true,
+    });
+
     revalidatePath("/admin/products");
     return {
       success: true,
       message: isArchived ? "Ürün yayına alındı! ✅" : "Ürün arşivlendi! 📦",
     };
   } catch (error) {
+    await createLog({
+      action: "ARCHIVE_ERROR",
+      details: `Ürün durum değiştirme hatası (ID: ${productId})`,
+      success: false,
+    });
+
     return { success: false, message: "İşlem başarısız." };
   }
 }

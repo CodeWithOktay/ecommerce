@@ -161,7 +161,7 @@ export default function ManagementLogin() {
                         ? "border-red-300 focus:border-red-500 focus:ring-red-200"
                         : "border-gray-200 hover:border-gray-300 focus:border-blue-500 focus:ring-blue-200"
                     }`}
-                  placeholder="admin@kervanpazar.com"
+                  placeholder="example@mail.com"
                 />
               </div>
               {errors.email && (

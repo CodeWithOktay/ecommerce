@@ -250,3 +250,17 @@ model Settings {
   twitter      String?
   maintenance  Boolean @default(false)
 }
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  action    String   
+  details   String?  
+  
+  adminId   String?  
+  adminEmail String?
+  
+  ipAddress String?  
+  userAgent String?  
+  
+  createdAt DateTime @default(now())
+}
