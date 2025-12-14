@@ -2,35 +2,20 @@ import { prisma } from "@/lib/prisma-client";
 import ProductForm from "@/components/admin/products/ProductForm";
 import { notFound } from "next/navigation";
 
-interface Props {
-  params: { productId: string };
+interface PageProps {
+  params: {
+    productId: string;
+  };
 }
 
-export default async function EditProductPage({ params }: Props) {
-  // 1. Kategorileri Çek (Hiyerarşik + Özellikler)
-  const categories = await prisma.category.findMany({
-    where: { parentId: null },
-    include: {
-      children: {
-        include: { attributes: true },
-      },
-      attributes: true,
-    },
-    orderBy: { name: "asc" },
-  });
-
-  // 2. Markaları Çek (⚠️ EKSİKTİ, EKLENDİ)
-  const brands = await prisma.brand.findMany({
-    orderBy: { name: "asc" },
-  });
-
-  // 3. Ürünü Detaylı Çek (⚠️ include EKLENDİ)
+export default async function EditProductPage({ params }: PageProps) {
+  // 1. Ürünü tüm detaylarıyla çek
   const product = await prisma.product.findUnique({
     where: { id: params.productId },
     include: {
-      variants: true, // Varyantları getir
-      attributeValues: true, // Özellik değerlerini getir
-      images: true, // Resimleri getir
+      images: true,
+      variants: true,
+      attributeValues: true,
     },
   });
 
@@ -38,24 +23,38 @@ export default async function EditProductPage({ params }: Props) {
     notFound();
   }
 
-  // 4. Decimal -> Number Dönüşümü (Serialization)
-  // Form bileşeni Decimal tipini (obje) sevmez, düz sayı (number) ister.
+  // 2. Kategorileri ve Markaları çek (Select kutuları için)
+  const categories = await prisma.category.findMany({
+    include: {
+      children: {
+        include: {
+          attributes: true,
+          brands: true,
+        },
+      },
+      brands: true,
+      attributes: true,
+    },
+  });
+
+  const brands = await prisma.brand.findMany();
+
+  // 3. Decimal Tiplerini Number'a Çevir (Serialization Hatası Almamak İçin)
   const formattedProduct = {
     ...product,
     price: Number(product.price),
     salePrice: product.salePrice ? Number(product.salePrice) : null,
-    // Varyantların içindeki Decimal fiyatları da çeviriyoruz (varsa)
     variants: product.variants.map((v) => ({
       ...v,
-      price: v.price ? Number(v.price) : null,
+      price: v.price ? Number(v.price) : 0, // Varyant fiyat farkı
     })),
   };
 
   return (
-    <div className="p-6 md:p-8 bg-gray-50/50 min-h-screen">
+    <div className="p-6">
       <ProductForm
         categories={categories}
-        brands={brands} // ✅ Artık tanımlı
+        brands={brands}
         initialData={formattedProduct}
       />
     </div>

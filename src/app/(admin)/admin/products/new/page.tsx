@@ -1,17 +1,24 @@
 import { prisma } from "@/lib/prisma-client";
 import ProductForm from "@/components/admin/products/ProductForm";
 
+export const dynamic = "force-dynamic";
+
 export default async function NewProductPage() {
   const categories = await prisma.category.findMany({
     where: { parentId: null },
     include: {
+      brands: true,
       children: {
-        include: { attributes: true },
+        include: {
+          attributes: true,
+          brands: true,
+        },
       },
       attributes: true,
     },
     orderBy: { name: "asc" },
   });
+
   const brands = await prisma.brand.findMany({
     orderBy: { name: "asc" },
   });

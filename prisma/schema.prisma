@@ -77,56 +77,42 @@ model Product {
   id          String    @id @default(cuid())
   name        String
   description String?   @db.Text
-  
-  // Ana Fiyat ve Stok (Varyant yoksa bu geçerli)
   price       Decimal   @db.Decimal(10, 2)
   salePrice   Decimal?  @db.Decimal(10, 2)
   stock       Int       @default(0)
-
   images      ProductImage[]
   isActive    Boolean   @default(true)
   isArchived  Boolean   @default(false)
-  
   categoryId  String
   category    Category  @relation(fields: [categoryId], references: [id])
-  
   brandId     String?
   brand       Brand?    @relation(fields: [brandId], references: [id])
-
-  // 🟢 YENİ: Varyantlar (Renk/Beden Stokları)
   variants    ProductVariant[]
-
-  // 🟢 YENİ: Ürün Özellik Değerleri (Örn: "İşlemci: M1")
   attributeValues ProductAttributeValue[]
-  
   orderItems  OrderItem[]
-
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 }
 
-// 🟢 YENİ MODEL: Ürün Varyantları
 model ProductVariant {
   id          String   @id @default(cuid())
   
   productId   String
   product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
   
-  name        String   // Varyant Adı (Örn: "Kırmızı - Large")
-  color       String?  // Renk Kodu veya Adı
-  size        String?  // Beden
+  name        String   
+  color       String?  
+  size        String?  
   
-  stock       Int      @default(0) 
-  price       Decimal? @db.Decimal(10, 2) // Farklı fiyatı varsa (Opsiyonel)
+  stock       Int       @default(0) 
+  price       Decimal?  @db.Decimal(10, 2) 
   
-  image       String?  // Varyant görseli (Opsiyonel)
+  image       String? 
 }
 
-// 🟢 YENİ MODEL: Özellik Tanımı (Attribute)
-// Örn: Kategori="Bilgisayar", İsim="İşlemci"
 model Attribute {
   id          String   @id @default(cuid())
-  name        String   // Örn: "Ekran Boyutu"
+  name        String   
   
   categoryId  String
   category    Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
@@ -134,8 +120,6 @@ model Attribute {
   values      ProductAttributeValue[]
 }
 
-// 🟢 YENİ MODEL: Ürüne Girilen Özellik Değeri
-// Örn: Product="Macbook", Attribute="İşlemci", Value="M1 Pro"
 model ProductAttributeValue {
   id          String    @id @default(cuid())
   value       String    

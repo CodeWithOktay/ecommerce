@@ -17,13 +17,12 @@ import {
   Upload,
   X,
   Layers,
-  DollarSign,
+  TurkishLira,
   Package,
   Type,
   Star,
   ImageIcon,
-  Tag,
-  Percent,
+  BadgePercent,
   Plus,
   Trash2,
   GitFork,
@@ -33,12 +32,16 @@ import {
   Search,
 } from "lucide-react";
 import { toBase64 } from "@/lib/utils/utils";
-import { createProductWithImages } from "@/lib/actions/product-actions";
+import {
+  createProductWithImages,
+  updateProductWithImages,
+} from "@/lib/actions/product-actions";
 import toast from "react-hot-toast";
 
 // --- TİP TANIMLAMALARI ---
 type CategoryWithChildren = Category & {
-  children: (Category & { attributes: Attribute[] })[];
+  brands: Brand[]; // 🟢 Markalar burada da var
+  children: (Category & { attributes: Attribute[]; brands: Brand[] })[]; // 🟢 Ve burada
   attributes: Attribute[];
 };
 
@@ -66,11 +69,11 @@ interface VariantRow {
 
 interface Props {
   categories: CategoryWithChildren[];
-  brands: Brand[];
+  brands: Brand[]; // Bu tüm liste (Yedek olarak kalsın ama kullanmayacağız)
   initialData?: ProductData | null;
 }
 
-// 🔥 YENİ: ARAMALI SEÇİM KUTUSU BİLEŞENİ (Custom Combobox)
+// 🔥 ARAMALI SEÇİM KUTUSU BİLEŞENİ
 function SearchableSelect({
   label,
   options,
@@ -90,7 +93,6 @@ function SearchableSelect({
   const [search, setSearch] = useState("");
   const wrapperRef = useRef<HTMLDivElement>(null);
 
-  // Dışarı tıklayınca kapat
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (
@@ -104,10 +106,7 @@ function SearchableSelect({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Seçili öğenin adını bul
   const selectedName = options.find((o) => o.id === value)?.name;
-
-  // Arama filtresi
   const filteredOptions = options.filter((o) =>
     o.name.toLowerCase().includes(search.toLowerCase())
   );
@@ -119,7 +118,6 @@ function SearchableSelect({
           {label}
         </label>
       )}
-
       <div
         onClick={() => !disabled && setIsOpen(!isOpen)}
         className={`w-full px-4 py-2.5 rounded-lg border flex items-center justify-between cursor-pointer transition-all ${
@@ -135,11 +133,8 @@ function SearchableSelect({
         </span>
         <ChevronsUpDown size={16} className="text-gray-400 shrink-0" />
       </div>
-
-      {/* DROPDOWN MENU */}
       {isOpen && !disabled && (
         <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-100">
-          {/* Arama Inputu */}
           <div className="p-2 border-b border-gray-100 sticky top-0 bg-white">
             <div className="relative">
               <Search
@@ -156,8 +151,6 @@ function SearchableSelect({
               />
             </div>
           </div>
-
-          {/* Liste */}
           <div className="max-h-60 overflow-y-auto custom-scrollbar">
             {filteredOptions.length > 0 ? (
               filteredOptions.map((opt) => (
@@ -166,7 +159,7 @@ function SearchableSelect({
                   onClick={() => {
                     onChange(opt.id);
                     setIsOpen(false);
-                    setSearch(""); // Aramayı sıfırla
+                    setSearch("");
                   }}
                   className={`px-4 py-2 text-sm cursor-pointer flex items-center justify-between hover:bg-indigo-50 transition-colors ${value === opt.id ? "bg-indigo-50 text-indigo-700 font-medium" : "text-gray-700"}`}
                 >
@@ -278,14 +271,33 @@ export default function ProductForm({
 
   // Kategori Değişim Handler'ı
   const handleCategoryChange = (catId: string) => {
-    setFormData({ ...formData, categoryId: catId });
+    setFormData({ ...formData, categoryId: catId, brandId: "" }); // Kategori değişince markayı sıfırla
     const parent = categories.find((p) => p.id === selectedParentId);
     const child = parent?.children.find((c) => c.id === catId);
     if (child) setActiveAttributes(child.attributes);
     else setActiveAttributes([]);
   };
 
-  // Listeleri Hazırla
+  // --- 🟢 YENİ: MARKA FİLTRELEME MANTIĞI ---
+  const filteredBrands = useMemo(() => {
+    if (!selectedParentId) return [];
+
+    const parent = categories.find((c) => c.id === selectedParentId);
+
+    const child = parent?.children.find((c) => c.id === formData.categoryId);
+
+    const parentBrands = parent?.brands || [];
+    const childBrands = child?.brands || [];
+
+    const combined = [...parentBrands, ...childBrands];
+
+    const uniqueBrands = Array.from(
+      new Map(combined.map((item) => [item.id, item])).values()
+    );
+
+    return uniqueBrands;
+  }, [categories, selectedParentId, formData.categoryId]);
+
   const parentCategories = useMemo(
     () => categories.filter((c) => c.parentId === null),
     [categories]
@@ -295,7 +307,7 @@ export default function ProductForm({
     [categories, selectedParentId]
   );
 
-  // --- HANDLERS (Varyant, Resim, Submit) - (Aynı kodlar korundu)
+  // --- HANDLERS ---
   const addVariant = () =>
     setVariants([
       ...variants,
@@ -384,8 +396,15 @@ export default function ProductForm({
         variants: variantsPayload,
         attributeValues: attributesPayload,
       };
+      let result;
+      if (initialData) {
+        // Eğer düzenleme modundaysak (initialData varsa) -> GÜNCELLEME ÇAĞIR
+        result = await updateProductWithImages(initialData.id, payload);
+      } else {
+        // Eğer yeni ürünse -> OLUŞTURMA ÇAĞIR
+        result = await createProductWithImages(payload);
+      }
 
-      const result = await createProductWithImages(payload);
       if (result.success) {
         toast.success(result.message);
         router.push("/admin/products");
@@ -672,26 +691,23 @@ export default function ProductForm({
 
         {/* --- SAĞ KOLON --- */}
         <div className="space-y-8">
-          {/* ORGANİZASYON (Aramalı Selectler) */}
+          {/* ORGANİZASYON */}
           <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
             <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
               <Layers size={18} className="text-gray-400" /> Organizasyon
             </h3>
             <div className="space-y-4">
-              {/* 1. Ana Kategori (Searchable) */}
               <SearchableSelect
                 label="1. Ana Kategori"
                 options={parentCategories}
                 value={selectedParentId}
                 onChange={(val) => {
                   setSelectedParentId(val);
-                  setFormData({ ...formData, categoryId: "" });
+                  setFormData({ ...formData, categoryId: "", brandId: "" }); // Markayı da sıfırla
                   setActiveAttributes([]);
                 }}
                 placeholder="Ana Kategori Ara..."
               />
-
-              {/* 2. Alt Kategori (Searchable) */}
               <SearchableSelect
                 label="2. Alt Kategori"
                 options={subCategories}
@@ -704,21 +720,22 @@ export default function ProductForm({
                     : "Önce Ana Kategori Seç"
                 }
               />
-              {!formData.categoryId && (
-                <div className="text-xs text-red-500 mt-1 font-medium">
-                  * Zorunlu alan
-                </div>
-              )}
-
               <hr className="border-gray-100" />
 
-              {/* Marka (Searchable) */}
+              {/* 🟢 GÜNCELLENEN MARKA SEÇİMİ */}
               <SearchableSelect
                 label="Marka"
-                options={brands}
+                options={filteredBrands} // 👈 SADECE FİLTRELENEN MARKALAR
                 value={formData.brandId}
                 onChange={(val) => setFormData({ ...formData, brandId: val })}
-                placeholder="Marka Ara..."
+                disabled={!selectedParentId}
+                placeholder={
+                  !selectedParentId
+                    ? "Önce Kategori Seçiniz"
+                    : filteredBrands.length === 0
+                      ? "Bu kategoride marka yok"
+                      : "Marka Ara..."
+                }
               />
             </div>
           </div>
@@ -732,37 +749,43 @@ export default function ProductForm({
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-1">
-                    <DollarSign size={14} /> Fiyat
+                    <TurkishLira size={14} /> Fiyat
                   </label>
                   <input
                     type="number"
                     min="0"
                     step="0.01"
-                    value={formData.price}
-                    onChange={(e) =>
+                    value={Number.isNaN(formData.price) ? "" : formData.price}
+                    onChange={(e) => {
+                      const val = parseFloat(e.target.value);
                       setFormData({
                         ...formData,
-                        price: parseFloat(e.target.value),
-                      })
-                    }
+                        price: isNaN(val) ? 0 : val,
+                      });
+                    }}
                     className="w-full px-4 py-2 rounded-lg border outline-none font-mono focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-red-600 mb-1 flex items-center gap-1">
-                    <Percent size={14} /> İndirimli
+                    <BadgePercent size={14} /> İndirimli Fiyat
                   </label>
                   <input
                     type="number"
                     min="0"
                     step="0.01"
-                    value={formData.salePrice || ""}
-                    onChange={(e) =>
+                    value={
+                      formData.salePrice === null || formData.salePrice === 0
+                        ? ""
+                        : formData.salePrice
+                    }
+                    onChange={(e) => {
+                      const val = parseFloat(e.target.value);
                       setFormData({
                         ...formData,
-                        salePrice: parseFloat(e.target.value),
-                      })
-                    }
+                        salePrice: isNaN(val) ? 0 : val,
+                      });
+                    }}
                     className="w-full px-4 py-2 rounded-lg border border-red-200 text-red-600 outline-none font-mono focus:ring-2 focus:ring-red-500"
                     placeholder="Opsiyonel"
                   />

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import Image from "next/image";
 import {
   Search,
@@ -9,12 +8,12 @@ import {
   AlertCircle,
   CheckCircle2,
   Archive,
-  Edit,
   EyeOff,
 } from "lucide-react";
+import ProductActions from "./ProductActions";
 
-// ✅ DÜZELTME: Prisma tiplerini sildik.
-// Backend'den (page.tsx) gelen sadeleştirilmiş veri yapısını buraya tanımlıyoruz.
+export const dynamic = "force-dynamic";
+
 interface ProductRow {
   id: string;
   name: string;
@@ -22,9 +21,9 @@ interface ProductRow {
   stock: number;
   isActive: boolean;
   isArchived: boolean;
-  categoryName: string; // category objesi yerine string ismi
-  brandName: string; // brand objesi yerine string ismi
-  image: string; // ProductImage[] yerine düz URL string'i
+  categoryName: string;
+  brandName: string;
+  image: string;
 }
 
 interface Props {
@@ -39,12 +38,13 @@ export default function ProductDataTable({ products }: Props) {
 
   // --- FİLTRELEME MANTIĞI ---
   const filteredProducts = products.filter((product) => {
-    // Arama: Ürün adı, kategori veya marka içinde ara
+    // 🛡️ Güvenli Arama (Null check)
     const term = searchTerm.toLowerCase();
-    const matchesSearch =
-      product.name.toLowerCase().includes(term) ||
-      product.categoryName.toLowerCase().includes(term) ||
-      product.brandName.toLowerCase().includes(term);
+    const nameMatch = (product.name || "").toLowerCase().includes(term);
+    const catMatch = (product.categoryName || "").toLowerCase().includes(term);
+    const brandMatch = (product.brandName || "").toLowerCase().includes(term);
+
+    const matchesSearch = nameMatch || catMatch || brandMatch;
 
     // Durum Filtresi
     let matchesStatus = true;
@@ -125,7 +125,7 @@ export default function ProductDataTable({ products }: Props) {
                   key={product.id}
                   className="hover:bg-gray-50/50 transition-colors group"
                 >
-                  {/* 1. Ürün Görsel ve İsim */}
+                  {/* 1. Görsel & İsim */}
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-4">
                       <div className="relative w-12 h-12 rounded-lg overflow-hidden border border-gray-100 bg-gray-50 shrink-0">
@@ -134,6 +134,7 @@ export default function ProductDataTable({ products }: Props) {
                           alt={product.name}
                           fill
                           className="object-cover"
+                          sizes="48px"
                         />
                       </div>
                       <div className="max-w-[200px]">
@@ -150,7 +151,7 @@ export default function ProductDataTable({ products }: Props) {
                     </div>
                   </td>
 
-                  {/* 2. Kategori ve Marka */}
+                  {/* 2. Kategori */}
                   <td className="px-6 py-4">
                     <div className="flex flex-col">
                       <span className="text-sm font-medium text-gray-900">
@@ -174,7 +175,13 @@ export default function ProductDataTable({ products }: Props) {
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
                       <div
-                        className={`w-2 h-2 rounded-full ${product.stock < 10 ? (product.stock === 0 ? "bg-red-500" : "bg-amber-500") : "bg-emerald-500"}`}
+                        className={`w-2 h-2 rounded-full ${
+                          product.stock < 10
+                            ? product.stock === 0
+                              ? "bg-red-500"
+                              : "bg-amber-500"
+                            : "bg-emerald-500"
+                        }`}
                       />
                       <span className="text-sm text-gray-700">
                         {product.stock} Adet
@@ -201,13 +208,10 @@ export default function ProductDataTable({ products }: Props) {
 
                   {/* 6. İşlemler */}
                   <td className="px-6 py-4 text-right">
-                    <Link
-                      href={`/admin/products/${product.id}/edit`}
-                      className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors inline-block"
-                      title="Düzenle"
-                    >
-                      <Edit size={18} />
-                    </Link>
+                    <ProductActions
+                      productId={product.id}
+                      isArchived={product.isArchived}
+                    />
                   </td>
                 </tr>
               ))}
@@ -233,7 +237,19 @@ export default function ProductDataTable({ products }: Props) {
 
 // --- YARDIMCI BİLEŞENLER ---
 
-function FilterButton({ label, active, onClick, icon, isWarning }: any) {
+function FilterButton({
+  label,
+  active,
+  onClick,
+  icon,
+  isWarning,
+}: {
+  label: string;
+  active: boolean;
+  onClick: () => void;
+  icon?: React.ReactNode;
+  isWarning?: boolean;
+}) {
   return (
     <button
       onClick={onClick}
@@ -254,7 +270,15 @@ function FilterButton({ label, active, onClick, icon, isWarning }: any) {
   );
 }
 
-function Badge({ children, variant, icon }: any) {
+function Badge({
+  children,
+  variant,
+  icon,
+}: {
+  children: React.ReactNode;
+  variant: "green" | "red" | "gray";
+  icon: React.ReactNode;
+}) {
   const styles = {
     green: "bg-emerald-50 text-emerald-700 border-emerald-100",
     red: "bg-rose-50 text-rose-700 border-rose-100",
@@ -262,7 +286,7 @@ function Badge({ children, variant, icon }: any) {
   };
   return (
     <span
-      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium border ${styles[variant as keyof typeof styles]}`}
+      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium border ${styles[variant]}`}
     >
       {icon}
       {children}

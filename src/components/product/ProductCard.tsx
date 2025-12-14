@@ -5,21 +5,36 @@ import Image from "next/image";
 import Link from "next/link";
 import React, { useState } from "react";
 import useCart from "@/hooks/use-cart";
-import { Product } from "@prisma/client";
 
-// ✅ DÜZELTME: Prop ismi 'data' yerine 'product' yapıldı.
-// Parent component (ProductGrid) bu ismi kullanıyor.
+// ✅ DÜZELTME 1: Tip Tanımı
+// Prisma'dan gelen ham Product tipi yerine, sayfanın gönderdiği
+// gerçek veri yapısını tanımlıyoruz.
 interface ProductCardProps {
-  product: Omit<Product, "price"> & { price: string | number | any };
+  product: {
+    id: string;
+    name: string;
+    description: string | null;
+    price: number; // Decimal değil number geliyor artık
+    stock: number;
+    // Resim dizisinin yapısını tanıtıyoruz
+    images: {
+      url: string;
+      isMain: boolean;
+    }[];
+  };
 }
 
 export default function ProductCard({ product }: ProductCardProps) {
   const cart = useCart();
   const [isAdded, setIsAdded] = useState(false);
 
-  // 'data' yerine 'product' kullanıyoruz
-  const priceNumber = Number(product.price);
-  const mainImage = product.images?.[0] || "/placeholder.png";
+  // ✅ DÜZELTME 2: Resim URL'ini Doğru Alma
+  // Önce "Ana Görsel" (isMain=true) var mı bak, yoksa ilk resmi al.
+  const mainImageObj =
+    product.images?.find((img) => img.isMain) || product.images?.[0];
+
+  // Obje varsa URL'ini al, yoksa placeholder koy.
+  const imageUrl = mainImageObj ? mainImageObj.url : "/placeholder.png";
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -28,8 +43,8 @@ export default function ProductCard({ product }: ProductCardProps) {
     cart.addItem({
       id: product.id,
       name: product.name,
-      price: priceNumber,
-      imageUrl: mainImage,
+      price: product.price,
+      imageUrl: imageUrl, // ✅ Düzeltilmiş URL
     });
 
     setIsAdded(true);
@@ -38,10 +53,11 @@ export default function ProductCard({ product }: ProductCardProps) {
 
   return (
     <div className="group bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 p-4 border border-gray-100 hover:border-indigo-100 relative overflow-hidden h-full flex flex-col">
+      {/* Resim Alanı */}
       <div className="relative aspect-[3/4] overflow-hidden rounded-xl mb-3 bg-gray-50">
-        <Link href={`/urun/${product.id}`}>
+        <Link href={`/products/${product.id}`}>
           <Image
-            src={mainImage}
+            src={imageUrl} // ✅ String URL kullanıyoruz
             alt={product.name}
             fill
             className="object-cover group-hover:scale-105 transition-transform duration-500"
@@ -49,6 +65,7 @@ export default function ProductCard({ product }: ProductCardProps) {
           />
         </Link>
 
+        {/* Stok Rozeti */}
         {product.stock <= 0 && (
           <div className="absolute inset-0 bg-white/60 backdrop-blur-[2px] flex items-center justify-center z-10">
             <span className="bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider transform -rotate-12 shadow-md">
@@ -58,8 +75,9 @@ export default function ProductCard({ product }: ProductCardProps) {
         )}
       </div>
 
+      {/* İçerik Alanı */}
       <div className="flex flex-col flex-1">
-        <Link href={`/urun/${product.id}`} className="flex-1">
+        <Link href={`/products/${product.id}`} className="flex-1">
           <h3 className="font-semibold text-gray-900 truncate mb-1 text-lg group-hover:text-indigo-600 transition-colors">
             {product.name}
           </h3>
@@ -68,9 +86,10 @@ export default function ProductCard({ product }: ProductCardProps) {
           </p>
         </Link>
 
+        {/* Fiyat */}
         <div className="mb-4">
           <p className="text-xl font-bold text-gray-900 flex items-center gap-1">
-            {priceNumber.toLocaleString("tr-TR", {
+            {product.price.toLocaleString("tr-TR", {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
             })}
@@ -80,6 +99,7 @@ export default function ProductCard({ product }: ProductCardProps) {
           </p>
         </div>
 
+        {/* Sepet Butonu */}
         <button
           onClick={handleAddToCart}
           disabled={product.stock <= 0}

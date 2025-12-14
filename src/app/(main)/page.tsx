@@ -1,33 +1,45 @@
 import { Lock, Star, Truck, AlertCircle } from "lucide-react";
 import Image from "next/image";
-import prisma from "@/lib/prisma-client";
+import { prisma } from "@/lib/prisma-client"; // { prisma } süslü parantez ile import etmek genelde daha güvenlidir
 import ProductCard from "@/components/product/ProductCard";
 
-// Sayfanın belirli aralıklarla (örn: 60 saniye) yenilenmesini sağlar (ISR)
-// veya '0' yaparak her istekte güncel veri çekmesini sağlayabilirsin.
+// Sayfanın her istekte güncel veri çekmesini sağlar
 export const revalidate = 0;
 
 export default async function HomePage() {
-  // 1. Veritabanından Canlı Ürünleri Çek
-  // Sadece aktif olan, arşivlenmemiş ve stokta olanları getiriyoruz.
-  const products = await prisma.product.findMany({
+  // 1. Veritabanından Ham Veriyi Çek
+  const rawProducts = await prisma.product.findMany({
     where: {
       isActive: true,
       isArchived: false,
     },
-    orderBy: {
-      createdAt: "desc", // En yeniler en başta
+    include: {
+      images: true,   // 🟢 Görselleri getir
+      category: true, // 🟢 Kategoriyi getir
+      brand: true     // 🟢 Markayı getir
     },
-    take: 12, // Ana sayfada çok yığılma olmasın diye limit koyduk
+    orderBy: {
+      createdAt: "desc",
+    },
+    take: 12,
   });
+
+  // 2. Decimal -> Number Dönüşümü (Serialization)
+  const products = rawProducts.map((product) => ({
+    ...product,
+    price: Number(product.price),
+    salePrice: product.salePrice ? Number(product.salePrice) : null,
+  }));
 
   return (
     <main className="min-h-screen bg-white">
       {/* Ana Container */}
       <div className="max-w-7xl mx-auto px-4 py-12">
-        {/* ✅ Header Bölümü */}
+        
+        {/* Header Bölümü */}
         <div className="text-center mb-16 space-y-4">
           <div className="flex justify-center items-center mb-6 relative h-24">
+            {/* Logo dosyası yoksa hata vermemesi için placeholder veya kontrol ekleyebilirsin */}
             <Image
               src="/kervanpazar-logo.png"
               alt="KervanPazar Logo"
@@ -47,19 +59,18 @@ export default async function HomePage() {
           <div className="w-24 h-1.5 bg-black mx-auto rounded-full mt-6"></div>
         </div>
 
-        {/* ✅ Ürün Grid Bölümü */}
+        {/* Ürün Grid Bölümü */}
         <div className="mb-20">
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-2xl font-bold text-gray-900">
               Öne Çıkan Ürünler
             </h2>
-            {/* İleride 'Tümünü Gör' linki eklenebilir */}
           </div>
 
           {products.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
               {products.map((product) => (
-                <ProductCard key={product.id} data={product} />
+                <ProductCard key={product.id} product={product} />
               ))}
             </div>
           ) : (
@@ -78,7 +89,7 @@ export default async function HomePage() {
           )}
         </div>
 
-        {/* ✅ Özellikler Bölümü (Features) */}
+        {/* Özellikler Bölümü (Features) */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
           {/* Hızlı Teslimat */}
           <div className="flex flex-col items-center text-center p-8 rounded-2xl bg-blue-50 border border-blue-100 transition-transform hover:-translate-y-1 duration-300">
