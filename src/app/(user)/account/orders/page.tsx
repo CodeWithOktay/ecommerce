@@ -1,203 +1,203 @@
 import { getUserOrders } from "@/lib/actions/order-actions";
-import { redirect } from "next/navigation";
-import Image from "next/image";
-import Link from "next/link";
 import {
   Package,
   Calendar,
   ChevronRight,
   ShoppingBag,
   Truck,
-  CheckCircle,
   Clock,
+  CheckCircle2,
   XCircle,
 } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import CancelOrderButton from "@/components/order/CancelOrderButton";
 
-// Sipariş durumu çevirileri ve renkleri
-const statusConfig: Record<
-  string,
-  { label: string; color: string; icon: any }
-> = {
-  PENDING: {
-    label: "Hazırlanıyor",
-    color: "bg-yellow-100 text-yellow-700 border-yellow-200",
-    icon: Clock,
-  },
-  SHIPPED: {
-    label: "Kargolandı",
-    color: "bg-blue-100 text-blue-700 border-blue-200",
-    icon: Truck,
-  },
-  DELIVERED: {
-    label: "Teslim Edildi",
-    color: "bg-green-100 text-green-700 border-green-200",
-    icon: CheckCircle,
-  },
-  CANCELLED: {
-    label: "İptal Edildi",
-    color: "bg-red-100 text-red-700 border-red-200",
-    icon: XCircle,
-  },
-  // Varsayılan
-  DEFAULT: {
-    label: "İşlemde",
-    color: "bg-gray-100 text-gray-700 border-gray-200",
-    icon: Package,
-  },
-};
-
-export default async function UserOrdersPage() {
+export default async function OrdersPage() {
   const orders = await getUserOrders();
 
-  // Oturum yoksa login'e at (Aslında middleware veya layout korur ama garanti olsun)
-  if (orders === null) {
-    redirect("/login");
+  // --- BOŞ SİPARİŞ DURUMU ---
+  if (!orders || orders.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 bg-white rounded-3xl border border-gray-100 shadow-sm text-center">
+        <div className="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mb-6 animate-pulse-slow">
+          <div className="bg-gradient-to-r from-[#667EEA] to-[#764BA2] bg-clip-text text-transparent">
+            <ShoppingBag size={40} />
+          </div>
+        </div>
+        <h2 className="text-2xl font-black text-gray-900 tracking-tight">
+          Henüz siparişiniz yok
+        </h2>
+        <p className="text-gray-500 mt-2 mb-8 text-lg">
+          Alışverişe başlayıp ilk siparişinizi oluşturun.
+        </p>
+        <Link
+          href="/"
+          className="px-8 py-4 bg-gradient-to-r from-[#667EEA] to-[#764BA2] text-white rounded-2xl font-bold hover:shadow-lg hover:shadow-[#667EEA]/30 hover:-translate-y-1 transition-all duration-300"
+        >
+          Alışverişe Başla
+        </Link>
+      </div>
+    );
   }
 
+  // --- DURUM ROZETLERİ ---
+  const getStatusBadge = (status: string) => {
+    const statusMap: Record<
+      string,
+      { label: string; className: string; icon: any }
+    > = {
+      PENDING: {
+        label: "Sipariş Alındı",
+        className: "bg-blue-50 text-blue-700 border-blue-200",
+        icon: Clock,
+      },
+      PROCESSING: {
+        label: "Hazırlanıyor",
+        className: "bg-purple-50 text-purple-700 border-purple-200", // Temaya uygun mor
+        icon: Package,
+      },
+      SHIPPED: {
+        label: "Kargoya Verildi",
+        className: "bg-indigo-50 text-indigo-700 border-indigo-200", // Temaya uygun indigo
+        icon: Truck,
+      },
+      DELIVERED: {
+        label: "Teslim Edildi",
+        className: "bg-green-50 text-green-700 border-green-200",
+        icon: CheckCircle2,
+      },
+      CANCELLED: {
+        label: "İptal Edildi",
+        className: "bg-red-50 text-red-700 border-red-200",
+        icon: XCircle,
+      },
+    };
+
+    const info = statusMap[status] || {
+      label: status,
+      className: "bg-gray-50 text-gray-700 border-gray-200",
+      icon: Package,
+    };
+
+    const Icon = info.icon;
+
+    return (
+      <span
+        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border ${info.className}`}
+      >
+        <Icon size={14} />
+        {info.label}
+      </span>
+    );
+  };
+
   return (
-    <div className="max-w-5xl mx-auto p-6 md:p-10 min-h-screen">
-      {/* Header */}
-      <div className="mb-8 flex items-center gap-3">
-        <div className="p-3 bg-blue-50 rounded-full text-blue-600">
-          <ShoppingBag size={28} />
-        </div>
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Siparişlerim</h1>
-          <p className="text-gray-500">
-            Geçmiş siparişlerinizi buradan takip edebilirsiniz.
-          </p>
-        </div>
+    <div className="space-y-8">
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-black text-gray-900 tracking-tight">
+          Siparişlerim
+        </h1>
+        <span className="text-sm font-medium text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+          Top. {orders.length} Sipariş
+        </span>
       </div>
 
-      {/* Sipariş Yoksa Empty State */}
-      {orders.length === 0 ? (
-        <div className="text-center py-20 bg-gray-50 rounded-3xl border border-dashed border-gray-300">
-          <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
-            <Package className="text-gray-300 w-10 h-10" />
-          </div>
-          <h3 className="text-xl font-semibold text-gray-900 mb-2">
-            Henüz Siparişiniz Yok
-          </h3>
-          <p className="text-gray-500 mb-8 max-w-md mx-auto">
-            Hemen alışverişe başlayın, ihtiyacınız olan ürünleri kapınıza
-            getirelim.
-          </p>
-          <Link
-            href="/"
-            className="inline-flex items-center gap-2 bg-black text-white px-8 py-3 rounded-xl font-medium hover:bg-gray-800 transition shadow-lg hover:shadow-xl"
+      <div className="space-y-6">
+        {orders.map((order) => (
+          <div
+            key={order.id}
+            className="group bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-xl hover:shadow-indigo-100/50 hover:border-[#667EEA]/30 transition-all duration-300"
           >
-            Alışverişe Başla <ChevronRight size={18} />
-          </Link>
-        </div>
-      ) : (
-        /* Sipariş Listesi */
-        <div className="space-y-6">
-          {orders.map((order) => {
-            // Config'den durumu al, yoksa default kullan
-            const statusInfo =
-              statusConfig[order.status] || statusConfig.DEFAULT;
-            const StatusIcon = statusInfo.icon;
-
-            return (
-              <div
-                key={order.id}
-                className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300"
-              >
-                {/* Kart Başlığı */}
-                <div className="bg-gray-50/50 p-4 md:p-6 border-b border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                  <div className="flex flex-wrap gap-6 text-sm">
-                    <div>
-                      <p className="text-gray-500 mb-1 flex items-center gap-1">
-                        <Calendar size={14} /> Sipariş Tarihi
-                      </p>
-                      <p className="font-semibold text-gray-900">
-                        {new Date(order.createdAt).toLocaleDateString("tr-TR", {
-                          day: "numeric",
-                          month: "long",
-                          year: "numeric",
-                        })}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-gray-500 mb-1">Toplam Tutar</p>
-                      <p className="font-bold text-gray-900">
-                        {Number(order.total).toLocaleString("tr-TR", {
-                          minimumFractionDigits: 2,
-                        })}{" "}
-                        ₺
-                      </p>
-                    </div>
-                    <div className="hidden md:block">
-                      <p className="text-gray-500 mb-1">Sipariş No</p>
-                      <p className="font-mono text-gray-900">
-                        #{order.id.slice(-8).toUpperCase()}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div
-                    className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium border ${statusInfo.color}`}
-                  >
-                    <StatusIcon size={16} />
-                    {statusInfo.label}
-                  </div>
+            {/* Üst Bilgi Barı */}
+            <div className="bg-gray-50/50 p-5 flex flex-wrap gap-4 justify-between items-center border-b border-gray-100">
+              <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500">
+                <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border border-gray-100 shadow-sm">
+                  <Calendar size={16} className="text-[#667EEA]" />
+                  <span className="font-medium text-gray-700">
+                    {new Date(order.createdAt).toLocaleDateString("tr-TR", {
+                      day: "numeric",
+                      month: "long",
+                      year: "numeric",
+                    })}
+                  </span>
                 </div>
-
-                {/* Ürünler */}
-                <div className="p-4 md:p-6">
-                  <div className="space-y-4">
-                    {order.items.map((item) => (
-                      <div key={item.id} className="flex items-center gap-4">
-                        {/* Resim */}
-                        <div className="relative w-16 h-16 md:w-20 md:h-20 bg-gray-100 rounded-lg overflow-hidden border border-gray-100 flex-shrink-0">
-                          {item.product && item.product.images[0] ? (
-                            <Image
-                              src={item.product.images[0]}
-                              alt={item.product.name}
-                              fill
-                              className="object-cover"
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center text-gray-400">
-                              <Package size={20} />
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Detay */}
-                        <div className="flex-1 min-w-0">
-                          <h4 className="font-medium text-gray-900 line-clamp-1">
-                            {item.product ? item.product.name : "Silinmiş Ürün"}
-                          </h4>
-                          <p className="text-sm text-gray-500 mt-1">
-                            {Number(item.price).toLocaleString("tr-TR")} ₺ x{" "}
-                            {item.quantity} adet
-                          </p>
-                        </div>
-
-                        {/* Ürün Linki (Varsa) */}
-                        {item.product && (
-                          <Link
-                            href={`/urun/${item.product.id}`}
-                            className="hidden sm:flex items-center text-sm font-medium text-blue-600 hover:text-blue-800 transition"
-                          >
-                            Ürüne Git
-                          </Link>
-                        )}
-                      </div>
-                    ))}
-                  </div>
+                <div className="hidden sm:flex items-center gap-2">
+                  <span className="text-xs text-gray-400 font-mono">
+                    #{order.id.slice(0, 8).toUpperCase()}
+                  </span>
                 </div>
-
-                {/* Alt Aksiyon (Detay Butonu eklenebilir) */}
-                {/* <div className="p-4 border-t border-gray-100 bg-gray-50/30 text-right">
-                   <button className="text-sm font-bold text-gray-900 hover:underline">Sipariş Detaylarını Gör</button>
-                </div> */}
               </div>
-            );
-          })}
-        </div>
-      )}
+
+              <div className="flex items-center gap-4">
+                {/* Durum Rozeti */}
+                {getStatusBadge(order.status)}
+
+                {/* Toplam Tutar (Gradient) */}
+                <span className="text-lg font-black bg-gradient-to-r from-[#667EEA] to-[#764BA2] bg-clip-text text-transparent">
+                  {Number(order.total).toLocaleString("tr-TR", {
+                    minimumFractionDigits: 2,
+                  })}{" "}
+                  ₺
+                </span>
+              </div>
+            </div>
+
+            {/* İçerik ve Butonlar */}
+            <div className="p-5 flex flex-col md:flex-row items-center justify-between gap-6">
+              {/* Ürün Görselleri */}
+              <div className="flex items-center gap-3 w-full md:w-auto overflow-x-auto pb-2 md:pb-0 no-scrollbar">
+                <div className="flex -space-x-4 pl-2">
+                  {order.items.slice(0, 4).map((item) => (
+                    <div
+                      key={item.id}
+                      className="relative w-14 h-14 rounded-full border-[3px] border-white shadow-md bg-white overflow-hidden hover:scale-110 hover:z-10 transition-transform duration-300"
+                    >
+                      {item.product.images?.[0]?.url ? (
+                        <Image
+                          src={item.product.images[0].url}
+                          alt="product"
+                          fill
+                          className="object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-gray-50 text-xs text-gray-400">
+                          <ShoppingBag size={16} />
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                {order.items.length > 4 && (
+                  <span className="text-xs font-bold text-gray-400 ml-2">
+                    +{order.items.length - 4} ürün daha
+                  </span>
+                )}
+              </div>
+
+              {/* Aksiyon Alanı */}
+              <div className="flex items-center gap-3 w-full md:w-auto">
+                {/* 🔴 İPTAL BUTONU */}
+                <div className="flex-1 md:flex-none">
+                  <CancelOrderButton orderId={order.id} status={order.status} />
+                </div>
+
+                {/* Detay Butonu (Gradient) */}
+                <Link
+                  href={`/orders/success/${order.id}`}
+                  className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-2.5 bg-gradient-to-r from-[#667EEA] to-[#764BA2] text-white rounded-xl text-sm font-bold hover:shadow-lg hover:shadow-[#667EEA]/30 hover:-translate-y-0.5 transition-all duration-300 active:scale-95 group"
+                >
+                  Detaylar
+                  <ChevronRight
+                    size={16}
+                    className="group-hover:translate-x-1 transition-transform"
+                  />
+                </Link>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

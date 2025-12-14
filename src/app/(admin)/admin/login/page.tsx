@@ -1,73 +1,97 @@
 "use client";
 
-// Gerekli ikon ve bileşen importları
-import { ArrowRight, Eye, EyeOff, Lock, Mail, Shield } from "lucide-react";
-import { signIn, useSession } from "next-auth/react"; // useSession eklendi
+import {
+  ArrowRight,
+  Eye,
+  EyeOff,
+  Lock,
+  Mail,
+  Shield,
+  AlertCircle,
+} from "lucide-react";
+import { signIn, useSession } from "next-auth/react";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
-export default function ManagementLogin() {
-  // State'lerin tanımlanması
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+// 🟢 ZOD VE HOOK FORM IMPORTS
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 
-  // Next.js ve Auth hook'ları
+// 🟢 1. ŞEMA TANIMI (Admin Kuralları)
+const adminLoginSchema = z.object({
+  email: z.string().email("Geçerli bir e-posta adresi giriniz."),
+  password: z.string().min(1, "Şifre alanı boş bırakılamaz."),
+});
+
+// Tip Türetme
+type AdminLoginFormValues = z.infer<typeof adminLoginSchema>;
+
+export default function ManagementLogin() {
+  // UI State'leri
+  const [showPassword, setShowPassword] = useState(false);
+  const [globalError, setGlobalError] = useState("");
+
+  // Next.js Hooks
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { status } = useSession(); // Oturum durumunu dinliyoruz
+  const { status } = useSession();
 
-  // ✅ Zaten giriş yapılmışsa direkt panele fırlat (Replace ile)
+  // 🟢 2. REACT HOOK FORM KURULUMU
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<AdminLoginFormValues>({
+    resolver: zodResolver(adminLoginSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  });
+
+  // Zaten giriş yapılmışsa panele at
   useEffect(() => {
     if (status === "authenticated") {
       router.replace("/admin/dashboard");
     }
   }, [status, router]);
 
-  // URL'den hata parametresini kontrol etme
+  // URL Hatalarını Yakala
   useEffect(() => {
     const errorParam = searchParams.get("error");
     if (errorParam === "CredentialsSignin") {
-      setError("Geçersiz email, şifre veya yetki.");
+      setGlobalError("Geçersiz email, şifre veya yetki.");
     }
   }, [searchParams]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
+  // 🟢 3. SUBMIT FONKSİYONU
+  const onSubmit = async (data: AdminLoginFormValues) => {
+    setGlobalError("");
 
     try {
       const result = await signIn("credentials", {
-        email,
-        password,
+        email: data.email.toLowerCase().trim(),
+        password: data.password,
         loginType: "ADMIN", // Yönetici Kapısı
         redirect: false,
       });
 
       if (result?.error) {
-        setError("Giriş başarısız. Yetkinizi ve bilgilerinizi kontrol edin.");
-        setLoading(false);
-        return;
-      }
-
-      if (result?.ok) {
-        // ✅ PUSH YERİNE REPLACE: Geri tuşuyla bu sayfaya dönülmesini engeller
+        setGlobalError(
+          "Giriş başarısız. Yetkinizi ve bilgilerinizi kontrol edin."
+        );
+      } else if (result?.ok) {
         router.replace("/admin/dashboard");
         router.refresh();
       }
     } catch (error) {
-      setError("Giriş sırasında bir hata oluştu");
-      setLoading(false);
+      setGlobalError("Bağlantı hatası. Lütfen tekrar deneyin.");
     }
   };
 
-  // ✅ YÜKLENİYOR DURUMU:
-  // Session kontrol edilirken veya zaten giriş yapılmışsa formu gösterme.
-  // Bu sayede sayfa "yanıp sönmez".
+  // Yükleniyor Ekranı (Session Kontrolü)
   if (status === "loading" || status === "authenticated") {
     return (
       <div className="min-h-screen bg-neutral-50 flex items-center justify-center">
@@ -89,9 +113,9 @@ export default function ManagementLogin() {
         <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-indigo-100 rounded-full blur-3xl opacity-60"></div>
       </div>
 
-      {/* Ana içerik container'ı */}
+      {/* Ana içerik */}
       <div className="max-w-md w-full relative z-10">
-        {/* Başlık bölümü */}
+        {/* Başlık */}
         <div className="text-center mb-10">
           <div className="flex justify-center mb-6 relative h-16">
             <Image
@@ -108,23 +132,20 @@ export default function ManagementLogin() {
           </p>
         </div>
 
-        {/* Giriş kartı */}
+        {/* Giriş Kartı */}
         <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8 backdrop-blur-sm">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Hata mesajı */}
-            {error && (
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            {/* Hata Mesajı */}
+            {globalError && (
               <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm flex items-center animate-pulse">
                 <Shield className="w-5 h-5 mr-3 flex-shrink-0" />
-                {error}
+                {globalError}
               </div>
             )}
 
-            {/* Email alanı */}
+            {/* EMAIL ALANI */}
             <div className="space-y-2">
-              <label
-                htmlFor="email"
-                className="block text-sm font-semibold text-gray-900"
-              >
+              <label className="block text-sm font-semibold text-gray-900">
                 E-posta Adresi
               </label>
               <div className="relative group">
@@ -132,30 +153,34 @@ export default function ManagementLogin() {
                   <Mail className="w-5 h-5 text-gray-400 group-focus-within:text-blue-500 transition-colors" />
                 </div>
                 <input
-                  id="email"
+                  {...register("email")}
                   type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 text-gray-900 placeholder-gray-400 bg-white hover:border-gray-300"
-                  placeholder="example@mail.com"
-                  required
+                  className={`w-full pl-10 pr-4 py-3.5 border rounded-xl focus:outline-none focus:ring-2 transition-all duration-200 placeholder-gray-400 bg-white
+                    ${
+                      errors.email
+                        ? "border-red-300 focus:border-red-500 focus:ring-red-200"
+                        : "border-gray-200 hover:border-gray-300 focus:border-blue-500 focus:ring-blue-200"
+                    }`}
+                  placeholder="admin@kervanpazar.com"
                 />
               </div>
+              {errors.email && (
+                <p className="text-xs text-red-600 mt-1 ml-1">
+                  {errors.email.message}
+                </p>
+              )}
             </div>
 
-            {/* Şifre alanı */}
+            {/* ŞİFRE ALANI */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <label
-                  htmlFor="password"
-                  className="block text-sm font-semibold text-gray-900"
-                >
+                <label className="block text-sm font-semibold text-gray-900">
                   Şifre
                 </label>
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors"
+                  className="text-xs text-blue-600 hover:text-blue-700 font-medium transition-colors"
                 >
                   {showPassword ? "Gizle" : "Göster"}
                 </button>
@@ -165,13 +190,15 @@ export default function ManagementLogin() {
                   <Lock className="w-5 h-5 text-gray-400 group-focus-within:text-blue-500 transition-colors" />
                 </div>
                 <input
-                  id="password"
+                  {...register("password")}
                   type={showPassword ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-10 pr-12 py-3.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 text-gray-900 placeholder-gray-400 bg-white hover:border-gray-300"
+                  className={`w-full pl-10 pr-12 py-3.5 border rounded-xl focus:outline-none focus:ring-2 transition-all duration-200 placeholder-gray-400 bg-white
+                    ${
+                      errors.password
+                        ? "border-red-300 focus:border-red-500 focus:ring-red-200"
+                        : "border-gray-200 hover:border-gray-300 focus:border-blue-500 focus:ring-blue-200"
+                    }`}
                   placeholder="••••••••"
-                  required
                 />
                 <button
                   type="button"
@@ -185,15 +212,20 @@ export default function ManagementLogin() {
                   )}
                 </button>
               </div>
+              {errors.password && (
+                <p className="text-xs text-red-600 mt-1 ml-1">
+                  {errors.password.message}
+                </p>
+              )}
             </div>
 
-            {/* Giriş butonu */}
+            {/* Giriş Butonu */}
             <button
               type="submit"
-              disabled={loading}
-              className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-4 px-6 rounded-xl font-semibold hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 group"
+              disabled={isSubmitting}
+              className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-4 px-6 rounded-xl font-semibold hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 group active:scale-[0.98]"
             >
-              {loading ? (
+              {isSubmitting ? (
                 <div className="flex items-center justify-center">
                   <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-3"></div>
                   Doğrulanıyor...
@@ -207,7 +239,7 @@ export default function ManagementLogin() {
             </button>
           </form>
 
-          {/* Güvenlik bilgisi */}
+          {/* Güvenlik Bilgisi */}
           <div className="mt-8 pt-6 border-t border-gray-100">
             <div className="flex items-start space-x-3">
               <div className="flex-shrink-0 w-5 h-5 bg-green-100 rounded-full flex items-center justify-center mt-0.5">

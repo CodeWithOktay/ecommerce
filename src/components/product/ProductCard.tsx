@@ -1,22 +1,19 @@
 "use client";
 
-import { ShoppingCart, Check } from "lucide-react";
+import { ShoppingCart, Check, PackageX, Heart } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import React, { useState } from "react";
 import useCart from "@/hooks/use-cart";
 
-// ✅ DÜZELTME 1: Tip Tanımı
-// Prisma'dan gelen ham Product tipi yerine, sayfanın gönderdiği
-// gerçek veri yapısını tanımlıyoruz.
 interface ProductCardProps {
   product: {
     id: string;
     name: string;
     description: string | null;
-    price: number; // Decimal değil number geliyor artık
+    price: number;
+    salePrice?: number | null; // 🟢 İndirimli fiyat desteği eklendi
     stock: number;
-    // Resim dizisinin yapısını tanıtıyoruz
     images: {
       url: string;
       isMain: boolean;
@@ -28,13 +25,13 @@ export default function ProductCard({ product }: ProductCardProps) {
   const cart = useCart();
   const [isAdded, setIsAdded] = useState(false);
 
-  // ✅ DÜZELTME 2: Resim URL'ini Doğru Alma
-  // Önce "Ana Görsel" (isMain=true) var mı bak, yoksa ilk resmi al.
   const mainImageObj =
     product.images?.find((img) => img.isMain) || product.images?.[0];
-
-  // Obje varsa URL'ini al, yoksa placeholder koy.
   const imageUrl = mainImageObj ? mainImageObj.url : "/placeholder.png";
+
+  // İndirim Hesaplaması
+  const hasDiscount = product.salePrice && product.salePrice < product.price;
+  const currentPrice = hasDiscount ? product.salePrice! : product.price;
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -43,8 +40,8 @@ export default function ProductCard({ product }: ProductCardProps) {
     cart.addItem({
       id: product.id,
       name: product.name,
-      price: product.price,
-      imageUrl: imageUrl, // ✅ Düzeltilmiş URL
+      price: currentPrice, // Sepete güncel fiyatla ekle
+      imageUrl: imageUrl,
     });
 
     setIsAdded(true);
@@ -52,84 +49,124 @@ export default function ProductCard({ product }: ProductCardProps) {
   };
 
   return (
-    <div className="group bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 p-4 border border-gray-100 hover:border-indigo-100 relative overflow-hidden h-full flex flex-col">
-      {/* Resim Alanı */}
-      <div className="relative aspect-[3/4] overflow-hidden rounded-xl mb-3 bg-gray-50">
-        <Link href={`/products/${product.id}`}>
+    <div className="group relative flex flex-col h-full bg-white rounded-2xl border border-gray-100 transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-100/50 hover:border-indigo-100 hover:-translate-y-1 overflow-hidden">
+      {/* --- GÖRSEL ALANI --- */}
+      {/* aspect-[3/4] yerine aspect-[4/5] veya kare daha ferah durabilir, şimdilik 3/4 korudum */}
+      <div className="relative aspect-[3/4] w-full overflow-hidden bg-gray-50 border-b border-gray-50">
+        <Link href={`/product/${product.id}`} className="block w-full h-full">
           <Image
-            src={imageUrl} // ✅ String URL kullanıyoruz
+            src={imageUrl}
             alt={product.name}
             fill
-            className="object-cover group-hover:scale-105 transition-transform duration-500"
+            // 🟢 DÜZELTME: object-contain ve padding ile resim sığdırıldı
+            className={`object-contain p-6 transition-transform duration-500 ease-out group-hover:scale-105 ${product.stock <= 0 ? "opacity-60 grayscale" : ""}`}
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           />
         </Link>
 
-        {/* Stok Rozeti */}
+        {/* İndirim Rozeti */}
+        {hasDiscount && product.stock > 0 && (
+          <div className="absolute top-3 left-3 bg-red-600 text-white text-[10px] font-bold px-2 py-1 rounded shadow-sm z-10">
+            İNDİRİM
+          </div>
+        )}
+
+        {/* Favori Butonu (Hover'da Çıkar) */}
+        <button className="absolute top-3 right-3 p-2 bg-white rounded-full shadow-md text-gray-400 opacity-0 translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 hover:text-red-500 z-20">
+          <Heart size={18} />
+        </button>
+
+        {/* Stok Rozeti (Tükendi) */}
         {product.stock <= 0 && (
-          <div className="absolute inset-0 bg-white/60 backdrop-blur-[2px] flex items-center justify-center z-10">
-            <span className="bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider transform -rotate-12 shadow-md">
-              Tükendi
-            </span>
+          <div className="absolute inset-0 flex items-center justify-center z-10 bg-white/40 backdrop-blur-[2px]">
+            <div className="bg-white/90 border border-red-100 px-4 py-2 rounded-lg shadow-lg -rotate-3">
+              <span className="flex items-center gap-2 text-red-600 font-bold uppercase tracking-widest text-xs">
+                <PackageX size={16} /> Tükendi
+              </span>
+            </div>
           </div>
         )}
       </div>
 
-      {/* İçerik Alanı */}
-      <div className="flex flex-col flex-1">
-        <Link href={`/products/${product.id}`} className="flex-1">
-          <h3 className="font-semibold text-gray-900 truncate mb-1 text-lg group-hover:text-indigo-600 transition-colors">
+      {/* --- İÇERİK ALANI --- */}
+      <div className="flex flex-col flex-1 p-5">
+        <Link href={`/product/${product.id}`} className="flex-1 space-y-2">
+          {/* Başlık */}
+          <h3 className="font-bold text-gray-900 text-base leading-tight group-hover:text-[#667EEA] transition-colors line-clamp-2 min-h-[2.5rem]">
             {product.name}
           </h3>
-          <p className="text-sm text-gray-500 line-clamp-2 mb-3 min-h-[40px]">
-            {product.description || "Açıklama bulunmuyor."}
+
+          {/* Açıklama (Opsiyonel - Kısa) */}
+          <p className="text-xs text-gray-500 line-clamp-2 h-[32px] leading-relaxed">
+            {product.description || "Ürün detayları için tıklayınız."}
           </p>
         </Link>
 
-        {/* Fiyat */}
-        <div className="mb-4">
-          <p className="text-xl font-bold text-gray-900 flex items-center gap-1">
-            {product.price.toLocaleString("tr-TR", {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            })}
-            <span className="text-xs font-medium text-gray-500 relative top-0.5">
-              TL
+        {/* Fiyat ve Alt Kısım */}
+        <div className="mt-4 pt-4 border-t border-gray-50 space-y-4">
+          <div className="flex flex-col">
+            <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1">
+              Fiyat
             </span>
-          </p>
-        </div>
+            <div className="flex items-end gap-2 flex-wrap h-[32px]">
+              {/* 🟢 DÜZELTME: İndirimli ve Eski Fiyat Gösterimi */}
+              {hasDiscount ? (
+                <>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-xl font-black text-[#667EEA]">
+                      {currentPrice.toLocaleString("tr-TR", {
+                        minimumFractionDigits: 2,
+                      })}
+                    </span>
+                    <span className="text-xs font-bold text-gray-500">TL</span>
+                  </div>
+                  <span className="text-sm text-gray-400 line-through decoration-red-400 mb-0.5">
+                    {product.price.toLocaleString("tr-TR")} TL
+                  </span>
+                </>
+              ) : (
+                <div className="flex items-baseline gap-1">
+                  <span className="text-xl font-black text-gray-900">
+                    {product.price.toLocaleString("tr-TR", {
+                      minimumFractionDigits: 2,
+                    })}
+                  </span>
+                  <span className="text-xs font-bold text-gray-500">TL</span>
+                </div>
+              )}
+            </div>
+          </div>
 
-        {/* Sepet Butonu */}
-        <button
-          onClick={handleAddToCart}
-          disabled={product.stock <= 0}
-          className={`
-            w-full py-3 rounded-xl font-semibold flex items-center justify-center gap-2 transition-all duration-200
-            ${
-              product.stock > 0
-                ? isAdded
-                  ? "bg-green-600 text-white hover:bg-green-700"
-                  : "bg-black text-white hover:bg-gray-800 hover:shadow-lg active:scale-95"
-                : "bg-gray-100 text-gray-400 cursor-not-allowed"
-            }
-          `}
-        >
-          {product.stock > 0 ? (
-            isAdded ? (
-              <>
-                <Check size={18} className="animate-bounce" />
-                Eklendi
-              </>
+          {/* Buton */}
+          <button
+            onClick={handleAddToCart}
+            disabled={product.stock <= 0}
+            className={`
+              relative w-full py-3 rounded-xl font-bold text-sm tracking-wide shadow-sm flex items-center justify-center gap-2 transition-all duration-300
+              ${
+                product.stock > 0
+                  ? isAdded
+                    ? "bg-green-500 text-white shadow-green-200"
+                    : "bg-gradient-to-r from-[#667EEA] to-[#764BA2] text-white hover:bg-gradient-to-r hover:from-[#6b84f7] hover:to-[#8a5bb9] hover:shadow-lg hover:shadow-indigo-200 active:scale-95"
+                  : "bg-gray-100 text-gray-400 cursor-not-allowed"
+              }
+            `}
+          >
+            {product.stock > 0 ? (
+              isAdded ? (
+                <>
+                  <Check size={16} strokeWidth={3} /> Eklendi
+                </>
+              ) : (
+                <>
+                  <ShoppingCart size={16} /> Sepete Ekle
+                </>
+              )
             ) : (
-              <>
-                <ShoppingCart size={18} />
-                Sepete Ekle
-              </>
-            )
-          ) : (
-            "Stokta Yok"
-          )}
-        </button>
+              "Stok Yok"
+            )}
+          </button>
+        </div>
       </div>
     </div>
   );

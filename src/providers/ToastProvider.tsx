@@ -9,7 +9,7 @@ export default function ToastProvider() {
       reverseOrder={false}
       toastOptions={{
         // Genel Ayarlar
-        duration: 4000,
+        duration: 2000,
         className: "text-sm font-medium shadow-xl",
 
         // ✅ BAŞARILI (YEŞİL POPUP)

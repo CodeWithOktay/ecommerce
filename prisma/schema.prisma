@@ -196,6 +196,8 @@ model Order {
   items         OrderItem[]
   customerName  String
   customerEmail String
+  address       String?     @db.Text
+  cancelReason  String?
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
 }

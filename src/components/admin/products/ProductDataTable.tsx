@@ -1,5 +1,5 @@
 "use client";
-
+import Link from "next/link";
 import { useState } from "react";
 import Image from "next/image";
 import {
@@ -138,12 +138,18 @@ export default function ProductDataTable({ products }: Props) {
                         />
                       </div>
                       <div className="max-w-[200px]">
-                        <p
-                          className="font-medium text-gray-900 truncate"
-                          title={product.name}
+                        <Link
+                          href={`/products/${product.id}`}
+                          className="font-semibold text-lg text-gray-900 hover:text-indigo-600 transition-colors line-clamp-2"
                         >
-                          {product.name}
-                        </p>
+                          <p
+                            className="font-medium text-gray-900 truncate"
+                            title={product.name}
+                          >
+                            {product.name}
+                          </p>
+                        </Link>
+
                         <p className="text-xs text-gray-500">
                           ID: {product.id.slice(-6)}
                         </p>

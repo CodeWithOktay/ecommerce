@@ -21,11 +21,11 @@ export default function NavbarCartActions() {
     <div className="ml-auto flex items-center gap-x-4">
       <Link
         href="/cart"
-        className="flex items-center gap-x-2 bg-black text-white p-2 px-4 rounded-full hover:opacity-75 transition"
+        className="flex items-center gap-x-2 bg-gradient-to-r from-[#667EEA] to-[#764BA2] text-white p-2 px-4 rounded-full hover:opacity-75 transition"
       >
         <ShoppingBag size={20} />
         <span className="text-sm font-medium text-white">
-          {cart.items.length} {/* Veya cart.getTotalItems() */}
+          {cart.items.length}
         </span>
       </Link>
     </div>

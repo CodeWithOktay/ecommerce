@@ -14,9 +14,9 @@ export default async function HomePage() {
       isArchived: false,
     },
     include: {
-      images: true,   // 🟢 Görselleri getir
+      images: true, // 🟢 Görselleri getir
       category: true, // 🟢 Kategoriyi getir
-      brand: true     // 🟢 Markayı getir
+      brand: true, // 🟢 Markayı getir
     },
     orderBy: {
       createdAt: "desc",
@@ -35,30 +35,6 @@ export default async function HomePage() {
     <main className="min-h-screen bg-white">
       {/* Ana Container */}
       <div className="max-w-7xl mx-auto px-4 py-12">
-        
-        {/* Header Bölümü */}
-        <div className="text-center mb-16 space-y-4">
-          <div className="flex justify-center items-center mb-6 relative h-24">
-            {/* Logo dosyası yoksa hata vermemesi için placeholder veya kontrol ekleyebilirsin */}
-            <Image
-              src="/kervanpazar-logo.png"
-              alt="KervanPazar Logo"
-              width={300}
-              height={100}
-              className="object-contain"
-              priority
-            />
-          </div>
-          <h1 className="text-4xl font-bold text-gray-900 tracking-tight">
-            Güvenli Alışverişin Adresi
-          </h1>
-          <p className="text-gray-500 text-lg max-w-2xl mx-auto">
-            Binlerce ürün, tek platform. KervanPazar güvencesiyle ihtiyacınız
-            olan her şey kapınızda.
-          </p>
-          <div className="w-24 h-1.5 bg-black mx-auto rounded-full mt-6"></div>
-        </div>
-
         {/* Ürün Grid Bölümü */}
         <div className="mb-20">
           <div className="flex items-center justify-between mb-8">

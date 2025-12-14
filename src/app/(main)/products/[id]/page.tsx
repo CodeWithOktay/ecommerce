@@ -1,17 +1,15 @@
-// src/app/urun/[id]/page.tsx
-
 import { prisma } from "@/lib/prisma-client";
 import {
   Check,
-  Clock,
-  Heart,
   RotateCcw,
   Shield,
   Star,
   Truck,
-  Zap,
   X,
-  List, // İkon eklendi
+  List,
+  ChevronRight,
+  Share2,
+  Heart,
 } from "lucide-react";
 import type { Metadata } from "next";
 import Image from "next/image";
@@ -19,7 +17,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import AddToCartButton from "@/components/product/AddToCartButton";
 
-// Yardımcı fonksiyon: Ürünü veritabanından çek
+// --- VERİ ÇEKME ---
 async function getProduct(id: string) {
   try {
     const product = await prisma.product.findUnique({
@@ -28,11 +26,8 @@ async function getProduct(id: string) {
         category: true,
         brand: true,
         images: true,
-        // 🟢 YENİ: Özellik değerlerini ve isimlerini çekiyoruz
         attributeValues: {
-          include: {
-            attribute: true, // Özelliğin adını (Örn: Ekran Boyutu) almak için
-          },
+          include: { attribute: true },
         },
       },
     });
@@ -42,22 +37,14 @@ async function getProduct(id: string) {
   }
 }
 
-/**
- * Dinamik Meta Veri
- */
+// --- METADATA ---
 export async function generateMetadata({
   params,
 }: {
   params: { id: string };
 }): Promise<Metadata> {
   const product = await getProduct(params.id);
-
-  if (!product) {
-    return {
-      title: "Ürün bulunamadı",
-      description: "Aradığınız ürün bulunamadı",
-    };
-  }
+  if (!product) return { title: "Ürün Bulunamadı" };
 
   const mainImage =
     product.images.find((img) => img.isMain) || product.images[0];
@@ -68,15 +55,11 @@ export async function generateMetadata({
     description: product.description?.substring(0, 160),
     openGraph: {
       images: [imageUrl],
-      title: `${product.name} | KervanPazar`,
-      description: product.description?.substring(0, 160),
     },
   };
 }
 
-/**
- * Ürün Detay Sayfası
- */
+// --- ANA SAYFA ---
 export default async function ProductDetailPage({
   params,
 }: {
@@ -84,11 +67,9 @@ export default async function ProductDetailPage({
 }) {
   const product = await getProduct(params.id);
 
-  if (!product) {
-    notFound();
-  }
+  if (!product) notFound();
 
-  // --- 1. VERİ DÖNÜŞÜMÜ ---
+  // Hesaplamalar
   const rawPrice = Number(product.price);
   const rawSalePrice = product.salePrice ? Number(product.salePrice) : null;
   const hasDiscount = rawSalePrice !== null && rawSalePrice < rawPrice;
@@ -103,10 +84,9 @@ export default async function ProductDetailPage({
   const mainImageUrl = mainImageObj ? mainImageObj.url : "/placeholder.png";
 
   const features = [
-    { icon: Truck, text: "Ücretsiz Kargo", subtext: "300 TL ve üzeri" },
-    { icon: Shield, text: "Güvenli Ödeme", subtext: "256-bit SSL" },
+    { icon: Truck, text: "Hızlı Teslimat", subtext: "1-3 iş günü" },
+    { icon: Shield, text: "%100 Güvenli", subtext: "256-bit SSL" },
     { icon: RotateCcw, text: "Kolay İade", subtext: "14 gün içinde" },
-    { icon: Clock, text: "Hızlı Teslimat", subtext: "1-3 iş günü" },
   ];
 
   const cartProductData = {
@@ -118,272 +98,245 @@ export default async function ProductDetailPage({
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50/30">
-      {/* Üst Banner */}
-      <div className="bg-gradient-to-r from-indigo-600 to-purple-700 text-white py-3">
-        <div className="container mx-auto px-4 text-center text-sm">
-          🚀 <strong>Özel Fırsat!</strong> Bu üründe 12 aya varan taksit
-          seçenekleri ve ücretsiz kargo!
-        </div>
-      </div>
-
-      <div className="container mx-auto px-4 max-w-7xl py-8">
-        {/* Breadcrumb */}
-        <nav className="mb-8">
-          <div className="flex items-center space-x-3 text-sm flex-wrap">
-            <Link
-              href="/"
-              className="text-gray-500 hover:text-indigo-600 transition-colors"
-            >
+    <div className="min-h-screen bg-[#F8F9FA] pb-24 lg:pb-10">
+      {/* 1. Breadcrumb & Header */}
+      <div className="bg-white/80 backdrop-blur-md border-b border-gray-100 sticky top-0 z-30 shadow-sm">
+        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+          <nav className="flex items-center text-sm text-gray-500 overflow-hidden whitespace-nowrap">
+            <Link href="/" className="hover:text-[#667EEA] transition-colors">
               Ana Sayfa
             </Link>
-            <span className="text-gray-300">›</span>
-            <Link
-              href="/urunler"
-              className="text-gray-500 hover:text-indigo-600 transition-colors"
-            >
-              Ürünler
-            </Link>
-            <span className="text-gray-300">›</span>
+            <ChevronRight size={14} className="mx-2 text-gray-300" />
             <Link
               href={`/category/${product.category.slug || product.categoryId}`}
-              className="text-gray-500 hover:text-indigo-600 transition-colors capitalize"
+              className="hover:text-[#667EEA] transition-colors"
             >
               {product.category.name}
             </Link>
-            <span className="text-gray-300">›</span>
-            <span className="text-gray-900 font-medium truncate max-w-40">
+            <ChevronRight size={14} className="mx-2 text-gray-300" />
+            <span className="font-bold text-gray-900 truncate max-w-[150px] md:max-w-xs bg-gradient-to-r from-[#667EEA] to-[#764BA2] bg-clip-text text-transparent">
               {product.name}
             </span>
-          </div>
-        </nav>
+          </nav>
+          <button className="p-2.5 hover:bg-gray-50 rounded-full text-gray-400 hover:text-[#667EEA] transition-colors border border-transparent hover:border-gray-100">
+            <Share2 size={18} />
+          </button>
+        </div>
+      </div>
 
-        {/* Ana Grid */}
-        <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 lg:gap-12">
-          {/* --- SOL TARAF: GÖRSELLER --- */}
-          <div className="xl:col-span-7">
-            <div className="sticky top-8 space-y-6">
-              {/* Ana Görsel */}
-              <div className="relative h-96 md:h-[600px] rounded-3xl overflow-hidden shadow-2xl bg-white group border border-gray-100">
+      {/* 2. Ana İçerik */}
+      <div className="container mx-auto px-4 py-8 md:py-12">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 xl:gap-16">
+          {/* --- SOL KOLON (Görseller) --- */}
+          <div className="lg:col-span-7 space-y-8">
+            <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-xl shadow-gray-200/50 relative">
+              {/* İndirim Rozeti (Gradient) */}
+              {hasDiscount && (
+                <div className="absolute top-6 left-6 z-10 animate-in fade-in zoom-in duration-500">
+                  <span className="bg-gradient-to-r from-[#667EEA] to-[#764BA2] text-white text-sm font-bold px-4 py-2 rounded-xl shadow-lg shadow-[#667EEA]/30">
+                    %{discountRate} İndirim
+                  </span>
+                </div>
+              )}
+
+              {/* Büyük Resim */}
+              <div className="relative aspect-[4/3] w-full rounded-2xl overflow-hidden bg-gray-50 group cursor-zoom-in">
                 <Image
                   src={mainImageUrl}
                   alt={product.name}
                   fill
                   priority
-                  sizes="(max-width: 1280px) 100vw, 60vw"
-                  className="object-cover object-center transition-transform duration-700 group-hover:scale-105"
+                  className="object-contain hover:scale-105 transition-transform duration-700 ease-out"
                 />
-                {hasDiscount && (
-                  <div className="absolute top-4 left-4 z-10">
-                    <span className="bg-red-600 text-white px-3 py-2 rounded-full text-sm font-bold shadow-lg animate-pulse">
-                      %{discountRate} İndirim
-                    </span>
-                  </div>
-                )}
               </div>
 
-              {/* Küçük Görseller */}
+              {/* Küçük Resimler */}
               {product.images.length > 1 && (
-                <div className="flex space-x-4 overflow-x-auto pb-4 custom-scrollbar">
+                <div className="mt-6 flex gap-4 overflow-x-auto pb-2 custom-scrollbar px-2">
                   {product.images.map((img) => (
-                    <div
+                    <button
                       key={img.id}
-                      className={`relative w-24 h-24 rounded-2xl overflow-hidden shadow-sm bg-white flex-shrink-0 cursor-pointer hover:shadow-lg transition-all duration-300 border-2 ${img.isMain ? "border-indigo-600" : "border-transparent hover:border-indigo-300"}`}
+                      className={`relative w-20 h-20 flex-shrink-0 rounded-2xl overflow-hidden border-2 transition-all duration-300 ${
+                        img.isMain
+                          ? "border-[#667EEA] ring-4 ring-[#667EEA]/10 scale-105"
+                          : "border-gray-100 hover:border-gray-300 opacity-70 hover:opacity-100"
+                      }`}
                     >
                       <Image
                         src={img.url}
-                        alt={`${product.name} thumbnail`}
+                        alt="thumb"
                         fill
-                        sizes="96px"
                         className="object-cover"
                       />
-                    </div>
+                    </button>
                   ))}
                 </div>
               )}
+            </div>
 
-              {/* Özellikler Grid (Icons) */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {features.map((feature, index) => (
-                  <div
-                    key={index}
-                    className="text-center p-4 bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow"
-                  >
-                    <feature.icon
-                      className="mx-auto mb-2 text-indigo-600"
-                      size={24}
-                    />
-                    <p className="font-semibold text-gray-900 text-sm">
-                      {feature.text}
-                    </p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      {feature.subtext}
-                    </p>
-                  </div>
-                ))}
+            {/* Ürün Açıklaması (Desktop) */}
+            <div className="hidden lg:block bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm">
+              <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                <List className="text-[#667EEA]" /> Ürün Açıklaması
+              </h2>
+              <div className="prose prose-indigo max-w-none text-gray-600 leading-relaxed">
+                {product.description || "Açıklama bulunmuyor."}
               </div>
             </div>
           </div>
 
-          {/* --- SAĞ TARAF: BİLGİLER --- */}
-          <div className="xl:col-span-5">
-            <div className="space-y-8">
-              {/* Üst Bilgiler Kartı */}
-              <div className="bg-white rounded-3xl p-8 shadow-xl border border-gray-100">
-                <div className="flex items-start justify-between mb-4">
-                  <div>
-                    <span className="inline-block px-3 py-1 bg-gradient-to-r from-indigo-100 to-purple-100 text-indigo-700 text-xs font-semibold rounded-full mb-3 border border-indigo-200">
-                      {product.brand?.name || "Genel Marka"}
-                    </span>
-                    <h1 className="text-3xl lg:text-4xl font-bold text-gray-900 leading-tight">
-                      {product.name}
-                    </h1>
-                  </div>
-                </div>
+          {/* --- SAĞ KOLON (Bilgi & Satın Alma) --- */}
+          <div className="lg:col-span-5">
+            <div className="lg:sticky lg:top-28 space-y-8">
+              {/* Ürün Başlık & Rating */}
+              <div className="space-y-4">
+                <span className="text-[#667EEA] font-bold text-xs uppercase tracking-wider bg-indigo-50 px-3 py-1.5 rounded-lg border border-indigo-100 inline-block">
+                  {product.brand?.name || "Genel"}
+                </span>
+                <h1 className="text-3xl md:text-4xl font-black text-gray-900 leading-tight tracking-tight">
+                  {product.name}
+                </h1>
 
-                {/* Rating */}
-                <div className="flex items-center space-x-6 mb-6">
-                  <div className="flex items-center space-x-2">
-                    <div className="flex items-center space-x-1 bg-yellow-50 px-3 py-1 rounded-full">
-                      <div className="flex text-yellow-400">
-                        <Star size={16} fill="currentColor" />
-                        <Star size={16} fill="currentColor" />
-                        <Star size={16} fill="currentColor" />
-                        <Star size={16} fill="currentColor" />
-                        <Star
-                          size={16}
-                          fill="currentColor"
-                          className="text-gray-300"
-                        />
-                      </div>
-                      <span className="text-sm font-bold text-gray-700 ml-1">
-                        4.8
-                      </span>
-                    </div>
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-1 bg-yellow-50 px-2 py-1 rounded-lg border border-yellow-100">
+                    <Star
+                      size={16}
+                      className="fill-yellow-400 text-yellow-400"
+                    />
+                    <span className="text-gray-700 text-sm font-bold">4.8</span>
                   </div>
-                  <div className="flex items-center space-x-1 text-green-600 bg-green-50 px-3 py-1 rounded-full">
-                    <Zap size={14} />
-                    <span className="text-sm font-semibold">
-                      Hızlı Gönderim
-                    </span>
-                  </div>
+                  <span className="text-gray-300">|</span>
+                  <span className="text-green-600 text-sm font-semibold flex items-center gap-1">
+                    <Check size={16} /> 150+ Sipariş
+                  </span>
                 </div>
+              </div>
 
-                {/* Fiyat Bilgisi */}
-                <div className="mb-6">
-                  <div className="flex items-baseline space-x-4 mb-2">
-                    <p
-                      className={`text-4xl lg:text-5xl font-black ${hasDiscount ? "text-red-600" : "bg-gradient-to-r from-indigo-600 to-purple-700 text-transparent bg-clip-text"}`}
-                    >
-                      {displayPrice.toLocaleString("tr-TR", {
-                        minimumFractionDigits: 2,
-                      })}{" "}
+              {/* Fiyat Kartı (Gradient Style) */}
+              <div className="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-xl shadow-gray-200/50 relative overflow-hidden">
+                {/* Arka plan efekti */}
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-[#667EEA]/10 to-transparent rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none"></div>
+
+                <div className="flex items-end gap-3 mb-8 relative z-10">
+                  <div className="text-5xl font-black bg-gradient-to-r from-[#667EEA] to-[#764BA2] bg-clip-text text-transparent tracking-tighter">
+                    {displayPrice.toLocaleString("tr-TR", {
+                      minimumFractionDigits: 2,
+                    })}
+                    <span className="text-2xl text-gray-400 font-medium ml-1 select-none">
                       ₺
-                    </p>
-                    {oldPrice && (
-                      <p className="text-xl text-gray-400 line-through decoration-red-400">
-                        {oldPrice.toLocaleString("tr-TR", {
-                          minimumFractionDigits: 2,
-                        })}{" "}
-                        ₺
-                      </p>
-                    )}
+                    </span>
                   </div>
-                </div>
-
-                {/* Stok Durumu */}
-                <div
-                  className={`inline-flex items-center space-x-2 px-4 py-3 rounded-xl text-sm font-semibold mb-6 ${
-                    product.stock > 0
-                      ? "bg-green-50 text-green-700 border border-green-200"
-                      : "bg-red-50 text-red-700 border border-red-200"
-                  }`}
-                >
-                  {product.stock > 0 ? (
-                    <>
-                      <Check size={16} className="text-green-600" />
-                      <span>Stokta - Son {product.stock} ürün</span>
-                    </>
-                  ) : (
-                    <>
-                      <X size={16} className="text-red-600" />
-                      <span>Stokta Yok</span>
-                    </>
+                  {oldPrice && (
+                    <div className="text-xl text-gray-400 line-through decoration-red-400/50 font-medium mb-2">
+                      {oldPrice.toLocaleString("tr-TR")} ₺
+                    </div>
                   )}
                 </div>
 
-                {/* Butonlar */}
+                {/* Stok Durumu */}
+                <div className="mb-8">
+                  {product.stock > 0 ? (
+                    <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-50 text-green-700 rounded-xl border border-green-200 text-sm font-bold">
+                      <span className="relative flex h-2.5 w-2.5">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
+                      </span>
+                      Stokta Var ({product.stock} adet)
+                    </div>
+                  ) : (
+                    <div className="inline-flex items-center gap-2 px-4 py-2 bg-red-50 text-red-700 rounded-xl border border-red-200 text-sm font-bold">
+                      <X size={16} /> Tükendi
+                    </div>
+                  )}
+                </div>
+
+                {/* Aksiyon Butonları */}
                 <div className="space-y-4">
+                  {/* Sepete Ekle Butonu (Component) */}
                   <AddToCartButton product={cartProductData} />
-                  <div className="grid grid-cols-2 gap-4">
-                    <button
-                      disabled={product.stock <= 0}
-                      className="bg-green-700 hover:bg-green-600 disabled:bg-gray-400 border-2 border-transparent text-white py-4 px-6 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 active:scale-95"
-                    >
-                      Hemen Al
+
+                  <div className="grid grid-cols-6 gap-3">
+                    <button className="col-span-5 bg-gradient-to-r from-[#667EEA] to-[#764BA2] text-white py-4 rounded-xl font-bold text-lg hover:shadow-xl hover:shadow-[#667EEA]/30 transition-all hover:-translate-y-1 active:scale-95 duration-300">
+                      Hemen Satın Al
                     </button>
-                    <button className="bg-white text-red-600 border-2 border-red-100 hover:border-red-200 py-4 px-6 rounded-xl font-semibold hover:bg-red-50 transition-all duration-300 hover:scale-105 flex items-center justify-center space-x-2">
-                      <Heart size={18} />
-                      <span>Favorile</span>
+                    <button className="col-span-1 flex items-center justify-center border-2 border-gray-100 rounded-xl text-gray-400 hover:border-red-200 hover:bg-red-50 hover:text-red-500 transition-all active:scale-90">
+                      <Heart size={24} />
                     </button>
                   </div>
                 </div>
+
+                {/* Güven Rozetleri */}
+                <div className="grid grid-cols-3 gap-4 mt-8 pt-8 border-t border-gray-100">
+                  {features.map((f, i) => (
+                    <div
+                      key={i}
+                      className="flex flex-col items-center text-center gap-2 group cursor-default"
+                    >
+                      <div className="p-3 bg-gray-50 group-hover:bg-[#667EEA]/10 rounded-2xl text-[#667EEA] transition-colors duration-300">
+                        <f.icon size={22} />
+                      </div>
+                      <span className="text-[10px] font-bold text-gray-500 group-hover:text-gray-800 uppercase tracking-wide transition-colors">
+                        {f.text}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Teknik Özellikler */}
+              {product.attributeValues.length > 0 && (
+                <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+                  <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
+                    <List size={20} className="text-[#667EEA]" />
+                    Öne Çıkan Özellikler
+                  </h3>
+                  <div className="divide-y divide-gray-50">
+                    {product.attributeValues.slice(0, 5).map((attr) => (
+                      <div
+                        key={attr.id}
+                        className="flex justify-between py-3 text-sm group hover:bg-gray-50 px-2 rounded-lg transition-colors"
+                      >
+                        <span className="text-gray-500 font-medium">
+                          {attr.attribute.name}
+                        </span>
+                        <span className="font-bold text-gray-900">
+                          {attr.value}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* --- MOBİL İÇİN AÇIKLAMA (Alta Gelir) --- */}
+          <div className="lg:hidden col-span-1 space-y-6">
+            <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+              <h2 className="text-lg font-bold text-gray-900 mb-4">
+                Ürün Açıklaması
+              </h2>
+              <div className="prose prose-sm text-gray-600">
+                {product.description || "Açıklama bulunmuyor."}
               </div>
             </div>
           </div>
         </div>
+      </div>
 
-        {/* --- ALT BÖLÜM: AÇIKLAMALAR VE ÖZELLİKLER --- */}
-        <div className="mt-16 grid grid-cols-1 xl:grid-cols-3 gap-8">
-          <div className="xl:col-span-2">
-            <div className="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden">
-              <div className="p-8">
-                {/* 🟢 YENİ: TEKNİK ÖZELLİKLER TABLOSU */}
-                {product.attributeValues.length > 0 && (
-                  <div className="mb-10">
-                    <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                      <List className="text-indigo-600" /> Teknik Özellikler
-                    </h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4 bg-gray-50/50 p-6 rounded-2xl border border-gray-100">
-                      {product.attributeValues.map((attr) => (
-                        <div
-                          key={attr.id}
-                          className="flex justify-between items-center py-3 border-b border-gray-200 last:border-0"
-                        >
-                          <span className="text-gray-500 font-medium text-sm">
-                            {attr.attribute.name}
-                          </span>
-                          <span className="text-gray-900 font-semibold text-sm">
-                            {attr.value}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                <h2 className="text-2xl font-bold text-gray-900 mb-6">
-                  Ürün Açıklaması
-                </h2>
-                <div className="prose prose-lg max-w-none text-gray-600 leading-relaxed whitespace-pre-wrap">
-                  {product.description ||
-                    "Bu ürün için henüz detaylı açıklama girilmemiş."}
-                </div>
-              </div>
-            </div>
+      {/* 3. MOBİL İÇİN STICKY BAR */}
+      <div className="fixed bottom-0 left-0 w-full bg-white/90 backdrop-blur-lg border-t border-gray-200 p-4 lg:hidden z-50 shadow-[0_-5px_20px_rgba(0,0,0,0.1)] pb-safe">
+        <div className="flex gap-4 items-center">
+          <div className="flex flex-col">
+            <span className="text-[10px] uppercase font-bold text-gray-400">
+              Toplam
+            </span>
+            <span className="text-xl font-black bg-gradient-to-r from-[#667EEA] to-[#764BA2] bg-clip-text text-transparent">
+              {displayPrice.toLocaleString("tr-TR")} TL
+            </span>
           </div>
-
-          {/* Yan Bannerlar */}
-          <div className="space-y-6">
-            <div className="bg-gradient-to-br from-indigo-600 to-purple-700 rounded-3xl p-6 text-white shadow-lg">
-              <h3 className="font-bold text-lg mb-2">Kurumsal Satış</h3>
-              <p className="text-indigo-100 text-sm mb-4">
-                Toplu alımlarınız için özel fiyat teklifi alın.
-              </p>
-              <button className="w-full bg-white text-indigo-600 py-2.5 rounded-xl font-bold text-sm hover:bg-gray-100 transition-colors">
-                Teklif İste
-              </button>
-            </div>
+          <div className="flex-1">
+            <AddToCartButton product={cartProductData} />
           </div>
         </div>
       </div>
