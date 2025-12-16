@@ -1,10 +1,12 @@
 "use client";
 
-import { ShoppingCart, Check, PackageX, Heart } from "lucide-react";
+import { ShoppingCart, Check, PackageX } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import React, { useState } from "react";
 import useCart from "@/hooks/use-cart";
+// 👇 Favori butonu bileşenini import ettik
+import FavoriteButton from "./FavoriteButton";
 
 interface ProductCardProps {
   product: {
@@ -12,7 +14,7 @@ interface ProductCardProps {
     name: string;
     description: string | null;
     price: number;
-    salePrice?: number | null; // 🟢 İndirimli fiyat desteği eklendi
+    salePrice?: number | null;
     stock: number;
     images: {
       url: string;
@@ -40,8 +42,8 @@ export default function ProductCard({ product }: ProductCardProps) {
     cart.addItem({
       id: product.id,
       name: product.name,
-      price: currentPrice, // Sepete güncel fiyatla ekle
-      imageUrl: imageUrl,
+      price: currentPrice,
+      imageUrl: imageUrl, // Sepette resim görünmesi için ekledim
     });
 
     setIsAdded(true);
@@ -51,32 +53,32 @@ export default function ProductCard({ product }: ProductCardProps) {
   return (
     <div className="group relative flex flex-col h-full bg-white rounded-2xl border border-gray-100 transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-100/50 hover:border-indigo-100 hover:-translate-y-1 overflow-hidden">
       {/* --- GÖRSEL ALANI --- */}
-      {/* aspect-[3/4] yerine aspect-[4/5] veya kare daha ferah durabilir, şimdilik 3/4 korudum */}
       <div className="relative aspect-[3/4] w-full overflow-hidden bg-gray-50 border-b border-gray-50">
         <Link href={`/product/${product.id}`} className="block w-full h-full">
           <Image
             src={imageUrl}
             alt={product.name}
             fill
-            // 🟢 DÜZELTME: object-contain ve padding ile resim sığdırıldı
-            className={`object-contain p-6 transition-transform duration-500 ease-out group-hover:scale-105 ${product.stock <= 0 ? "opacity-60 grayscale" : ""}`}
+            className={`object-contain p-6 transition-transform duration-500 ease-out group-hover:scale-105 ${
+              product.stock <= 0 ? "opacity-60 grayscale" : ""
+            }`}
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           />
         </Link>
 
-        {/* İndirim Rozeti */}
+        {/* 🟢 FAVORİ BUTONU (Sağ Üst) */}
+        <div className="absolute top-3 right-3 z-20 opacity-0 translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300">
+          <FavoriteButton productId={product.id} />
+        </div>
+
+        {/* İndirim Rozeti (Sol Üst) */}
         {hasDiscount && product.stock > 0 && (
           <div className="absolute top-3 left-3 bg-red-600 text-white text-[10px] font-bold px-2 py-1 rounded shadow-sm z-10">
             İNDİRİM
           </div>
         )}
 
-        {/* Favori Butonu (Hover'da Çıkar) */}
-        <button className="absolute top-3 right-3 p-2 bg-white rounded-full shadow-md text-gray-400 opacity-0 translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 hover:text-red-500 z-20">
-          <Heart size={18} />
-        </button>
-
-        {/* Stok Rozeti (Tükendi) */}
+        {/* Tükendi Rozeti (Orta) */}
         {product.stock <= 0 && (
           <div className="absolute inset-0 flex items-center justify-center z-10 bg-white/40 backdrop-blur-[2px]">
             <div className="bg-white/90 border border-red-100 px-4 py-2 rounded-lg shadow-lg -rotate-3">
@@ -91,25 +93,21 @@ export default function ProductCard({ product }: ProductCardProps) {
       {/* --- İÇERİK ALANI --- */}
       <div className="flex flex-col flex-1 p-5">
         <Link href={`/product/${product.id}`} className="flex-1 space-y-2">
-          {/* Başlık */}
           <h3 className="font-bold text-gray-900 text-base leading-tight group-hover:text-[#667EEA] transition-colors line-clamp-2 min-h-[2.5rem]">
             {product.name}
           </h3>
 
-          {/* Açıklama (Opsiyonel - Kısa) */}
           <p className="text-xs text-gray-500 line-clamp-2 h-[32px] leading-relaxed">
             {product.description || "Ürün detayları için tıklayınız."}
           </p>
         </Link>
 
-        {/* Fiyat ve Alt Kısım */}
         <div className="mt-4 pt-4 border-t border-gray-50 space-y-4">
           <div className="flex flex-col">
             <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1">
               Fiyat
             </span>
             <div className="flex items-end gap-2 flex-wrap h-[32px]">
-              {/* 🟢 DÜZELTME: İndirimli ve Eski Fiyat Gösterimi */}
               {hasDiscount ? (
                 <>
                   <div className="flex items-baseline gap-1">
@@ -137,7 +135,7 @@ export default function ProductCard({ product }: ProductCardProps) {
             </div>
           </div>
 
-          {/* Buton */}
+          {/* Sepete Ekle Butonu */}
           <button
             onClick={handleAddToCart}
             disabled={product.stock <= 0}

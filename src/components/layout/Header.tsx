@@ -1,18 +1,15 @@
-// 'use client' ARTIK YOK! Burası bir Server Component.
-
-import { prisma } from "@/lib/prisma-client"; // Senin dosya yapına göre import
+import { prisma } from "@/lib/prisma-client";
 import Image from "next/image";
 import Link from "next/link";
 
 // Bileşen Importları
 import UserMenu from "./UserMenu";
 import { SearchBar } from "@/components/forms/SearchBar";
-import CartButton from "./CartButton"; // Az önce oluşturduğumuz buton
-import CategoryHeader from "./category-nav/CategoryHeader"; // Senin yeni nav sistemi
+import CartButton from "./CartButton";
+import CategoryHeader from "./category-nav/CategoryHeader";
+import { Heart } from "lucide-react";
 
 export default async function Header() {
-  // 1. VERİYİ ÇEKİYORUZ 🥩
-  // Sadece ana kategorileri (babası olmayanları) getiriyoruz
   const categories = await prisma.category.findMany({
     where: { parentId: null },
     include: { children: true },
@@ -21,9 +18,7 @@ export default async function Header() {
 
   return (
     <header className="bg-white/90 backdrop-blur-md border-b border-gray-100 sticky top-0 z-50">
-      {/* --- ÜST KATMAN (Logo, Search, User, Cart) --- */}
       <div className="container mx-auto flex justify-between items-center py-3 px-6 h-20">
-        {/* Logo */}
         <Link
           href="/"
           className="flex-shrink-0 hover:opacity-90 transition-opacity"
@@ -38,25 +33,35 @@ export default async function Header() {
           />
         </Link>
 
-        {/* Arama (Desktop) */}
         <div className="hidden md:block flex-1 max-w-xl mx-8">
           <SearchBar />
         </div>
 
-        {/* SAĞ TARAF */}
         <div className="flex items-center gap-3">
-          {/* UserMenu (Masaüstü) */}
           <div className="hidden md:block">
             <UserMenu />
           </div>
+          <div className="hidden md:block">
+            <Link
+              href="/account/favorites"
+              className="group flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-red-50 transition-all duration-300"
+              title="Favorilerim"
+            >
+              <Heart
+                size={20}
+                className="text-gray-500 group-hover:text-red-500 group-hover:fill-current transition-all duration-300"
+              />
 
-          {/* Sepet Butonu (Client Component olarak ayrıldı) */}
+              <span className="text-sm font-bold text-gray-600 group-hover:text-red-600 transition-colors">
+                Favorilerim
+              </span>
+            </Link>
+          </div>
           <CartButton />
         </div>
       </div>
 
       {/* --- ALT KATMAN (Kategori Navigasyonu) --- */}
-      {/* Mobil menü ve masaüstü menü artık bu bileşenin içinde yönetiliyor */}
       <div className="border-t border-gray-100">
         <CategoryHeader categories={categories} />
       </div>

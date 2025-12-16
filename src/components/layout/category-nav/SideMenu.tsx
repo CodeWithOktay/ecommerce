@@ -16,7 +16,6 @@ interface SideMenuProps {
   onClose: () => void;
 }
 
-// ✅ KRİTİK DOKUNUŞ: { categories = [] }
 // Bu sayede veri gelmese bile categories her zaman boş bir dizi olur, asla patlamaz.
 export function SideMenu({
   categories = [],
@@ -26,15 +25,11 @@ export function SideMenu({
   const [searchTerm, setSearchTerm] = useState("");
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
 
-  // Artık (categories ?? []) yapmana gerek yok, yukarıda hallettik.
   const filteredCategories = categories.filter((category) => {
     const term = searchTerm.toLowerCase();
 
-    // Ana kategori ismi eşleşiyor mu?
     const matchesCategory = category.name.toLowerCase().includes(term);
 
-    // Alt kategorilerden HERHANGİ BİRİ eşleşiyor mu?
-    // children null gelebilir diye ?. koyduk
     const matchesChildren = category.children?.some((child) =>
       child.name.toLowerCase().includes(term)
     );
@@ -71,7 +66,6 @@ export function SideMenu({
             </div>
             <div>
               <h2 className="text-xl font-bold text-gray-900">Kategoriler</h2>
-              {/* Burası artık patlamaz çünkü categories en kötü ihtimalle []'dir */}
               <p className="text-sm text-gray-500">
                 {categories.length} kategori
               </p>
@@ -107,7 +101,6 @@ export function SideMenu({
           <div className="p-4 space-y-2">
             {filteredCategories.map((category) => (
               <div key={category.id} className="group">
-                {/* Ana Kategori Kartı */}
                 <div
                   className={`flex items-center justify-between p-4 rounded-xl cursor-pointer transition-all duration-200 ${
                     activeCategory === category.id

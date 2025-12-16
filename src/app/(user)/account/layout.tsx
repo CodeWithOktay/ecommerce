@@ -1,7 +1,7 @@
 // src/app/(user)/layout.tsx
 import Header from "@/components/layout/Header"; // Header her yerde olsun
 import Link from "next/link";
-import { User, Package, MapPin, LogOut } from "lucide-react";
+import { User, Package, MapPin, LogOut, Heart } from "lucide-react";
 
 export default function UserLayout({
   children,
@@ -39,6 +39,13 @@ export default function UserLayout({
 
                 {/* İleride eklersen: Adreslerim */}
                 {/* <Link href="/adreslerim" ...><MapPin size={18}/> Adreslerim</Link> */}
+                <Link
+                  href="/account/favorites"
+                  className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-gray-600 rounded-lg hover:bg-purple-50 hover:text-[#764BA2] transition-colors"
+                >
+                  <Heart size={18} />
+                  Favorilerim
+                </Link>
               </nav>
             </div>
           </aside>
