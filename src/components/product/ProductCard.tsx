@@ -54,7 +54,7 @@ export default function ProductCard({ product }: ProductCardProps) {
     <div className="group relative flex flex-col h-full bg-white rounded-2xl border border-gray-100 transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-100/50 hover:border-indigo-100 hover:-translate-y-1 overflow-hidden">
       {/* --- GÖRSEL ALANI --- */}
       <div className="relative aspect-[3/4] w-full overflow-hidden bg-gray-50 border-b border-gray-50">
-        <Link href={`/product/${product.id}`} className="block w-full h-full">
+        <Link href={`/products/${product.id}`} className="block w-full h-full">
           <Image
             src={imageUrl}
             alt={product.name}
@@ -92,7 +92,7 @@ export default function ProductCard({ product }: ProductCardProps) {
 
       {/* --- İÇERİK ALANI --- */}
       <div className="flex flex-col flex-1 p-5">
-        <Link href={`/product/${product.id}`} className="flex-1 space-y-2">
+        <Link href={`/products/${product.id}`} className="flex-1 space-y-2">
           <h3 className="font-bold text-gray-900 text-base leading-tight group-hover:text-[#667EEA] transition-colors line-clamp-2 min-h-[2.5rem]">
             {product.name}
           </h3>
