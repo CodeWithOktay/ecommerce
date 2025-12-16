@@ -37,14 +37,19 @@ export default function UserLayout({
                   Kullanıcı Bilgilerim
                 </Link>
 
-                {/* İleride eklersen: Adreslerim */}
-                {/* <Link href="/adreslerim" ...><MapPin size={18}/> Adreslerim</Link> */}
                 <Link
                   href="/account/favorites"
                   className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-gray-600 rounded-lg hover:bg-purple-50 hover:text-[#764BA2] transition-colors"
                 >
                   <Heart size={18} />
                   Favorilerim
+                </Link>
+                <Link
+                  href="/account/addresses"
+                  className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-gray-600 rounded-lg hover:bg-purple-50 hover:text-[#764BA2] transition-colors"
+                >
+                  <MapPin size={18} />
+                  Adreslerim
                 </Link>
               </nav>
             </div>

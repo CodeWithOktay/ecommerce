@@ -306,11 +306,6 @@ export default function CheckoutPage() {
 
                 {/* ADRES FORMU (Yeni Eklenecekse veya Düzenlenecekse) */}
                 <form onSubmit={handleAddressSubmit} className="space-y-5">
-                  {/* Form sadece "NEW" seçiliyse veya hiç adres yoksa tam açık olsun, 
-                       kayıtlı adres seçiliyse sadece önizleme kalsın veya düzenlenebilir olsun.
-                       Burada kullanıcı deneyimi için: Kayıtlı seçilse bile inputlar dolu gelir, düzenleyip devam edebilir.
-                   */}
-
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div className="space-y-2">
                       <label className="text-xs font-bold text-gray-500 ml-1">
