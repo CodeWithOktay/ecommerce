@@ -1,7 +1,6 @@
 <h1 align="center">KervanPazar: KOBİ'ler İçin Modern E-ticaret Platformu</h1>
 
-<p align="center">
-  <img width="1919" height="941" alt="image" src="https://github.com/user-attachments/assets/e34ccc96-d79e-470d-a41d-6233f1304d6f" />
+<img width="1830" height="896" alt="resim" src="https://github.com/user-attachments/assets/c1aa26d6-3f14-4f95-b9c6-9116e08eb303" />
 
   <br>
   <em></em>
