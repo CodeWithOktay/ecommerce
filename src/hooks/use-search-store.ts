@@ -1,6 +1,6 @@
 // src/hooks/use-search-store.ts
 import { create } from "zustand";
-import { searchProductsInDb } from "@/lib/actions/product-actions";
+import { searchProductsInDb } from "@/lib/actions/product";
 
 // Ürün tipini kabaca tanımlayalım (veya Prisma tiplerini kullanabilirsin)
 interface SearchState {

@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma-client";
 import { headers } from "next/headers";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth/options";
+import { authOptions } from "@/lib/actions/auth";
 
 interface LogParams {
   action: string;
