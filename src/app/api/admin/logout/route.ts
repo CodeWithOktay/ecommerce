@@ -27,7 +27,7 @@ export async function POST() {
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
       maxAge: 0,
-      path: "/admin/login",
+      path: "/login",
     });
 
     /**
@@ -39,7 +39,7 @@ export async function POST() {
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
       maxAge: 0,
-      path: "/admin/login",
+      path: "/login",
     });
 
     return response;

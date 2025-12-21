@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma-client";
+import { prisma } from "@/lib/db";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -17,7 +17,7 @@ export default async function Header() {
   });
 
   return (
-    <header className="bg-white/90 backdrop-blur-md border-b border-gray-100 sticky top-0 z-50">
+    <header className="bg-white/90 backdrop-blur-md border-b border-gray-100 sticky top-0 z-40 ">
       <div className="container mx-auto flex justify-between items-center py-3 px-6 h-20">
         <Link
           href="/"

@@ -1,4 +1,3 @@
-// src/app/layout.tsx
 import { Geist } from "next/font/google";
 import { Toaster } from "react-hot-toast";
 import { getServerSession } from "next-auth";
@@ -6,7 +5,7 @@ import { authOptions } from "@/lib/actions/auth";
 import AuthProvider from "@/components/providers/auth-provider";
 import { BackToTopButton } from "@/components/ui/back-to-top";
 import type { Metadata } from "next";
-import "./globals.css";
+import "@/app/globals.css";
 
 const geist = Geist({
   variable: "--font-geist-sans",
@@ -26,7 +25,7 @@ export default async function RootLayout({
   const session = await getServerSession(authOptions);
 
   return (
-    <html lang="tr">
+    <html>
       <body id="top" className={`${geist.variable}`}>
         <AuthProvider session={session}>
           {children}

@@ -1,9 +1,8 @@
-// src/lib/actions/address-actions.ts
 "use server";
 
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/actions/auth";
-import { prisma } from "@/lib/prisma-client";
+import { prisma } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 
 function capitalizeText(text: string) {

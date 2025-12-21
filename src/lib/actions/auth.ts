@@ -2,8 +2,8 @@ import { Role } from "@prisma/client";
 import bcrypt from "bcrypt";
 import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { prisma } from "../prisma-client";
-import { createLog } from "@/lib/logger"; // 👈 Log fonksiyonumuz
+import { prisma } from "../db";
+import { createLog } from "@/lib/logger"; 
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -133,10 +133,10 @@ export const authOptions: NextAuthOptions = {
     session: async ({ session, token }) => {
       if (token && session.user) {
         session.user.id = token.id as string;
-        session.user.role = token.role;
-        session.user.name = token.name;
-        session.user.firstName = token.firstName;
-        session.user.lastName = token.lastName;
+        session.user.role = token.role as Role;
+        session.user.name = token.name as string;
+        session.user.firstName = token.firstName as string;
+        session.user.lastName = token.lastName as string;
       }
       return session;
     },

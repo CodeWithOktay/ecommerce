@@ -2,7 +2,7 @@
 "use client";
 
 import { AlertCircle, ArrowRight, Eye, EyeOff, Lock, Mail } from "lucide-react";
-import { signIn } from "next-auth/react";
+import { signIn, getSession } from "next-auth/react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -53,19 +53,23 @@ export default function LoginPage() {
   // 🟢 3. SUBMIT FONKSİYONU
   const onSubmit = async (data: LoginFormValues) => {
     setGlobalError(""); // Önceki hataları temizle
-
     try {
       const result = await signIn("credentials", {
         email: data.email.toLowerCase().trim(),
         password: data.password,
-        loginType: "USER", // Müşteri girişi
         redirect: false,
       });
 
       if (result?.error) {
         setGlobalError("Giriş başarısız. Bilgilerinizi kontrol edin.");
-      } else if (result?.ok) {
-        router.push("/");
+      }
+      if (result?.ok) {
+        const session = await getSession();
+        if (session?.user.role === "ADMIN") {
+          router.push("admin/dashboard");
+        } else {
+          router.push("/");
+        }
         router.refresh();
       }
     } catch (err) {

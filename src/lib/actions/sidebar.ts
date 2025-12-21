@@ -1,6 +1,6 @@
 "use server";
 
-import { prisma } from "@/lib/prisma-client";
+import { prisma } from "@/lib/db";
 
 export async function getSidebarStats() {
   // Tüm sorguları aynı anda (paralel) çalıştırıyoruz, performans artışı için

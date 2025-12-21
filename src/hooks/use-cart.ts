@@ -8,6 +8,11 @@ export interface Product {
   name: string;
   price: number;
   imageUrl?: string;
+  images?: Array<{
+    url: string;
+    isMain?: boolean;
+  }>;
+  stock?: number;
 }
 
 export interface CartItem extends Product {

@@ -24,12 +24,25 @@ export default function AddToCartButton({
     <button
       onClick={onAddToCart}
       className={`
-        flex items-center justify-center gap-2 bg-black text-white rounded-full font-semibold hover:bg-gray-800 transition active:scale-95
-        ${showText ? "py-3 px-6 w-full" : "p-3 w-10 h-10"}
-      `}
+    relative flex items-center justify-center gap-2
+    rounded-full font-bold overflow-hidden
+    text-white transition-all duration-300
+    active:scale-95
+    bg-gradient-to-r from-[#667EEA] to-[#764BA2]
+    shadow-lg shadow-[#667EEA]/30
+    hover:shadow-xl hover:shadow-[#667EEA]/50
+
+    ${showText ? "py-3 px-6 w-full" : "p-3 w-10 h-10"}
+  `}
     >
-      <ShoppingCart size={20} />
-      {showText && <span>Sepete Ekle</span>}
+      {/* Glow Effect (v3 uyumlu, pseudo yerine absolute) */}
+      <span className="absolute inset-0 rounded-full bg-gradient-to-r from-[#667EEA] to-[#764BA2] opacity-30 blur-xl pointer-events-none"></span>
+
+      {/* İçerik */}
+      <span className="relative flex items-center gap-2 z-10">
+        <ShoppingCart size={20} />
+        {showText && <span>Sepete Ekle</span>}
+      </span>
     </button>
   );
 }

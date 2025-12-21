@@ -10,7 +10,6 @@ export default function UserLayout({
 }) {
   return (
     <>
-      <Header /> {/* Üst menü sabit kalsın */}
       <div className="bg-gray-50 min-h-[calc(100vh-80px)] py-8">
         <div className="container mx-auto px-4 flex flex-col md:flex-row gap-6">
           {/* 👈 SOL SIDEBAR (MENÜ) */}

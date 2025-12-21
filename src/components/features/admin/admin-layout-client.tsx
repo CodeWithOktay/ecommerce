@@ -1,8 +1,8 @@
 "use client";
 
-import AdminFooter from "./admin-footer";
-import AdminHeader from "./admin-header";
-import AdminSidebar from "./admin-sidebar";
+import AdminFooter from "@/components/layout/admin-footer";
+import AdminHeader from "@/components/layout/admin-header";
+import AdminSidebar from "@/components/layout/admin-sidebar";
 import { useSession } from "next-auth/react";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -14,6 +14,8 @@ interface AdminLayoutClientProps {
     pendingOrders: number;
     lowStockProducts: number;
     totalUsers: number;
+    totalAdmins: number;
+    totalCategories: number;
   };
 }
 
@@ -27,8 +29,8 @@ export default function AdminLayoutClient({
   const pathname = usePathname();
 
   // İstisna sayfalarını tanımlıyoruz
-  const isLoginPage = pathname === "/admin/login";
-  const isUnauthorizedPage = pathname === "/admin/unauthorized"; // <--- YENİ EKLENEN
+  const isLoginPage = pathname === "/login";
+  const isUnauthorizedPage = pathname === "/unauthorized"; // <--- YENİ EKLENEN
 
   useEffect(() => {
     if (status === "loading") return;
@@ -37,12 +39,12 @@ export default function AdminLayoutClient({
     if (isLoginPage || isUnauthorizedPage) return;
 
     if (status === "unauthenticated") {
-      router.replace("/admin/login");
+      router.replace("/login");
       return;
     }
 
     if (status === "authenticated" && session?.user?.role !== "ADMIN") {
-      router.replace("/admin/unauthorized");
+      router.replace("/unauthorized");
     }
   }, [session, status, router, pathname, isLoginPage, isUnauthorizedPage]);
 
@@ -56,7 +58,6 @@ export default function AdminLayoutClient({
   }
 
   // 2. İstisna Sayfaları (Layout OLMADAN render et)
-  // Login ve Unauthorized sayfaları Sidebar ve Header olmadan, tam ekran görünmeli
   if (isLoginPage || isUnauthorizedPage) {
     return <div className="min-h-screen bg-gray-50">{children}</div>;
   }
@@ -79,10 +80,12 @@ export default function AdminLayoutClient({
       />
 
       <div className="flex-1 flex flex-col lg:ml-0 min-w-0">
-        <AdminHeader
-          onMenuToggle={() => setSidebarOpen(!sidebarOpen)}
-          user={session?.user}
-        />
+        {session?.user && (
+          <AdminHeader
+            onMenuToggle={() => setSidebarOpen(!sidebarOpen)}
+            user={session.user}
+          />
+        )}
 
         <main className="flex-1 p-4 sm:p-6 overflow-x-hidden">{children}</main>
         <ToastProvider />

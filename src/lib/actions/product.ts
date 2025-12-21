@@ -1,6 +1,6 @@
 "use server";
 
-import { prisma } from "@/lib/prisma-client";
+import { prisma } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import fs from "node:fs/promises";
 import path from "node:path";
@@ -138,7 +138,7 @@ export async function createProductWithImages(data: CreateProductFormState) {
       success: true,
     });
 
-    revalidatePath("/admin/products");
+    revalidatePath("/products");
     return { success: true, message: "Ürün başarıyla oluşturuldu! 🎉" };
   } catch (error) {
     console.error("Kayıt Hatası:", error);
@@ -240,7 +240,7 @@ export async function updateProductWithImages(
       success: true,
     });
 
-    revalidatePath("/admin/products");
+    revalidatePath("/products");
     return { success: true, message: "Ürün başarıyla güncellendi! 🔄" };
   } catch (error) {
     console.error("Güncelleme Hatası:", error);
@@ -267,7 +267,7 @@ export async function deleteProduct(productId: string) {
       success: true,
     });
 
-    revalidatePath("/admin/products");
+    revalidatePath("/products");
     return { success: true, message: "Ürün silindi. 🗑️" };
   } catch (error) {
     await createLog({
@@ -300,8 +300,8 @@ export async function toggleProductArchive(
       details: `Ürün ${actionText}: ${updatedProduct.name} (ID: ${productId})`,
       success: true,
     });
-
-    revalidatePath("/admin/products");
+    revalidatePath("/");
+    revalidatePath("/products");
     return {
       success: true,
       message: isArchived ? "Ürün yayına alındı! ✅" : "Ürün arşivlendi! 📦",

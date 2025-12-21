@@ -1,8 +1,8 @@
 // src/app/api/register/route.ts
-import bcrypt from 'bcrypt';
-import { NextResponse } from 'next/server';
+import bcrypt from "bcrypt";
+import { NextResponse } from "next/server";
 // Prisma client'ını lib klasöründen import et (varsayılan yol)
-import prisma from '@/lib/prisma-client';
+import prisma from "@/lib/db";
 
 export async function POST(request: Request) {
   try {
@@ -10,13 +10,13 @@ export async function POST(request: Request) {
     const { email, firstName, lastName, password } = body;
 
     if (!email || !password || !firstName || !lastName) {
-      return new NextResponse('Tüm alanlar doldurulmalı', { status: 400 });
+      return new NextResponse("Tüm alanlar doldurulmalı", { status: 400 });
     }
     const existingUser = await prisma.user.findUnique({
       where: { email },
     });
     if (existingUser) {
-      return new NextResponse('Bu e-posta zaten kullanımda', { status: 409 });
+      return new NextResponse("Bu e-posta zaten kullanımda", { status: 409 });
     }
 
     // Şifreyi hash'le
@@ -40,7 +40,7 @@ export async function POST(request: Request) {
       role: user.role,
     });
   } catch (error) {
-    console.error('[REGISTER_POST_ERROR]', error);
-    return new NextResponse('Internal Error', { status: 500 });
+    console.error("[REGISTER_POST_ERROR]", error);
+    return new NextResponse("Internal Error", { status: 500 });
   }
 }

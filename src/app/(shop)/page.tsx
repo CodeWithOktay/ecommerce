@@ -1,22 +1,46 @@
 import { Lock, Star, Truck, AlertCircle } from "lucide-react";
-import Image from "next/image";
-import { prisma } from "@/lib/prisma-client"; // { prisma } süslü parantez ile import etmek genelde daha güvenlidir
+// import Image from "next/image"; // Kullanılmıyorsa kaldırabilirsin, ProductCard içinde var zaten
+import { prisma } from "@/lib/db";
 import ProductCard from "@/components/features/product/product-card";
+import { getServerSession } from "next-auth"; // 🟢 1. Auth import
+import { authOptions } from "@/lib/actions/auth"; // 🟢 2. Auth ayarlarının yolu (Senin dosya yolun farklıysa düzelt)
 
 // Sayfanın her istekte güncel veri çekmesini sağlar
 export const revalidate = 0;
 
 export default async function HomePage() {
-  // 1. Veritabanından Ham Veriyi Çek
+  // --- 🟢 3. KULLANICI KONTROLÜ BAŞLANGIÇ ---
+  const session = await getServerSession(authOptions);
+  const userId = session?.user?.id;
+
+  // Kullanıcının favori ürün ID'lerini tutacak boş bir liste
+  let favoriteIds: string[] = [];
+
+  // Eğer kullanıcı giriş yapmışsa, favorilerini veritabanından çek
+  if (userId) {
+    const favorites = await prisma.favorite.findMany({
+      where: {
+        userId: userId,
+      },
+      select: {
+        productId: true, // Bize sadece ID'ler lazım
+      },
+    });
+    // Gelen sonucu düz listeye çevir: ['id1', 'id2', 'id3']
+    favoriteIds = favorites.map((fav) => fav.productId);
+  }
+  // --- KULLANICI KONTROLÜ BİTİŞ ---
+
+  // 1. Veritabanından Ham Veriyi Çek (Ürünler)
   const rawProducts = await prisma.product.findMany({
     where: {
       isActive: true,
       isArchived: false,
     },
     include: {
-      images: true, // 🟢 Görselleri getir
-      category: true, // 🟢 Kategoriyi getir
-      brand: true, // 🟢 Markayı getir
+      images: true,
+      category: true,
+      brand: true,
     },
     orderBy: {
       createdAt: "desc",
@@ -24,7 +48,7 @@ export default async function HomePage() {
     take: 12,
   });
 
-  // 2. Decimal -> Number Dönüşümü (Serialization)
+  // 2. Decimal -> Number Dönüşümü
   const products = rawProducts.map((product) => ({
     ...product,
     price: Number(product.price),
@@ -45,9 +69,18 @@ export default async function HomePage() {
 
           {products.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-              {products.map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
+              {products.map((product) => {
+                // 🟢 4. KONTROL: Bu ürün favori listesinde var mı?
+                const isFav = favoriteIds.includes(product.id);
+
+                return (
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                    isFavorited={isFav} // 🟢 5. Bilgiyi karta gönderiyoruz!
+                  />
+                );
+              })}
             </div>
           ) : (
             // Ürün Yoksa Gösterilecek State
@@ -65,7 +98,7 @@ export default async function HomePage() {
           )}
         </div>
 
-        {/* Özellikler Bölümü (Features) */}
+        {/* Özellikler Bölümü (Features) - AYNI KALIYOR */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
           {/* Hızlı Teslimat */}
           <div className="flex flex-col items-center text-center p-8 rounded-2xl bg-blue-50 border border-blue-100 transition-transform hover:-translate-y-1 duration-300">

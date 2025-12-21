@@ -40,14 +40,14 @@ export default function CategoryHeader({ categories }: CategoryHeaderProps) {
 
   return (
     <>
-      <MainNav
-        categories={categories}
-        onShowAllClick={() => setIsMenuOpen(true)}
-      />
       <SideMenu
         categories={categories}
         isMenuOpen={isMenuOpen}
         onClose={() => setIsMenuOpen(false)}
+      />
+      <MainNav
+        categories={categories}
+        onShowAllClick={() => setIsMenuOpen(true)}
       />
     </>
   );

@@ -2,12 +2,12 @@
 
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/actions/auth";
-import { prisma } from "@/lib/prisma-client"; // Named import standartlaştı
+import { prisma } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import { OrderStatus } from "@prisma/client";
-import { createLog } from "@/lib/logger"; // 👈 Log sistemini ekledik
+import { createLog } from "@/lib/logger";
 
-// 🟢 1. SİPARİŞ DURUM GÜNCELLEME (ADMIN)
+//  1. SİPARİŞ DURUM GÜNCELLEME (ADMIN)
 export async function updateOrderStatus(orderId: string, formData: FormData) {
   try {
     const rawStatus = formData.get("status");
@@ -16,7 +16,6 @@ export async function updateOrderStatus(orderId: string, formData: FormData) {
       return;
     }
 
-    // Enum kontrolü (Type Safety)
     const newStatus = rawStatus as OrderStatus;
     if (!Object.values(OrderStatus).includes(newStatus)) {
       throw new Error("Geçersiz sipariş durumu.");
@@ -27,7 +26,7 @@ export async function updateOrderStatus(orderId: string, formData: FormData) {
       data: { status: newStatus },
     });
 
-    // ✅ LOG KAYDI
+    //  LOG KAYDI
     await createLog({
       action: "UPDATE_ORDER_STATUS",
       details: `Sipariş #${orderId.slice(-6).toUpperCase()} durumu güncellendi: ${newStatus}`,
@@ -39,7 +38,6 @@ export async function updateOrderStatus(orderId: string, formData: FormData) {
     revalidatePath("/admin/dashboard");
   } catch (error) {
     console.error("Durum güncelleme hatası:", error);
-    // ❌ HATA LOGU
     await createLog({
       action: "UPDATE_ORDER_STATUS_ERROR",
       details: `Sipariş durumu güncellenemedi (ID: ${orderId})`,
@@ -48,7 +46,7 @@ export async function updateOrderStatus(orderId: string, formData: FormData) {
   }
 }
 
-// 🟢 2. KULLANICI SİPARİŞLERİNİ GETİRME
+// 2. KULLANICI SİPARİŞLERİNİ GETİRME
 export async function getUserOrders() {
   const session = await getServerSession(authOptions);
   if (!session || !session.user?.id) return null;
@@ -81,7 +79,7 @@ interface CartItemInput {
   price: number;
 }
 
-// 🟢 3. SİPARİŞ OLUŞTURMA
+// 3. SİPARİŞ OLUŞTURMA
 export async function createOrder(
   cartItems: CartItemInput[],
   totalAmount: number,
@@ -98,7 +96,6 @@ export async function createOrder(
 
   // GÜVENLİK DUVARI: ADMIN KONTROLÜ
   if (session.user.role === "ADMIN") {
-    // 🚨 LOG: Admin sipariş vermeye çalıştı
     await createLog({
       action: "ADMIN_ORDER_ATTEMPT",
       details: `Admin hesabı (${session.user.email}) sipariş vermeye çalıştı, engellendi.`,
@@ -131,7 +128,7 @@ export async function createOrder(
       },
     });
 
-    // ✅ LOG KAYDI
+    //  LOG KAYDI
     await createLog({
       action: "CREATE_ORDER",
       details: `Yeni sipariş alındı: #${order.id.slice(-6).toUpperCase()} - Tutar: ${totalAmount}₺ - Müşteri: ${session.user.email}`,
@@ -148,7 +145,6 @@ export async function createOrder(
   } catch (error) {
     console.error("Sipariş oluşturma hatası:", error);
 
-    // ❌ HATA LOGU
     await createLog({
       action: "CREATE_ORDER_ERROR",
       details: `Sipariş oluşturulamadı: ${(error as Error).message}`,
@@ -162,7 +158,7 @@ export async function createOrder(
   }
 }
 
-// 🟢 4. SİPARİŞ İPTALİ
+// 4. SİPARİŞ İPTALİ
 export async function cancelOrder(orderId: string, reason: string) {
   const session = await getServerSession(authOptions);
 
@@ -184,7 +180,7 @@ export async function cancelOrder(orderId: string, reason: string) {
     }
 
     if (order.userId !== session.user.id && session.user.role !== "ADMIN") {
-      // 🚨 LOG: Yetkisiz iptal denemesi
+      // LOG: Yetkisiz iptal denemesi
       await createLog({
         action: "UNAUTHORIZED_CANCEL",
         details: `Yetkisiz sipariş iptal denemesi. Sipariş: ${orderId}, Kullanıcı: ${session.user.email}`,
@@ -200,7 +196,6 @@ export async function cancelOrder(orderId: string, reason: string) {
       };
     }
 
-    // Güncelleme işlemi
     await prisma.order.update({
       where: { id: orderId },
       data: {
@@ -209,7 +204,7 @@ export async function cancelOrder(orderId: string, reason: string) {
       },
     });
 
-    // ✅ LOG KAYDI
+    // LOG KAYDI
     await createLog({
       action: "CANCEL_ORDER",
       details: `Sipariş iptal edildi #${order.id.slice(-6).toUpperCase()}. Sebep: ${reason}`,
@@ -217,7 +212,7 @@ export async function cancelOrder(orderId: string, reason: string) {
     });
 
     revalidatePath("/account/orders");
-    revalidatePath("/admin/orders");
+    revalidatePath("/orders");
 
     return {
       success: true,

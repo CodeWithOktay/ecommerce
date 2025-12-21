@@ -1,59 +1,28 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import Footer from "./footer";
-import Header from "./header";
-import { PageLayout } from "./PageLayout";
+import { ReactNode } from "react";
 
 /**
- * Ana Layout Bileşeni
+ * Ana Layout Bileşeni (Birleştirilmiş Versiyon)
  *
- * Uygulamanın ana layout yapısını yönetir.
- * Admin sayfaları için farklı, normal sayfalar için standart layout uygular.
- *
- * @param children - İçeriği render edilecek React bileşenleri
- * @returns {JSX.Element} Layout yapısı
+ * Hem sayfa yapısını (padding, container) hem de
+ * Admin/User ayrımını tek bir dosyada yönetir.
  */
-export default function MainLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  // Mevcut sayfa yolunu al
+export default function MainLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
 
-  // Admin sayfası kontrolü - '/admin' ile başlayan sayfalar
   const isAdminPage = pathname.startsWith("/admin");
 
-  /**
-   * Admin Sayfası Layout'u
-   *
-   * Admin paneli sayfaları için header ve footer gösterilmez.
-   * Sadece içerik (children) render edilir.
-   * Bu sayede admin paneli temiz ve minimalist bir arayüze sahip olur.
-   */
   if (isAdminPage) {
     return <>{children}</>;
   }
 
-  /**
-   * Normal Sayfa Layout'u
-   *
-   * Standart kullanıcı sayfaları için tam layout yapısı:
-   * - Header (üst navigasyon)
-   * - PageLayout (içerik wrapper'ı)
-   * - Footer (alt bilgi ve linkler)
-   */
   return (
-    <>
-      {/* Üst Navigasyon - Logo, arama, sepet */}
-      <Header />
-
-      {/* Ana İçerik Alanı - Sayfa içeriğini saran layout */}
-      <PageLayout>{children}</PageLayout>
-
-      {/* Alt Bilgi - Marka bilgisi, linkler, sosyal medya */}
-      <Footer />
-    </>
+    <div className="flex flex-col min-h-screen">
+      <main className="flex-grow container mx-auto p-4 md:p-6 min-h-[60vh]">
+        {children}
+      </main>
+    </div>
   );
 }

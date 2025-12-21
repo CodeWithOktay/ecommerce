@@ -1,6 +1,6 @@
 "use server";
 
-import prisma from "@/lib/prisma-client";
+import prisma from "@/lib/db";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/actions/auth";
 import { redirect } from "next/navigation";
@@ -21,13 +21,11 @@ export async function createOrder(cartItems: CartItemInput[], address: string) {
     return { success: false, message: "Sepetiniz boş." };
   }
 
-  // Transaction Başlatıyoruz (Ya hepsi çalışır ya hiçbiri)
   try {
     const result = await prisma.$transaction(async (tx) => {
       let totalAmount = 0;
       const orderItemsData = [];
 
-      // 1. Ürünleri ve Stokları Kontrol Et
       for (const item of cartItems) {
         const product = await tx.product.findUnique({
           where: { id: item.productId },
@@ -41,7 +39,6 @@ export async function createOrder(cartItems: CartItemInput[], address: string) {
           throw new Error(`Stok yetersiz: ${product.name}`);
         }
 
-        // Fiyatı veritabanından alıyoruz (Frontend'e güvenilmez!)
         const price = Number(product.price);
         totalAmount += price * item.quantity;
 
@@ -51,14 +48,12 @@ export async function createOrder(cartItems: CartItemInput[], address: string) {
           price: product.price,
         });
 
-        // 2. Stoktan Düş
         await tx.product.update({
           where: { id: product.id },
           data: { stock: { decrement: item.quantity } },
         });
       }
 
-      // 3. Siparişi Oluştur
       const order = await tx.order.create({
         data: {
           userId: session.user.id,

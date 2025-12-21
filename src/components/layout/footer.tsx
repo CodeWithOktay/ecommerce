@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma-client";
+import { prisma } from "@/lib/db";
 import { Facebook, Instagram, Twitter } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";

@@ -1,51 +1,57 @@
-import type { Role } from "@prisma/client";
-import type { JWT } from "next-auth/jwt";
-import { withAuth } from "next-auth/middleware";
 import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import { getToken } from "next-auth/jwt";
 
-// Next.js middleware fonksiyonu - her request'ten önce çalışır
-export default withAuth(
-  function middleware(req) {
-    const token = req.nextauth.token as (JWT & { role: Role }) | null;
-    const isAdmin = token?.role === "ADMIN";
+export async function middleware(req: NextRequest) {
+  const { pathname } = req.nextUrl;
 
-    // ✅ ADMIN ROUTE KONTROLÜ - /admin ile başlayan tüm route'lar
-    if (req.nextUrl.pathname.startsWith("/admin")) {
-      // Token yoksa (kullanıcı giriş yapmamışsa) login sayfasına yönlendir
-      if (!token) {
-        return NextResponse.redirect(new URL("/admin/login", req.url));
-      }
+  const token = await getToken({
+    req,
+    secret: process.env.NEXTAUTH_SECRET,
+  });
 
-      // Kullanıcı ADMIN değilse yetkisiz sayfasına yönlendir
-      if (!isAdmin) {
-        return NextResponse.redirect(new URL("/admin/unauthorized", req.url));
-      }
+  // 🔍 Debug (prod'da kaldır)
+  console.log(
+    `[Middleware] Path: ${pathname} | Auth: ${!!token} | Role: ${token?.role}`
+  );
+
+  const isAdminPath = pathname.startsWith("/admin");
+  const isAccountPath = pathname.startsWith("/account");
+  const isAuthPath =
+    pathname.startsWith("/login") || pathname.startsWith("/register");
+
+  // 🔐 Login / Register → girişliyse yönlendir
+  if (isAuthPath && token) {
+    return NextResponse.redirect(
+      new URL(token.role === "ADMIN" ? "/admin/dashboard" : "/", req.url)
+    );
+  }
+
+  // 🛡️ ADMIN KORUMASI
+  if (isAdminPath) {
+    if (!token) {
+      const loginUrl = new URL("/login", req.url);
+      loginUrl.searchParams.set("callbackUrl", pathname);
+      return NextResponse.redirect(loginUrl);
     }
 
-    // Tüm kontroller başarılıysa request'i devam ettir
-    return NextResponse.next();
-  },
-  {
-    // Yetkilendirme callback'i - withAuth için gerekli
-    callbacks: {
-      authorized: ({ token, req }) => {
-        // ✅ ADMIN ROUTE YETKİLENDİRMESİ
-        if (req.nextUrl.pathname.startsWith("/admin")) {
-          return !!token;
-        }
-        // Diğer tüm route'lar için erişime izin ver
-        return true;
-      },
-    },
+    if (token.role !== "ADMIN") {
+      return NextResponse.redirect(new URL("/", req.url));
+    }
   }
-);
 
-// Middleware'in çalışacağı route pattern'larını belirle
+  // 👤 ACCOUNT KORUMASI
+  if (isAccountPath && !token) {
+    const loginUrl = new URL("/login", req.url);
+    loginUrl.searchParams.set("callbackUrl", pathname);
+    return NextResponse.redirect(loginUrl);
+  }
+
+  return NextResponse.next();
+}
+
 export const config = {
   matcher: [
-    "/admin/:path*", // ✅ /admin ve altındaki tüm route'lar
-    "/user/profile:path*",
-    "/user/orders:path*",
-    "/api/admin/:path*", // ✅ /api/admin ve altındaki tüm API route'ları
+    "/((?!api|_next/static|_next/image|favicon.ico|.*\\.(png|svg|jpg|jpeg|webp)).*)",
   ],
 };

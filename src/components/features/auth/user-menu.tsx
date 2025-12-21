@@ -154,7 +154,10 @@ export default function UserMenu() {
 
         <div className="border-t border-gray-50 mt-2 pt-2 px-2">
           <button
-            onClick={() => signOut({ callbackUrl: "/" })}
+            onClick={async () => {
+              console.log("Logout clicked");
+              await signOut({ callbackUrl: "/" });
+            }}
             className="w-full flex items-center gap-3 px-3 py-3 text-sm font-medium text-red-500 hover:bg-red-50 rounded-xl transition-all"
           >
             <LogOut size={18} />

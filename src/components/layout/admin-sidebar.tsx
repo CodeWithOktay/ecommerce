@@ -94,7 +94,7 @@ export default function AdminSidebar({
 
   const handleLogout = async () => {
     try {
-      await signOut({ callbackUrl: "/admin/login" });
+      await signOut({ callbackUrl: "/login" });
     } catch (error) {
       console.error("Logout error:", error);
     }
@@ -125,7 +125,6 @@ export default function AdminSidebar({
       >
         {/* --- HEADER (LOGO) --- */}
         <div className="h-20 flex items-center justify-between px-4 border-b border-gray-800 flex-shrink-0">
-          {/* Logo Container - Animasyonlu */}
           <div
             className={`flex items-center transition-all duration-300 ${isHovered ? "w-full px-2" : "w-full justify-center"}`}
           >

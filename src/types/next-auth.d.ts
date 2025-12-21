@@ -1,37 +1,33 @@
-// lib/types/next-auth.d.ts
-
 import { DefaultSession, DefaultUser } from "next-auth";
 import { DefaultJWT } from "next-auth/jwt";
-
-// Kendi enum'umuzu import ediyoruz
 import { Role } from "@prisma/client";
 
-// 1. JWT (Token) tipini genişletiyoruz
-declare module "next-auth/jwt" {
-  interface JWT extends DefaultJWT {
-    role: Role; // Token'ımıza 'role' alanını ekliyoruz
-    id: string; // Token'ımıza 'id' alanını ekliyoruz
-    firstName?: string;
-    lastName?: string;
-  }
-}
-
-// 2. Session tipini genişletiyoruz
+/**
+ * next-auth modülünü genişlet
+ */
 declare module "next-auth" {
   interface Session {
     user: {
       id: string;
       role: Role;
-      firstName?: string;
-      lastName?: string;
-      // Session.user objesine 'role' ve 'id' alanlarını ekliyoruz
-    } & DefaultSession["user"]; // Orijinal user alanlarını (name, email, image) koruyoruz
+      firstName?: string | null;
+      lastName?: string | null;
+    } & DefaultSession["user"];
   }
 
-  // 3. authorize'dan dönen User tipini genişletiyoruz
   interface User extends DefaultUser {
-    role: Role; // User objemize 'role' alanını ekliyoruz
-    firstName?: string;
-    lastName?: string;
+    id: string;
+    role: Role;
+    firstName?: string | null;
+    lastName?: string | null;
+  }
+}
+
+declare module "next-auth/jwt" {
+  interface JWT extends DefaultJWT {
+    id: string;
+    role: Role;
+    firstName?: string | null;
+    lastName?: string | null;
   }
 }

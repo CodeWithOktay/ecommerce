@@ -15,12 +15,16 @@ import Image from "next/image";
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 
+import { Role } from "@prisma/client";
+
 interface User {
-  id?: string;
-  name?: string;
-  email?: string;
-  image?: string;
-  role?: string;
+  id: string;
+  name?: string | null;
+  email?: string | null;
+  image?: string | null;
+  role: Role;
+  firstName?: string | null;
+  lastName?: string | null;
 }
 
 interface AdminHeaderProps {
@@ -33,7 +37,6 @@ export default function AdminHeader({ onMenuToggle }: AdminHeaderProps) {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  // Menü açıkken dışarı tıklanırsa kapat
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
@@ -53,7 +56,7 @@ export default function AdminHeader({ onMenuToggle }: AdminHeaderProps) {
   };
 
   const handleLogout = async () => {
-    await signOut({ callbackUrl: "/admin/login" });
+    await signOut({ callbackUrl: "/login" });
   };
 
   return (
@@ -77,16 +80,8 @@ export default function AdminHeader({ onMenuToggle }: AdminHeaderProps) {
           </div>
         </div>
 
-        {/* --- ORTA: ARAMA ÇUBUĞU KALDIRILDI --- */}
-        {/* Buradaki div'i sildik, justify-between sayesinde sağ ve sol yaslandı */}
-
         {/* --- SAĞ TARAF: AKSİYONLAR --- */}
         <div className="flex items-center gap-1.5 sm:gap-3">
-          {/* Yardım Butonu (Opsiyonel) */}
-          <button className="hidden sm:flex p-2 text-gray-400 hover:bg-gray-50 hover:text-indigo-600 rounded-full transition-all">
-            <HelpCircle className="w-5 h-5" />
-          </button>
-
           {/* ✅ BİLDİRİMLER (SİPARİŞLER LİNKİ) */}
           <Link
             href="/admin/orders"
@@ -133,7 +128,7 @@ export default function AdminHeader({ onMenuToggle }: AdminHeaderProps) {
                   {session?.user?.firstName || "Admin"}
                 </span>
                 <span className="text-[10px] font-medium text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded-full mt-0.5">
-                  {(session?.user as any)?.role || "Yönetici"}
+                  {session?.user?.role || "Yönetici"}
                 </span>
               </div>
 
@@ -159,7 +154,7 @@ export default function AdminHeader({ onMenuToggle }: AdminHeaderProps) {
               {/* Linkler */}
               <div className="p-2 space-y-1">
                 <Link
-                  href="/admin/profile"
+                  href={`/admin/administrators/${session?.user?.id}`}
                   className="group flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-gray-600 hover:text-indigo-600 hover:bg-indigo-50/50 rounded-xl transition-all"
                   onClick={() => setShowUserMenu(false)}
                 >

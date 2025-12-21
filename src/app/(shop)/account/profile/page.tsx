@@ -1,9 +1,9 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/actions/auth";
-import prisma from "@/lib/prisma-client";
+import prisma from "@/lib/db";
 import { redirect } from "next/navigation";
 import Image from "next/image";
-import ProfileForm from "@/app/(user)/account/profile/profile-form";
+import ProfileForm from "./profile-form";
 import {
   Calendar,
   Mail,
@@ -12,7 +12,6 @@ import {
   ShieldCheck,
   ShoppingBag,
   User as UserIcon,
-  Star,
 } from "lucide-react";
 
 export default async function ProfilePage() {

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation"; // 👈 1. Bunu ekle
-import { addBrandToCategory } from "@/lib/actions/add-brand-to-category";
+import { addBrandToCategory } from "@/lib/actions/category";
 import { toast } from "react-hot-toast";
 
 interface Props {

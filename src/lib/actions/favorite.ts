@@ -1,9 +1,8 @@
-// src/lib/actions/favorite-actions.ts
 "use server";
 
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/actions/auth";
-import { prisma } from "@/lib/prisma-client";
+import { prisma } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 
 export async function toggleFavorite(productId: string) {
@@ -16,7 +15,6 @@ export async function toggleFavorite(productId: string) {
   const userId = session.user.id;
 
   try {
-    // Önce var mı diye kontrol et
     const existingFavorite = await prisma.favorite.findUnique({
       where: {
         userId_productId: {
@@ -27,20 +25,18 @@ export async function toggleFavorite(productId: string) {
     });
 
     if (existingFavorite) {
-      // Varsa SİL (Favoriden çıkar)
       await prisma.favorite.delete({
         where: {
           id: existingFavorite.id,
         },
       });
-      revalidatePath("/"); // Sayfayı yenile ki kalp boşalsın
+      revalidatePath("/");
       return {
         success: true,
         message: "Favorilerden çıkarıldı.",
         isFavorited: false,
       };
     } else {
-      // Yoksa EKLE
       await prisma.favorite.create({
         data: {
           userId,
@@ -50,7 +46,7 @@ export async function toggleFavorite(productId: string) {
       revalidatePath("/");
       return {
         success: true,
-        message: "Favorilere eklendi! ❤️",
+        message: "Favorilere eklendi!",
         isFavorited: true,
       };
     }

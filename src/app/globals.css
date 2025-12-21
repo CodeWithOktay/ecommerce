@@ -10,15 +10,45 @@
 
   /* CSS Custom Properties (CSS Variables) tanımları */
   :root {
-    /* Gradient renk tanımları */
-    --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    --gradient-secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-    
-    /* Renk paleti tanımları */
-    --dark: #1e293b;        /* Koyu gri - başlıklar ve önemli metinler */
-    --light: #f8fafc;       /* Açık gri - arkaplanlar */
-    --text: #334155;        /* Orta gri - normal metinler */
-    --border: #e2e8f0;      /* Border gri - çizgiler ve ayraçlar */
-    --accent: #3b82f6;      /* Vurgu mavisi - butonlar ve linkler */
+    /* globals.css */
+    :root {
+      --grad-main: linear-gradient(135deg, #667eea, #764ba2);
+      --grad-soft: linear-gradient(
+        135deg,
+        rgba(102, 126, 234, 0.15),
+        rgba(118, 75, 162, 0.15)
+      );
+      --grad-glow: radial-gradient(
+        circle at top left,
+        rgba(196, 197, 202, 0.25),
+        transparent 60%
+      );
+    }
   }
+}
+/* SideMenu için özel stiller */
+.overflow-hidden {
+  overflow: hidden !important;
+}
+
+.pr-\[15px\] {
+  padding-right: 15px !important;
+}
+
+/* Fade in animasyonu */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Alt kategoriler için animasyon sınıfı */
+[style*="animation-delay"] {
+  animation: fadeIn 0.2s ease-out forwards;
+  opacity: 0;
 }

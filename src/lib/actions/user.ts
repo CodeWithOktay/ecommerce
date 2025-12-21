@@ -2,7 +2,7 @@
 "use server";
 
 import { z } from "zod";
-import { prisma } from "@/lib/prisma-client";
+import { prisma } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";

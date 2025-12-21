@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma-client";
+import { prisma } from "@/lib/db";
 import ProductCard from "@/components/features/product/product-card";
 import {
   ChevronRight,
@@ -79,7 +79,6 @@ export default async function CategoryPage({
 
   if (sortParam === "price_asc") orderBy = { price: "asc" };
   if (sortParam === "price_desc") orderBy = { price: "desc" };
-  if (sortParam === "name_asc") orderBy = { name: "asc" };
 
   // 4. Ürünleri Çek
   const rawProducts = await prisma.product.findMany({
@@ -171,34 +170,6 @@ export default async function CategoryPage({
                   </ul>
                 </div>
               )}
-
-              {/* Fiyat Filtresi (Minimal) */}
-              <div>
-                <h3 className="font-bold text-gray-900 mb-4 text-sm uppercase tracking-wider">
-                  Fiyat Aralığı
-                </h3>
-                <div className="space-y-3">
-                  {["0 ₺ - 500 ₺", "500 ₺ - 1000 ₺", "1000 ₺ ve üzeri"].map(
-                    (label, idx) => (
-                      <label
-                        key={idx}
-                        className="flex items-center gap-3 cursor-pointer group"
-                      >
-                        <div className="relative flex items-center">
-                          <input
-                            type="checkbox"
-                            className="peer w-4 h-4 border-2 border-gray-300 rounded checked:border-[#667EEA] checked:bg-[#667EEA] transition-all appearance-none cursor-pointer"
-                          />
-                          <CheckIcon className="absolute left-0.5 top-0.5 w-3 h-3 text-white opacity-0 peer-checked:opacity-100 pointer-events-none" />
-                        </div>
-                        <span className="text-sm text-gray-600 group-hover:text-gray-900 transition-colors">
-                          {label}
-                        </span>
-                      </label>
-                    )
-                  )}
-                </div>
-              </div>
             </div>
           </aside>
 

@@ -1,7 +1,7 @@
 // src/lib/actions/settings-actions.ts
 "use server";
 
-import prisma from "@/lib/prisma-client";
+import prisma from "@/lib/db";
 import { revalidatePath } from "next/cache";
 
 // 1. Ayarları Getir (Yoksa varsayılanları oluşturur)

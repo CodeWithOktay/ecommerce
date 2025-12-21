@@ -215,7 +215,7 @@ export default function ProductDataTable({ products }: Props) {
                   {/* 6. İşlemler */}
                   <td className="px-6 py-4 text-right">
                     <ProductActions
-                      productId={product.id}
+                      id={product.id}
                       isArchived={product.isArchived}
                     />
                   </td>
