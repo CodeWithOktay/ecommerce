@@ -18,11 +18,10 @@ import { Role } from "@prisma/client";
 
 interface User {
   id: string;
-  name?: string | null;
   email?: string | null;
   image?: string | null;
   role: Role;
-  firstName?: string | null;
+  firstName?: string;
   lastName?: string | null;
 }
 
@@ -153,7 +152,7 @@ export default function AdminHeader({ onMenuToggle }: AdminHeaderProps) {
               {/* Linkler */}
               <div className="p-2 space-y-1">
                 <Link
-                  href={`/admin/administrators/${session?.user?.id}`}
+                  href={`/admin/administrators`}
                   className="group flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-gray-600 hover:text-indigo-600 hover:bg-indigo-50/50 rounded-xl transition-all"
                   onClick={() => setShowUserMenu(false)}
                 >

@@ -10,7 +10,7 @@ import {
  */
 export default async function AdministratorsPage() {
   const admins = await prisma.user.findMany({
-    where: { role: "ADMIN" },
+    where: { role: { in: ["ADMIN", "SUPER_ADMIN"] } },
     orderBy: { createdAt: "desc" },
   });
 

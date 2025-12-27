@@ -170,7 +170,10 @@ export default function AdminSidebar({
           <ul className="space-y-1.5">
             {menuItems.map((item) => {
               const Icon = item.icon;
-              const isActive = pathname === item.href;
+              const isActive =
+                item.href === "/admin/dashboard"
+                  ? pathname === item.href
+                  : pathname.startsWith(item.href);
 
               return (
                 <li key={item.href}>

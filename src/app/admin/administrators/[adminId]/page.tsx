@@ -1,18 +1,35 @@
 import { prisma } from "@/lib/db";
-import { updateUserProfile } from "@/lib/actions/user";
+import { updateAdmin } from "@/lib/actions/admin";
 import Link from "next/link";
 import Image from "next/image";
+import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
+
+async function updateAdminAction(userId: string, formData: FormData) {
+  "use server";
+  const result = await updateAdmin(userId, formData);
+  if (result.success) {
+    revalidatePath("/admin/administrators");
+    redirect("/admin/administrators");
+  } else {
+    const errorMessage = encodeURIComponent(result.message);
+    redirect(`/admin/administrators/${userId}?error=${errorMessage}`);
+  }
+}
 
 export default async function AdminEditPage({
   params,
+  searchParams,
 }: {
   params: { adminId: string };
+  searchParams?: { [key: string]: string | undefined };
 }) {
   const user = await prisma.user.findUnique({
     where: { id: params.adminId },
   });
 
-  if (!user || user.role !== "ADMIN") return <div>Yönetici bulunamadı.</div>;
+  if (!user || (user.role !== "ADMIN" && user.role !== "SUPER_ADMIN"))
+    return <div>Yönetici bulunamadı.</div>;
 
   return (
     <div className="max-w-2xl mx-auto p-8">
@@ -25,6 +42,16 @@ export default async function AdminEditPage({
       <h1 className="text-2xl font-bold mb-6 text-purple-900">
         Yönetici Düzenle
       </h1>
+
+      {searchParams?.error && (
+        <div
+          className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4"
+          role="alert"
+        >
+          <p className="font-bold">Hata</p>
+          <p>{searchParams.error}</p>
+        </div>
+      )}
 
       <div className="bg-white p-8 rounded-xl shadow-sm border border-purple-100">
         <div className="flex items-center gap-4 mb-8">
@@ -49,16 +76,7 @@ export default async function AdminEditPage({
         </div>
 
         <form
-          action={async (formData) => {
-            const result = await updateUserProfile(formData);
-            if (!result.success) {
-              // You might want to show this error to the user
-              console.error(result.message);
-            } else {
-              // Optionally show success message or redirect
-              console.log("Profile updated successfully");
-            }
-          }}
+          action={updateAdminAction.bind(null, user.id)}
           className="space-y-4"
         >
           <input type="hidden" name="id" value={user.id} />
