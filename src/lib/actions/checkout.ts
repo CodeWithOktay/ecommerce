@@ -1,9 +1,8 @@
 "use server";
 
-import prisma from "@/lib/db";
+import {prisma} from "@/lib/db";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/actions/auth";
-import { redirect } from "next/navigation";
 
 interface CartItemInput {
   productId: string;
@@ -61,6 +60,7 @@ export async function createOrder(cartItems: CartItemInput[], address: string) {
           status: "PENDING",
           customerName: session.user.name || "Müşteri",
           customerEmail: session.user.email || "",
+          address: address, // Add the address to the order
           items: {
             create: orderItemsData,
           },
@@ -71,11 +71,13 @@ export async function createOrder(cartItems: CartItemInput[], address: string) {
     });
 
     return { success: true, orderId: result.id };
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMessage =
+      error instanceof Error ? error.message : "Bilinmeyen bir hata oluştu";
     console.error("Sipariş hatası:", error);
     return {
       success: false,
-      message: error.message || "Sipariş oluşturulamadı.",
+      message: errorMessage,
     };
   }
 }

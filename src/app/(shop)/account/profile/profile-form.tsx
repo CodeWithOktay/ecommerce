@@ -1,6 +1,6 @@
 "use client";
 
-import { updateMyProfile } from "@/lib/actions/user";
+import { updateUserProfile } from "@/lib/actions/user";
 import { useState } from "react";
 import {
   User,
@@ -20,6 +20,7 @@ import toast from "react-hot-toast";
 
 interface ProfileFormProps {
   user: {
+    id: string; // ID eklendi
     firstName: string | null;
     lastName: string | null;
     email: string | null;
@@ -35,50 +36,46 @@ interface ProfileFormProps {
 export default function ProfileForm({ user, address }: ProfileFormProps) {
   const [loading, setLoading] = useState(false);
   const [phone, setPhone] = useState(user.phoneNumber || "");
-
-  // Şifre Göster/Gizle State'leri
   const [showCurrentPass, setShowCurrentPass] = useState(false);
   const [showNewPass, setShowNewPass] = useState(false);
 
   async function handleSubmit(formData: FormData) {
     setLoading(true);
 
-    // --- İstemci Tarafı Doğrulama (Client Validation) ---
     const currentPassword = formData.get("currentPassword") as string;
     const newPassword = formData.get("newPassword") as string;
     const confirmPassword = formData.get("confirmPassword") as string;
 
-    // Eğer yeni şifre alanlarından biri doluysa, şifre değiştirme işlemi yapılıyor demektir.
     if (newPassword || confirmPassword) {
       if (!currentPassword) {
-        toast.error("Şifre değiştirmek için mevcut şifrenizi girmelisiniz.");
+        toast.error("Mevcut şifrenizi girmelisiniz.");
         setLoading(false);
         return;
       }
-
       if (newPassword.length < 6) {
         toast.error("Yeni şifre en az 6 karakter olmalıdır.");
         setLoading(false);
         return;
       }
-
       if (newPassword !== confirmPassword) {
-        toast.error("Yeni şifreler birbiriyle eşleşmiyor.");
+        toast.error("Yeni şifreler eşleşmiyor.");
         setLoading(false);
         return;
       }
     }
-    // ----------------------------------------------------
 
     try {
-      const result = await updateMyProfile(formData);
+      const result = await updateUserProfile(formData);
       if (result.success) {
         toast.success(result.message);
+        // Formdaki şifre alanlarını temizle
+        const form = document.querySelector("form") as HTMLFormElement;
+        form.reset();
       } else {
         toast.error(result.message);
       }
-    } catch (error) {
-      toast.error("Bir hata oluştu.");
+    } catch {
+      toast.error("Bağlantı hatası oluştu.");
     } finally {
       setLoading(false);
     }
@@ -87,8 +84,7 @@ export default function ProfileForm({ user, address }: ProfileFormProps) {
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let val = e.target.value.replace(/\D/g, "");
     if (val.length > 11) val = val.slice(0, 11);
-    let formatted = "";
-    if (val.length > 0) formatted = val.slice(0, 4);
+    let formatted = val.length > 0 ? val.slice(0, 4) : "";
     if (val.length > 4) formatted += " " + val.slice(4, 7);
     if (val.length > 7) formatted += " " + val.slice(7, 9);
     if (val.length > 9) formatted += " " + val.slice(9, 11);
@@ -105,6 +101,9 @@ export default function ProfileForm({ user, address }: ProfileFormProps) {
       action={handleSubmit}
       className="space-y-8 animate-in fade-in duration-500"
     >
+      {/* --- GİZLİ INPUTLAR --- */}
+      <input type="hidden" name="id" value={user.id} />
+
       {/* 1. KİŞİSEL BİLGİLER */}
       <div>
         <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2 border-b border-gray-100 pb-2">
@@ -169,7 +168,6 @@ export default function ProfileForm({ user, address }: ProfileFormProps) {
                 onChange={handlePhoneChange}
                 className={inputClass}
                 placeholder="05XX XXX XX XX"
-                maxLength={14}
               />
             </div>
           </div>
@@ -236,20 +234,9 @@ export default function ProfileForm({ user, address }: ProfileFormProps) {
         <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2 border-b border-gray-100 pb-2">
           <ShieldCheck className="text-[#667EEA]" size={20} /> Güvenlik
         </h3>
-
-        <div className="bg-yellow-50 border border-yellow-100 rounded-xl p-4 mb-6">
-          <p className="text-xs text-yellow-700">
-            <strong>Bilgi:</strong> Şifrenizi değiştirmek istemiyorsanız
-            aşağıdaki alanları <u>boş bırakın</u>.
-          </p>
-        </div>
-
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Mevcut Şifre */}
           <div className="space-y-1 md:col-span-2">
-            <label className={labelClass}>
-              Mevcut Şifre (Değişiklik İçin Gerekli)
-            </label>
+            <label className={labelClass}>Mevcut Şifre</label>
             <div className="relative">
               <Lock
                 className="absolute left-3 top-3.5 text-gray-400"
@@ -259,19 +246,17 @@ export default function ProfileForm({ user, address }: ProfileFormProps) {
                 type={showCurrentPass ? "text" : "password"}
                 name="currentPassword"
                 className={inputClass}
-                placeholder="Mevcut şifreniz"
+                placeholder="Değişiklik için şart"
               />
               <button
                 type="button"
                 onClick={() => setShowCurrentPass(!showCurrentPass)}
-                className="absolute right-3 top-3.5 text-gray-400 hover:text-gray-600 transition-colors"
+                className="absolute right-3 top-3.5 text-gray-400 hover:text-gray-600"
               >
                 {showCurrentPass ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
           </div>
-
-          {/* Yeni Şifre */}
           <div className="space-y-1">
             <label className={labelClass}>Yeni Şifre</label>
             <div className="relative">
@@ -283,54 +268,46 @@ export default function ProfileForm({ user, address }: ProfileFormProps) {
                 type={showNewPass ? "text" : "password"}
                 name="newPassword"
                 className={inputClass}
-                placeholder="En az 6 karakter"
+                placeholder="En az 6 hane"
               />
               <button
                 type="button"
                 onClick={() => setShowNewPass(!showNewPass)}
-                className="absolute right-3 top-3.5 text-gray-400 hover:text-gray-600 transition-colors"
+                className="absolute right-3 top-3.5 text-gray-400 hover:text-gray-600"
               >
                 {showNewPass ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
           </div>
-
-          {/* Yeni Şifre Tekrar */}
           <div className="space-y-1">
-            <label className={labelClass}>Yeni Şifre (Tekrar)</label>
+            <label className={labelClass}>Yeni Şifre Tekrar</label>
             <div className="relative">
               <Lock
                 className="absolute left-3 top-3.5 text-gray-400"
                 size={18}
               />
               <input
-                type={showNewPass ? "text" : "password"} // Aynı toggle'ı kullanabiliriz
+                type={showNewPass ? "text" : "password"}
                 name="confirmPassword"
                 className={inputClass}
-                placeholder="Şifreyi onaylayın"
               />
             </div>
           </div>
         </div>
       </div>
 
-      <div className="pt-4">
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full md:w-auto px-8 py-4 bg-gradient-to-r from-[#667EEA] to-[#764BA2] text-white rounded-xl font-bold hover:shadow-lg hover:shadow-[#667EEA]/30 hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-        >
-          {loading ? (
-            <>
-              <Loader2 className="animate-spin w-5 h-5" /> Güncelleniyor...
-            </>
-          ) : (
-            <>
-              <Save className="w-5 h-5" /> Değişiklikleri Kaydet
-            </>
-          )}
-        </button>
-      </div>
+      <button
+        type="submit"
+        disabled={loading}
+        className="w-full md:w-auto px-8 py-4 bg-gradient-to-r from-[#667EEA] to-[#764BA2] text-white rounded-xl font-bold hover:shadow-lg transition-all flex items-center justify-center gap-2"
+      >
+        {loading ? (
+          <Loader2 className="animate-spin w-5 h-5" />
+        ) : (
+          <Save className="w-5 h-5" />
+        )}
+        Kaydet
+      </button>
     </form>
   );
 }

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import prisma from "@/lib/db";
+import { testPrisma as prisma} from "@/lib/test-utils/prisma";
 import { authenticateUser } from "@/lib/auth/auth.service";
 import bcrypt from "bcrypt";
 

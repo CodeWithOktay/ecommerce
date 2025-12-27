@@ -63,16 +63,25 @@ export default function LoginPage() {
       if (result?.error) {
         setGlobalError("Giriş başarısız. Bilgilerinizi kontrol edin.");
       }
+
       if (result?.ok) {
+        // Oturumu güncelle ki son rolü alabilelim
         const session = await getSession();
-        if (session?.user.role === "ADMIN") {
-          router.push("admin/dashboard");
+
+        // 🛠️ DÜZELTME BURADA: Hem ADMIN hem SUPER_ADMIN kontrolü
+        if (
+          session?.user.role === "ADMIN" ||
+          session?.user.role === "SUPER_ADMIN"
+        ) {
+          router.push("/admin/dashboard"); // Başına / koyduk (Garanti olsun)
         } else {
           router.push("/");
         }
+
+        // Middleware ve Client bileşenlerin senkronize olması için yenile
         router.refresh();
       }
-    } catch (err) {
+    } catch {
       setGlobalError("Bağlantı hatası. Lütfen tekrar deneyin.");
     }
   };
@@ -134,6 +143,12 @@ export default function LoginPage() {
               <label className="block text-sm font-semibold text-gray-900">
                 Şifre
               </label>
+              <Link
+                href="/reset"
+                className="text-sm font-medium text-[#667EEA] hover:text-[#5a6fd6] hover:underline transition-colors"
+              >
+                Şifreni mi unuttun?
+              </Link>
             </div>
             <div className="relative group">
               <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">

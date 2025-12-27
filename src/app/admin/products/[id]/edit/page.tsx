@@ -1,84 +1,148 @@
-import prisma from "@/lib/db";
-import { notFound } from "next/navigation";
+import { prisma } from "@/lib/db"; // Veya "@/lib/prisma" - hangisini kullanıyorsan
 import ProductForm from "@/components/features/admin/products/product-form";
+import { notFound } from "next/navigation";
+import {
+  Product,
+  ProductAttributeValue,
+  ProductVariant as PrismaProductVariant,
+  ProductImage as PrismaProductImage,
+} from "@prisma/client";
 
-// Define a type for the variant
-type ProductVariant = {
-  id: string;
-  productId: string;
-  name: string;
-  color: string | null;
-  size: string | null;
-  stock: number;
-  price: number | null;
-  image: string | null;
+// --- TİP TANIMLAMALARI ---
+
+type ProductWithRelations = Product & {
+  attributeValues: ProductAttributeValue[];
+  variants: (PrismaProductVariant & {
+    // Schema'ya göre size/color string ama kodunda obje kontrolü vardı,
+    // Garanti olsun diye ikisini de destekleyen tip yazdım.
+    color?: { name: string; value: string } | string | null;
+    size?: { name: string } | string | null;
+  })[];
+  images: PrismaProductImage[];
+  stock?: number;
 };
 
-// 1. Next.js 15 Standardı: params bir Promise'dir
+// Formun beklediği veri tipi
+type ProductData = Omit<Product, "price" | "salePrice"> & {
+  price: number;
+  salePrice: number | null;
+  attributeValues: ProductAttributeValue[];
+  variants?: FormattedVariant[];
+  images?: FormattedImage[];
+  stock?: number;
+};
+
+// Next.js 15 İÇİN KRİTİK DÜZELTME: params artık bir PROMISE!
 interface PageProps {
-  params: Promise<{ id: string }>;
+  params: Promise<{ id: string }>; // Dosya adın [id] olduğu için burası 'id' olmalı
+}
+
+interface FormattedVariant {
+  id: string;
+  size: string;
+  color: string;
+  stock: number;
+  price: number;
+  salePrice: number | null;
+  image?: string | null;
+  productId?: string;
+}
+
+interface FormattedImage {
+  id: string;
+  url: string;
+  isMain: boolean;
 }
 
 export default async function EditProductPage({ params }: PageProps) {
-  // 2. KRİTİK ADIM: params'ı await edip 'id'yi alıyoruz
-  // Klasör adın [id] olduğu için değişken adı da 'id' olmalı (productId değil)
+  // 🟢 1. ADIM: params'ı await ile çözümlüyoruz
   const { id } = await params;
 
-  // 3. Prisma sorgusu
-  const RawProduct = await prisma.product.findUnique({
-    where: { id: id },
+  if (!id) {
+    return notFound();
+  }
+
+  // 🟢 2. ADIM: Veriyi çekiyoruz
+  const product = await prisma.product.findUnique({
+    where: { id: id }, // Burada 'id' kullanıyoruz
     include: {
       images: true,
       variants: true,
       attributeValues: {
         include: {
-          attribute: true,
+          attribute: true, // Attribute isimlerini de çekmek gerekebilir
         },
       },
     },
   });
-  if (!RawProduct) {
+
+  if (!product) {
     notFound();
   }
 
-  // Convert Decimal to number for price and salePrice
-  const product = {
-    ...RawProduct,
-    price: RawProduct.price ? Number(RawProduct.price) : 0,
-    salePrice: RawProduct.salePrice ? Number(RawProduct.salePrice) : null,
-    variants: RawProduct.variants?.map((v: ProductVariant) => ({
-      ...v,
+  // Tip güvenliği için cast işlemi
+  const typedProduct = product as unknown as ProductWithRelations;
+
+  // 🟢 3. ADIM: Veriyi formatlıyoruz
+  const formattedProduct: ProductData = {
+    ...typedProduct,
+    // Decimal to Number dönüşümleri (Formlar decimal sevmez)
+    price: Number(typedProduct.price) || 0,
+    salePrice: typedProduct.salePrice ? Number(typedProduct.salePrice) : null,
+    stock: typedProduct.stock ?? 0,
+    attributeValues: typedProduct.attributeValues || [],
+
+    // Varyantları formatla
+    variants: (typedProduct.variants || []).map((v) => ({
+      id: v.id,
+      // Eğer veritabanında obje ise ismini al, string ise direkt kendisini al
+      size: v.size
+        ? typeof v.size === "object" && v.size !== null
+          ? (v.size as any).name
+          : String(v.size)
+        : "",
+      color: v.color
+        ? typeof v.color === "object" && v.color !== null
+          ? (v.color as any).name
+          : String(v.color)
+        : "",
+      stock: v.stock ?? 0,
       price: v.price ? Number(v.price) : 0,
+      salePrice: v.salePrice ? Number(v.salePrice) : null,
+      image: v.image || null,
+      productId: v.productId,
+    })),
+
+    // Resimleri formatla
+    images: (typedProduct.images || []).map((img) => ({
+      id: img.id,
+      url: img.url,
+      isMain: img.isMain || false,
     })),
   };
 
-  // Form için gerekli yan verileri çek
+  // Kategorileri ve markaları çek
   const categories = await prisma.category.findMany({
-    where: { parentId: null },
     include: {
-      brands: true,
-      attributes: true,
       children: {
         include: {
           attributes: true,
           brands: true,
         },
       },
+      brands: true,
+      attributes: true,
     },
-    orderBy: { name: "asc" },
   });
-  const brands = await prisma.brand.findMany({ orderBy: { name: "asc" } });
+
+  const brands = await prisma.brand.findMany();
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold tracking-tight">Ürünü Düzenle</h1>
-      </div>
-
+    <div className="p-6 max-w-7xl mx-auto">
       <ProductForm
-        initialData={product}
         categories={categories}
         brands={brands}
+        initialData={formattedProduct}
       />
     </div>
   );

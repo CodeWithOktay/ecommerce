@@ -1,9 +1,9 @@
 "use client";
 
 import { deleteProduct, toggleProductArchive } from "@/lib/actions/product";
-import { Eye, EyeOff, Trash2, Pencil, Loader2 } from "lucide-react";
+import { Trash2, Pencil, Loader2, RefreshCcw, Archive } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation"; // 🟢 1. Router'ı import ettik
+import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import toast from "react-hot-toast";
 
@@ -13,37 +13,37 @@ interface Props {
 }
 
 export default function ProductActions({ id, isArchived }: Props) {
-  const router = useRouter(); // 🟢 2. Router'ı tanımladık
+  const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
-  // ARŞİVLE / ÇIKAR
-  const handleArchive = async () => {
+  // 🔄 ARŞİVLE / GERİ YÜKLE (TOGGLE)
+  const handleToggleArchive = async () => {
     startTransition(async () => {
       try {
+        // Server Action çağırıyoruz (isArchived durumunun tersini yapar)
         const result = await toggleProductArchive(id, isArchived);
 
         if (result.success) {
           toast.success(result.message);
-          router.refresh(); // 🟢 3. Listeyi anında güncelle
+          router.refresh();
         } else {
           toast.error(result.message);
         }
-      } catch (error) {
-        toast.error("Bir hata oluştu.");
+      } catch {
+        toast.error("İşlem sırasında bir hata oluştu.");
       }
     });
   };
 
-  // SİL
+  // 🗑️ KALICI SİL
   const handleDelete = async () => {
-    // window.confirm kullanarak tarayıcı penceresi olduğunu garantiye alalım
-    if (
-      typeof window !== "undefined" &&
-      !window.confirm(
-        "Bu ürünü tamamen silmek istediğinize emin misiniz? Bu işlem geri alınamaz!"
-      )
-    ) {
-      return;
+    // Tarayıcı kontrolü (SSR hatası almamak için)
+    if (typeof window !== "undefined") {
+      const confirmMessage = isArchived
+        ? "Bu arşivlenmiş ürünü KALICI OLARAK silmek istiyor musunuz? Geri alınamaz!"
+        : "Bu ürünü silmek istediğinize emin misiniz?";
+
+      if (!window.confirm(confirmMessage)) return;
     }
 
     startTransition(async () => {
@@ -51,20 +51,22 @@ export default function ProductActions({ id, isArchived }: Props) {
         const result = await deleteProduct(id);
 
         if (result.success) {
-          toast.success(result.message);
-          router.refresh(); // 🟢 3. Listeyi anında güncelle
+          toast.success("Ürün başarıyla silindi.");
+          router.refresh();
         } else {
           toast.error(result.message);
         }
       } catch (error) {
-        toast.error("Silme işlemi sırasında hata oluştu.");
+        console.error("Silme hatası:", error);
+        toast.error("Silinemedi.");
       }
     });
   };
 
-  // Butonlara tıklandığında olası tablo satırı tıklamasını engellemek için (stopPropagation)
+  // Tablo satırına tıklamayı engelle (Event Bubbling)
   const preventBubble = (e: React.MouseEvent) => {
     e.stopPropagation();
+    e.preventDefault();
   };
 
   return (
@@ -72,41 +74,41 @@ export default function ProductActions({ id, isArchived }: Props) {
       className="flex items-center justify-end gap-2"
       onClick={preventBubble}
     >
-      {/* Düzenle Butonu */}
+      {/* ✏️ DÜZENLE (Sadece arşivde değilse gösterilebilir veya her zaman kalabilir) */}
       <Link
-        href={`/admin/products/${id}/edit`} // Eğer admin panelin /admin altındaysa burayı `/admin/products/${id}/edit` yapman gerekebilir
+        href={`/admin/products/${id}/edit`}
         className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors border border-transparent hover:border-blue-100"
         title="Düzenle"
       >
         <Pencil size={18} />
       </Link>
 
-      {/* Arşiv Butonu */}
+      {/* 🔄 ARŞİVLE / GERİ YÜKLE BUTONU */}
       <button
-        onClick={handleArchive}
+        onClick={handleToggleArchive}
         disabled={isPending}
         className={`p-2 rounded-lg transition-colors border border-transparent ${
           isArchived
-            ? "text-green-600 hover:bg-green-50 hover:border-green-100"
-            : "text-amber-600 hover:bg-amber-50 hover:border-amber-100"
+            ? "text-green-600 hover:bg-green-50 hover:border-green-100" // Arşivdeyse Yeşil (Geri Yükle)
+            : "text-amber-600 hover:bg-amber-50 hover:border-amber-100" // Yayındaysa Turuncu (Arşivle)
         }`}
-        title={isArchived ? "Yayına Al" : "Arşivle"}
+        title={isArchived ? "Yayına Al (Geri Yükle)" : "Arşive Kaldır"}
       >
         {isPending ? (
           <Loader2 size={18} className="animate-spin" />
         ) : isArchived ? (
-          <Eye size={18} />
+          <RefreshCcw size={18} /> // Geri yükleme ikonu
         ) : (
-          <EyeOff size={18} />
+          <Archive size={18} /> // Arşivleme ikonu (veya EyeOff)
         )}
       </button>
 
-      {/* Sil Butonu */}
+      {/* 🗑️ SİL BUTONU */}
       <button
         onClick={handleDelete}
         disabled={isPending}
         className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors border border-transparent hover:border-red-100"
-        title="Sil"
+        title="Kalıcı Olarak Sil"
       >
         {isPending ? (
           <Loader2 size={18} className="animate-spin" />

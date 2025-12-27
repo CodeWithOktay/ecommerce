@@ -1,19 +1,39 @@
 "use client";
 
 import { useState } from "react";
-import {
-  Star,
-  ShieldCheck,
-  CheckCircle2,
-  RotateCcw,
-  Truck,
-} from "lucide-react";
+import { Star, CheckCircle2, RotateCcw, Truck } from "lucide-react";
 import ProductDescription from "./product-description";
+
+interface Attribute {
+  id: string;
+  attribute: {
+    id: string;
+    name: string;
+    categoryId: string;
+  };
+  value: string;
+}
+
+interface Review {
+  id: string;
+  rating: number;
+  comment?: string | null;
+  userId: string;
+  productId: string;
+  createdAt: Date;
+  updatedAt: Date;
+  isApproved: boolean;
+  user: {
+    firstName: string | null;
+    lastName: string | null;
+    image: string | null;
+  };
+}
 
 interface Props {
   description: string | null;
-  attributes: any[];
-  reviews?: any[];
+  attributes: Attribute[];
+  reviews?: Review[];
   isUserBought?: boolean;
 }
 
@@ -49,7 +69,11 @@ export default function ProductTabs({
             {tabs.map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id as any)}
+                onClick={() =>
+                  setActiveTab(
+                    tab.id as "desc" | "specs" | "reviews" | "returns"
+                  )
+                }
                 className={`py-6 text-sm font-medium transition-all relative whitespace-nowrap ${
                   activeTab === tab.id
                     ? "text-indigo-600"
@@ -144,7 +168,13 @@ export default function ProductTabs({
                   Yorum Yaz
                 </button>
               </div>
-
+              {!isUserBought && (
+                <div className="text-center">
+                  <span className="text-xs text-gray-500">
+                    Yorum yapabilmek için ürünü satın almanız gerekmektedir.
+                  </span>
+                </div>
+              )}
               {/* Review List */}
               <div className="space-y-10">
                 {hasReviews ? (
@@ -213,9 +243,9 @@ export default function ProductTabs({
                   <h4 className="font-bold">Teslimat Bilgileri</h4>
                 </div>
                 <p className="text-sm text-gray-600 leading-relaxed">
-                  Saat 16:00'a kadar verilen siparişler aynı gün kargoya teslim
-                  edilir. Hafta sonu verilen siparişler Pazartesi günü işleme
-                  alınır.
+                  Saat 16:00&apos;a kadar verilen siparişler aynı gün kargoya
+                  teslim edilir. Hafta sonu verilen siparişler Pazartesi günü
+                  işleme alınır.
                 </p>
               </div>
               <div className="space-y-4">

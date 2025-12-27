@@ -16,6 +16,8 @@ interface AdminLayoutClientProps {
     totalUsers: number;
     totalAdmins: number;
     totalCategories: number;
+    totalDiscounts: number;
+    totalLogs: number;
   };
 }
 
@@ -43,7 +45,7 @@ export default function AdminLayoutClient({
       return;
     }
 
-    if (status === "authenticated" && session?.user?.role !== "ADMIN") {
+    if (status === "authenticated" && session?.user?.role !== "ADMIN" && session?.user?.role !== "SUPER_ADMIN") {
       router.replace("/unauthorized");
     }
   }, [session, status, router, pathname, isLoginPage, isUnauthorizedPage]);
@@ -65,7 +67,7 @@ export default function AdminLayoutClient({
   // 3. Yetkisiz Kullanıcı Koruması (Beyaz ekranı önlemek için ekstra güvenlik)
   if (
     status === "unauthenticated" ||
-    (session && session.user?.role !== "ADMIN")
+    (session && session.user?.role !== "ADMIN" && session?.user?.role !== "SUPER_ADMIN")
   ) {
     return null;
   }

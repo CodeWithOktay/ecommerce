@@ -28,7 +28,7 @@ export default async function Header() {
             alt="KervanPazar"
             width={180}
             height={40}
-            className="object-contain h-10 w-auto"
+            className="object-contain h-auto w-auto"
             priority
           />
         </Link>

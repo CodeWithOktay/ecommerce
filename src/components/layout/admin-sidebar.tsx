@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  ChevronRight,
   FolderTree,
   LayoutDashboard,
   LogOut,
@@ -26,6 +25,8 @@ interface AdminSidebarProps {
     totalUsers: number;
     totalAdmins: number;
     totalCategories: number;
+    totalDiscounts: number;
+    totalLogs: number;
   };
 }
 
@@ -75,6 +76,17 @@ export default function AdminSidebar({
       badge: stats.totalUsers,
     },
     {
+      href: "/admin/discounts",
+      icon: Users,
+      label: "Kupon ve İndirim",
+      badge: stats.totalDiscounts,
+    },
+    {
+      href: "/admin/banners",
+      icon: Users,
+      label: "Bannerlar",
+    },
+    {
       href: "/admin/administrators",
       icon: Users,
       label: "Yöneticiler",
@@ -89,6 +101,7 @@ export default function AdminSidebar({
       href: "/admin/logs",
       icon: Settings,
       label: "Loglar",
+      badge: stats.totalLogs,
     },
   ];
 

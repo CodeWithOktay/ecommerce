@@ -58,7 +58,7 @@ export default function RegisterPage() {
 
     try {
       // confirmPassword backend'e gitmez, onu çıkarıyoruz
-      const { confirmPassword, ...payload } = data;
+      const { confirmPassword: _confirmPassword, ...payload } = data;
 
       const res = await fetch("/api/register", {
         method: "POST",
@@ -76,7 +76,7 @@ export default function RegisterPage() {
         const errorData = await res.json();
         setServerError(errorData.message || "Bir hata oluştu!");
       }
-    } catch (err) {
+    } catch {
       setServerError("Ağ hatası. Lütfen tekrar deneyin.");
     }
   };

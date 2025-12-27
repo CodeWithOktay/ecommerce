@@ -3,14 +3,11 @@
 @tailwind utilities;
 
 @layer base {
-  /* Smooth scroll davranışı - tüm sayfa için */
   html {
     scroll-behavior: smooth;
   }
 
-  /* CSS Custom Properties (CSS Variables) tanımları */
   :root {
-    /* globals.css */
     :root {
       --grad-main: linear-gradient(135deg, #667eea, #764ba2);
       --grad-soft: linear-gradient(
@@ -26,7 +23,6 @@
     }
   }
 }
-/* SideMenu için özel stiller */
 .overflow-hidden {
   overflow: hidden !important;
 }
@@ -35,7 +31,6 @@
   padding-right: 15px !important;
 }
 
-/* Fade in animasyonu */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -47,7 +42,6 @@
   }
 }
 
-/* Alt kategoriler için animasyon sınıfı */
 [style*="animation-delay"] {
   animation: fadeIn 0.2s ease-out forwards;
   opacity: 0;

@@ -171,14 +171,16 @@ export default async function OrderSuccessPage({ params }: PageProps) {
                       </p>
                     </div>
 
-                    {/* Eğer veritabanında adres kolonu varsa göster (Şimdilik statik bir placeholder gibi duruyor) */}
-                    {/* NOT: Veritabanında 'address' kolonu eklediysen order.address kullan */}
-                    {/* <div>
-                        <p className="text-xs text-gray-400 font-bold mb-1">ADRES</p>
+                    {order.address && (
+                      <div>
+                        <p className="text-xs text-gray-400 font-bold mb-1">
+                          ADRES
+                        </p>
                         <p className="text-sm text-gray-600 leading-relaxed">
                           {order.address || "Adres bilgisi alınamadı."}
                         </p>
-                      </div> */}
+                      </div>
+                    )}
 
                     <div>
                       <p className="text-xs text-gray-400 font-bold mb-1">

@@ -8,8 +8,8 @@ export async function getSidebarStats() {
     pendingOrders,
     lowStockProducts,
     totalUsers,
-    totalAdmins, // 🟢 EKLENDİ
-    totalCategories, // 🟢 EKLENDİ
+    totalAdmins,
+    totalCategories,
   ] = await prisma.$transaction([
     // 1. Bekleyen Siparişler
     prisma.order.count({
@@ -29,16 +29,18 @@ export async function getSidebarStats() {
       where: { role: "ADMIN" },
     }),
 
-    // 5. Toplam Kategori (Eksikti)
+    // 5. Toplam Kategori
     prisma.category.count(),
   ]);
 
-  // Döndürülen obje artık AdminSidebar'ın beklediği tipte
   return {
     pendingOrders,
     lowStockProducts,
     totalUsers,
-    totalAdmins, // ✅ Artık gönderiliyor
-    totalCategories, // ✅ Artık gönderiliyor
+    totalAdmins,
+    totalCategories,
+    // These are currently 0 as the models don't exist yet
+    totalDiscounts: 0,
+    totalLogs: 0,
   };
 }

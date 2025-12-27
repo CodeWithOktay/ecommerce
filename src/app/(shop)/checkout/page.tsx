@@ -16,7 +16,6 @@ import {
   ChevronRight,
   Lock,
   ShieldCheck,
-  Wallet,
   Loader2,
   Wifi,
   Plus,
@@ -164,7 +163,7 @@ export default function CheckoutPage() {
       } else {
         toast.error(result.message);
       }
-    } catch (error) {
+    } catch {
       toast.error("Bir hata oluştu.");
     } finally {
       setLoading(false);

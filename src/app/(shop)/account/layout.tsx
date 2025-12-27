@@ -1,7 +1,5 @@
-// src/app/(user)/layout.tsx
-import Header from "@/components/layout/header"; // Header her yerde olsun
 import Link from "next/link";
-import { User, Package, MapPin, LogOut, Heart } from "lucide-react";
+import { User, Package, MapPin, Heart } from "lucide-react";
 
 export default function UserLayout({
   children,

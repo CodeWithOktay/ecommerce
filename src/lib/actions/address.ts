@@ -45,7 +45,7 @@ export async function createAddress(formData: FormData) {
 
     revalidatePath("/account/addresses");
     return { success: true, message: "Adres eklendi." };
-  } catch (error) {
+  } catch {
     return { success: false, message: "Hata oluştu." };
   }
 }
@@ -109,7 +109,7 @@ export async function setDefaultAddress(addressId: string) {
 
     revalidatePath("/account/addresses");
     return { success: true, message: "Varsayılan adres güncellendi. ✅" };
-  } catch (error) {
+  } catch {
     return { success: false, message: "İşlem başarısız." };
   }
 }

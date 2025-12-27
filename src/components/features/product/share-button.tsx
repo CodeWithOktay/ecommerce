@@ -25,7 +25,7 @@ export default function ShareButton() {
           },
         });
       }
-    } catch (err) {
+    } catch {
       // Kullanıcı iptal ettiğinde hata fırlatmasın
       console.log("Paylaşım kapandı");
     }

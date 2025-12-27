@@ -1,5 +1,11 @@
 // src/lib/utils.ts
 
+import { type ClassValue, clsx } from "clsx";
+import { twMerge } from "tailwind-merge";
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
 // Dosyayı Base64 string'e çevirir
 export const toBase64 = (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
@@ -9,7 +15,6 @@ export const toBase64 = (file: File): Promise<string> => {
     reader.onerror = (error) => reject(error);
   });
 };
-
 
 export function slugify(text: string): string {
   const trMap: Record<string, string> = {

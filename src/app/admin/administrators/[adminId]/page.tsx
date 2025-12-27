@@ -1,5 +1,5 @@
-import prisma from "@/lib/db";
-import { updateUser } from "@/lib/actions/user";
+import { prisma } from "@/lib/db";
+import { updateUserProfile } from "@/lib/actions/user";
 import Link from "next/link";
 import Image from "next/image";
 
@@ -48,7 +48,19 @@ export default async function AdminEditPage({
           </div>
         </div>
 
-        <form action={updateUser} className="space-y-4">
+        <form
+          action={async (formData) => {
+            const result = await updateUserProfile(formData);
+            if (!result.success) {
+              // You might want to show this error to the user
+              console.error(result.message);
+            } else {
+              // Optionally show success message or redirect
+              console.log("Profile updated successfully");
+            }
+          }}
+          className="space-y-4"
+        >
           <input type="hidden" name="id" value={user.id} />
 
           <div className="grid grid-cols-2 gap-4">

@@ -1,3 +1,4 @@
+import "./globals.css";
 import { Geist } from "next/font/google";
 import { Toaster } from "react-hot-toast";
 import { getServerSession } from "next-auth";
@@ -5,7 +6,6 @@ import { authOptions } from "@/lib/actions/auth";
 import AuthProvider from "@/components/providers/auth-provider";
 import { BackToTopButton } from "@/components/ui/back-to-top";
 import type { Metadata } from "next";
-import "@/app/globals.css";
 
 const geist = Geist({
   variable: "--font-geist-sans",
@@ -13,7 +13,7 @@ const geist = Geist({
 });
 
 export const metadata: Metadata = {
-  title: "İpek Yolu'nun Dijital Hali",
+  title: "KervanPazar",
   description: "İpek Yolu'nun Dijital Hali",
 };
 

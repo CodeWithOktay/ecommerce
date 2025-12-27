@@ -1,178 +1,184 @@
-// src/lib/actions/user-actions.ts
 "use server";
 
-import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/actions/auth";
-import bcrypt from "bcrypt";
+import { z } from "zod";
+import bcrypt from "bcryptjs";
+import { Role } from "@prisma/client";
 
-// ---------------------------------------------------------
-// 1. ADMIN İÇİN: KULLANICI DÜZENLEME (Mevcut Yapı)
-// ---------------------------------------------------------
-
-const adminUserSchema = z.object({
+// 🟢 ZOD ŞEMASI (Yapı bozulmadı, sadece formdaki diğer alanlar eklendi)
+const userSchema = z.object({
   id: z.string(),
   firstName: z.string().min(2, "Ad en az 2 karakter olmalı"),
   lastName: z.string().min(2, "Soyad en az 2 karakter olmalı"),
   email: z.string().email("Geçersiz e-posta"),
+  phoneNumber: z
+    .string()
+    .nullable()
+    .optional()
+    .refine(
+      (val) => {
+        if (!val) return true;
+        const purePhone = val.replace(/\s/g, "");
+        return /^\d{11}$/.test(purePhone);
+      },
+      { message: "Telefon 11 haneli olmalıdır (05...)" }
+    ),
+  // 👇 Formdan gelen ama şemada olmayan alanları ekliyoruz
+  currentPassword: z.string().optional().nullable(),
+  newPassword: z.string().optional().nullable(),
+  confirmPassword: z.string().optional().nullable(),
+  city: z.string().optional().nullable(),
+  district: z.string().optional().nullable(),
+  addressLine: z.string().optional().nullable(),
+  role: z.string().optional(),
+  isActive: z.string().optional().nullable(),
 });
 
-export async function updateUser(formData: FormData) {
-  const rawData = {
-    id: formData.get("id"),
-    firstName: formData.get("firstName"),
-    lastName: formData.get("lastName"),
-    email: formData.get("email"),
-  };
-
-  const validation = adminUserSchema.safeParse(rawData);
-
-  if (!validation.success) {
-    console.error("Validasyon hatası:", validation.error.flatten());
-    return;
-  }
-
-  const { id, firstName, lastName, email } = validation.data;
-
+export async function updateUserProfile(formData: FormData) {
   try {
-    await prisma.user.update({
-      where: { id },
-      data: {
-        firstName,
-        lastName,
-        email,
-      },
-    });
+    const rawData = Object.fromEntries(formData.entries());
+    const validated = userSchema.safeParse(rawData);
 
-    console.log(`Kullanıcı güncellendi: ${id}`);
-  } catch (error) {
-    console.error("Veritabanı hatası:", error);
-    throw new Error("Kullanıcı güncellenemedi");
-  }
-
-  revalidatePath("/admin/customers");
-  revalidatePath("/admin/administrators");
-  revalidatePath(`/admin/customers/${id}`);
-
-  redirect("/admin/customers");
-}
-
-// ---------------------------------------------------------
-// 2. MÜŞTERİ İÇİN: KENDİ PROFİLİNİ GÜNCELLEME (GÜNCELLENDİ 🚀)
-// ---------------------------------------------------------
-
-export async function updateMyProfile(formData: FormData) {
-  // 1. Oturum Kontrolü
-  const session = await getServerSession(authOptions);
-
-  if (!session || !session.user?.id) {
-    return { success: false, message: "Oturum açmanız gerekiyor." };
-  }
-
-  // 2. Form Verilerini Al
-  const firstName = formData.get("firstName") as string;
-  const lastName = formData.get("lastName") as string;
-  const phoneNumber = formData.get("phoneNumber") as string; // Şemadaki 'phoneNumber'
-  const password = formData.get("password") as string;
-
-  // Adres Verilerini Al
-  const city = formData.get("city") as string;
-  const district = formData.get("district") as string;
-  const addressLine = formData.get("addressLine") as string;
-
-  try {
-    // --- A. KULLANICI BİLGİLERİNİ GÜNCELLE ---
-    const updateData: any = {
-      firstName,
-      lastName,
-      phoneNumber, // User tablosundaki telefon alanı
-    };
-
-    // Şifre değişikliği varsa
-    if (password && password.trim() !== "") {
-      if (password.length < 6) {
-        return { success: false, message: "Şifre en az 6 karakter olmalıdır." };
-      }
-      // Not: bcrypt veya bcryptjs kullanabilirsin, projendeki pakete göre.
-      const hashedPassword = await bcrypt.hash(password, 12);
-      updateData.passwordHash = hashedPassword;
+    if (!validated.success) {
+      // Hangi alanın hata verdiğini logla (debug için)
+      console.log("❌ Zod Hatası:", validated.error.format());
+      return { success: false, message: validated.error.issues[0].message };
     }
 
-    await prisma.user.update({
-      where: { id: session.user.id },
-      data: updateData,
-    });
+    const {
+      id,
+      firstName,
+      lastName,
+      email,
+      phoneNumber,
+      currentPassword,
+      newPassword,
+      city,
+      district,
+      addressLine,
+      role,
+      isActive,
+    } = validated.data;
 
-    // --- B. ADRES İŞLEMLERİ ---
-    // Kullanıcı adres alanlarından en az birini doldurduysa işlem yap
+    const user = await prisma.user.findUnique({ where: { id } });
+    if (!user) return { success: false, message: "Kullanıcı bulunamadı." };
+
+    // 1. Profil Verileri Hazırla
+    const updateData: {
+      firstName: string;
+      lastName: string;
+      email: string;
+      phoneNumber?: string;
+      role?: Role; // 👈 BURAYI string YERİNE Role YAPTIK
+      isActive?: boolean;
+      passwordHash?: string;
+    } = {
+      firstName,
+      lastName,
+      email: email.toLowerCase(),
+      phoneNumber: phoneNumber?.replace(/\s/g, ""),
+    };
+
+    if (role) {
+      // Artık güvenle cast edebilirsin, updateData.role artık string değil Role tipinde
+      updateData.role = role as Role;
+    }
+    if (isActive !== undefined)
+      updateData.isActive = isActive === "on" || isActive === "true";
+
+    // 2. 🔐 ŞİFRE DEĞİŞTİRME MANTIĞI
+    if (newPassword && newPassword.trim().length > 0) {
+      if (!currentPassword) {
+        return { success: false, message: "Mevcut şifrenizi girmelisiniz." };
+      }
+
+      const isMatch = await bcrypt.compare(
+        currentPassword,
+        user.passwordHash || ""
+      );
+      if (!isMatch) {
+        return { success: false, message: "Mevcut şifreniz hatalı!" };
+      }
+
+      if (newPassword.length < 6) {
+        return {
+          success: false,
+          message: "Yeni şifre en az 6 karakter olmalı.",
+        };
+      }
+
+      updateData.passwordHash = await bcrypt.hash(newPassword, 10);
+    }
+
+    // 3. 🏠 ADRES GÜNCELLEME (UPSERT)
     if (city || district || addressLine) {
-      // Kullanıcının en son güncellenen adresini bul
-      const existingAddress = await prisma.address.findFirst({
-        where: { userId: session.user.id },
-        orderBy: { updatedAt: "desc" },
+      const userAddress = await prisma.address.findFirst({
+        where: { userId: id },
       });
 
-      if (existingAddress) {
-        // Varsa GÜNCELLE
+      if (userAddress) {
         await prisma.address.update({
-          where: { id: existingAddress.id },
+          where: { id: userAddress.id },
           data: {
-            title: existingAddress.title || "Ev Adresim",
-            firstName: firstName, // Adresteki ismi de profil ile senkronize et
-            lastName: lastName,
-            phone: phoneNumber || "",
-            city: city,
-            district: district,
-            addressLine: addressLine,
-          },
-        });
-      } else {
-        // Yoksa OLUŞTUR
-        await prisma.address.create({
-          data: {
-            userId: session.user.id,
-            title: "Varsayılan Adres",
-            firstName: firstName,
-            lastName: lastName,
-            phone: phoneNumber || "",
             city: city || "",
             district: district || "",
             addressLine: addressLine || "",
-            country: "Türkiye",
+          },
+        });
+      } else {
+        await prisma.address.create({
+          data: {
+            userId: id,
+            city: city || "",
+            district: district || "",
+            addressLine: addressLine || "",
+            title: "Ev Adresi",
+            firstName,
+            lastName,
+            phone: phoneNumber?.replace(/\s/g, "") || "",
           },
         });
       }
     }
+    // 4. Veritabanı Güncelle
+    await prisma.user.update({
+      where: { id },
+      data: updateData,
+    });
 
-    // Profil sayfasını yenile
     revalidatePath("/account/profile");
+    revalidatePath(`/admin/customers/${id}`);
 
     return {
       success: true,
-      message: "Profil bilgileriniz başarıyla güncellendi. 🎉",
+      message: "Profilin mermi gibi güncellendi kral! 🎉",
     };
   } catch (error) {
-    console.error("Profil güncelleme hatası:", error);
-    return { success: false, message: "Güncelleme sırasında bir hata oluştu." };
+    console.error("🔥 Update Error:", error);
+    return { success: false, message: "Bir hata oluştu, tekrar dene." };
   }
 }
 
 export async function getUserAddresses() {
-  const session = await getServerSession(authOptions);
-
-  if (!session || !session.user?.id) {
-    return [];
-  }
-
   try {
+    // Session'ı burada kontrol etmemiz lazım çünkü bu bir Server Action
+    const { getServerSession } = await import("next-auth");
+    const { authOptions } = await import("@/lib/auth/options"); // Kendi yoluna göre düzelt
+
+    const session = await getServerSession(authOptions);
+
+    if (!session?.user?.id) {
+      return [];
+    }
+
     const addresses = await prisma.address.findMany({
       where: { userId: session.user.id },
-      orderBy: { updatedAt: "desc" },
+      orderBy: { isDefault: "desc" }, // Önce varsayılan adresi getir
     });
-    return addresses;
+
+    // 🟢 KRİTİK: Next.js 15 Decimal hatası vermemesi için serialize ediyoruz
+    return JSON.parse(JSON.stringify(addresses));
   } catch (error) {
     console.error("Adres çekme hatası:", error);
     return [];

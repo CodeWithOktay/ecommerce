@@ -1,65 +1,83 @@
 import { Lock, Star, Truck, AlertCircle } from "lucide-react";
-// import Image from "next/image"; // Kullanılmıyorsa kaldırabilirsin, ProductCard içinde var zaten
 import { prisma } from "@/lib/db";
 import ProductCard from "@/components/features/product/product-card";
-import { getServerSession } from "next-auth"; // 🟢 1. Auth import
-import { authOptions } from "@/lib/actions/auth"; // 🟢 2. Auth ayarlarının yolu (Senin dosya yolun farklıysa düzelt)
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth/options";
+import HeroSlider from "@/components/features/banner/banner-slider"; // 🟢 1. Import HeroSlider
 
-// Sayfanın her istekte güncel veri çekmesini sağlar
+// Ensure the page fetches fresh data on every request
 export const revalidate = 0;
 
 export default async function HomePage() {
-  // --- 🟢 3. KULLANICI KONTROLÜ BAŞLANGIÇ ---
+  // --- USER SESSION CHECK ---
   const session = await getServerSession(authOptions);
   const userId = session?.user?.id;
 
-  // Kullanıcının favori ürün ID'lerini tutacak boş bir liste
-  let favoriteIds: string[] = [];
+  // --- PARALLEL DATA FETCHING ---
+  // We use Promise.all to fetch products, banners, and favorites simultaneously for better performance.
+  const [favorites, rawProducts, banners] = await Promise.all([
+    // 1. Fetch Favorites (if user is logged in)
+    userId
+      ? prisma.favorite.findMany({
+          where: { userId: userId },
+          select: { productId: true },
+        })
+      : Promise.resolve([]),
 
-  // Eğer kullanıcı giriş yapmışsa, favorilerini veritabanından çek
-  if (userId) {
-    const favorites = await prisma.favorite.findMany({
+    // 2. Fetch Products
+    prisma.product.findMany({
       where: {
-        userId: userId,
+        isActive: true,
+        isArchived: false,
       },
-      select: {
-        productId: true, // Bize sadece ID'ler lazım
+      include: {
+        images: true,
+        category: true,
+        brand: true,
+        variants: true,
+        reviews: { select: { rating: true } }, // Include reviews for star ratings
       },
-    });
-    // Gelen sonucu düz listeye çevir: ['id1', 'id2', 'id3']
-    favoriteIds = favorites.map((fav) => fav.productId);
-  }
-  // --- KULLANICI KONTROLÜ BİTİŞ ---
+      orderBy: {
+        createdAt: "desc",
+      },
+      take: 12,
+    }),
 
-  // 1. Veritabanından Ham Veriyi Çek (Ürünler)
-  const rawProducts = await prisma.product.findMany({
-    where: {
-      isActive: true,
-      isArchived: false,
-    },
-    include: {
-      images: true,
-      category: true,
-      brand: true,
-    },
-    orderBy: {
-      createdAt: "desc",
-    },
-    take: 12,
-  });
+    // 3. 🟢 Fetch Active Banners
+    prisma.banner.findMany({
+      where: { isActive: true },
+      orderBy: { order: "asc" },
+    }),
+  ]);
 
-  // 2. Decimal -> Number Dönüşümü
+  // Extract favorite IDs
+  const favoriteIds = favorites.map((fav) => fav.productId);
+
+  // 4. Data Transformation (Decimal -> Number)
   const products = rawProducts.map((product) => ({
     ...product,
     price: Number(product.price),
     salePrice: product.salePrice ? Number(product.salePrice) : null,
+    variants: product.variants.map((v) => ({
+      ...v,
+      price: v.price ? Number(v.price) : 0,
+      salePrice: v.salePrice ? Number(v.salePrice) : null,
+    })),
   }));
 
   return (
     <main className="min-h-screen bg-white">
-      {/* Ana Container */}
-      <div className="max-w-7xl mx-auto px-4 py-12">
-        {/* Ürün Grid Bölümü */}
+      {/* 🟢 5. HERO SLIDER SECTION */}
+      {/* Only render if there are banners */}
+      {banners.length > 0 && (
+        <div className="max-w-[1400px] mx-auto px-4 mt-6 mb-10">
+          <HeroSlider banners={banners} />
+        </div>
+      )}
+
+      {/* Main Container */}
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        {/* Product Grid Section */}
         <div className="mb-20">
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-2xl font-bold text-gray-900">
@@ -70,20 +88,19 @@ export default async function HomePage() {
           {products.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
               {products.map((product) => {
-                // 🟢 4. KONTROL: Bu ürün favori listesinde var mı?
                 const isFav = favoriteIds.includes(product.id);
 
                 return (
                   <ProductCard
                     key={product.id}
                     product={product}
-                    isFavorited={isFav} // 🟢 5. Bilgiyi karta gönderiyoruz!
+                    isFavorited={isFav}
                   />
                 );
               })}
             </div>
           ) : (
-            // Ürün Yoksa Gösterilecek State
+            // Empty State
             <div className="text-center py-20 bg-gray-50 rounded-2xl border border-gray-100">
               <div className="bg-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
                 <AlertCircle className="text-gray-400" size={32} />
@@ -98,9 +115,9 @@ export default async function HomePage() {
           )}
         </div>
 
-        {/* Özellikler Bölümü (Features) - AYNI KALIYOR */}
+        {/* Features Section */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-          {/* Hızlı Teslimat */}
+          {/* Fast Delivery */}
           <div className="flex flex-col items-center text-center p-8 rounded-2xl bg-blue-50 border border-blue-100 transition-transform hover:-translate-y-1 duration-300">
             <div className="w-14 h-14 bg-blue-600 text-white rounded-xl flex items-center justify-center mb-4 shadow-lg shadow-blue-200">
               <Truck size={28} />
@@ -114,7 +131,7 @@ export default async function HomePage() {
             </p>
           </div>
 
-          {/* Güvenli Ödeme */}
+          {/* Secure Payment */}
           <div className="flex flex-col items-center text-center p-8 rounded-2xl bg-green-50 border border-green-100 transition-transform hover:-translate-y-1 duration-300">
             <div className="w-14 h-14 bg-green-600 text-white rounded-xl flex items-center justify-center mb-4 shadow-lg shadow-green-200">
               <Lock size={28} />
@@ -128,7 +145,7 @@ export default async function HomePage() {
             </p>
           </div>
 
-          {/* Kalite Garantisi */}
+          {/* Satisfaction Guarantee */}
           <div className="flex flex-col items-center text-center p-8 rounded-2xl bg-amber-50 border border-amber-100 transition-transform hover:-translate-y-1 duration-300">
             <div className="w-14 h-14 bg-amber-500 text-white rounded-xl flex items-center justify-center mb-4 shadow-lg shadow-amber-200">
               <Star size={28} />

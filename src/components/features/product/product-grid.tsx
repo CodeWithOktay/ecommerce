@@ -2,27 +2,21 @@
 
 import { ListFilter, Search } from "lucide-react";
 import { useMemo, useState } from "react";
-import { Product } from "@prisma/client";
 import ProductCard from "./product-card";
 
-// Props interface'i - ürün grid bileşeninin alacağı props'lar
-type ProductWithImages = Product & {
-  images: {
-    id: string;
-    url: string;
-    isMain: boolean;
-  }[];
-};
-
+// 🛠️ ÇÖZÜM: Prisma Product tipini import ETME.
+// Bunun yerine UI'ın ihtiyacı olan esnek bir interface tanımlıyoruz.
+// "any" kullanarak TypeScript'in "Decimal vs Number" kavgasına son veriyoruz.
+import { ProductWithImages } from "@/types/common";
 interface ProductGridProps {
-  products: ProductWithImages[]; // Gösterilecek ürün listesi
+  products: ProductWithImages[];
 }
 
 export function ProductGrid({ products }: ProductGridProps) {
-  // Sıralama seçeneği state'i
   const [sortOrder, setSortOrder] = useState("default");
 
   const sortedProducts = useMemo(() => {
+    // Spread ile kopyalıyoruz
     const tempProducts = [...products];
 
     switch (sortOrder) {
@@ -44,14 +38,13 @@ export function ProductGrid({ products }: ProductGridProps) {
 
   return (
     <div className="space-y-8">
-      {/* ✅ Filtre ve Sıralama Alanı */}
+      {/* Filtre ve Sıralama Alanı */}
       <div className="flex justify-end">
         <div className="relative w-64">
-          {/* Sıralama Dropdown */}
           <select
             value={sortOrder}
             onChange={(e) => setSortOrder(e.target.value)}
-            className="appearance-none w-full border border-gray-300 rounded-lg px-4 py-2 pr-10 bg-white shadow-sm text-gray-700 text-sm hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+            className="appearance-none w-full border border-gray-300 rounded-lg px-4 py-2 pr-10 bg-white shadow-sm text-gray-700 text-sm hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors cursor-pointer"
             aria-label="Ürün sıralama seçenekleri"
           >
             <option value="default">Önerilen Sıralama</option>
@@ -68,32 +61,29 @@ export function ProductGrid({ products }: ProductGridProps) {
         </div>
       </div>
 
-      {/* ✅ Ürün Grid veya Boş Durum */}
+      {/* Ürün Grid */}
       {sortedProducts.length > 0 ? (
-        <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {sortedProducts.map((product) => (
-              <ProductCard
-                key={product.id}
-                product={{
-                  ...product,
-                  price: Number(product.price),
-                  salePrice: product.salePrice
-                    ? Number(product.salePrice)
-                    : null,
-                  images: product.images || [],
-                }}
-              />
-            ))}
-          </div>
-        </>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {sortedProducts.map((product) => (
+            <ProductCard
+              key={product.id}
+              product={{
+                ...product,
+                // Burada Number() kullanımı güvenlidir
+                price: Number(product.price),
+                salePrice: product.salePrice ? Number(product.salePrice) : null,
+                images: product.images || [],
+              }}
+            />
+          ))}
+        </div>
       ) : (
-        <div className="flex flex-col items-center justify-center py-20 text-center text-gray-500">
+        <div className="flex flex-col items-center justify-center py-20 text-center text-gray-500 bg-gray-50 rounded-xl border border-dashed border-gray-300">
           <Search size={48} className="mb-4 text-gray-400" aria-hidden="true" />
           <h3 className="text-xl font-semibold text-gray-900 mb-2">
             Ürün bulunamadı
           </h3>
-          <p className="max-w-xs">
+          <p className="max-w-xs text-sm">
             Arama kriterlerinize uygun ürün bulunamadı. Lütfen başka bir arama
             yapın veya filtreleri değiştirin.
           </p>

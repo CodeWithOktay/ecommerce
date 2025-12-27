@@ -1,6 +1,6 @@
 "use client";
 
-import { Search, Loader2, PackageX } from "lucide-react";
+import { Loader2, PackageX } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { ProductGrid } from "@/components/features/product/product-grid";
 import { useEffect } from "react";
@@ -59,7 +59,9 @@ export default function SearchPage() {
                   Sonuç Bulunamadı
                 </h3>
                 <p className="text-gray-500 max-w-md mx-auto">
-                  <span className="font-semibold text-gray-900">"{query}"</span>{" "}
+                  <span className="font-semibold text-gray-900">
+                    &ldquo;{query}&rdquo;
+                  </span>{" "}
                   aramasıyla eşleşen bir ürün bulamadık. Yazım hatası yapmış
                   olabilir misiniz?
                 </p>

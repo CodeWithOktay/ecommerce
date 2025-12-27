@@ -1,4 +1,5 @@
 // ✅ types.ts — Geliştirilmiş Sürüm
+import { Decimal } from "@prisma/client/runtime/library";
 
 // 🛒 Ürün Tipi
 export interface Product {
@@ -7,12 +8,13 @@ export interface Product {
   category_id: string;
   subcategory_id?: string;
   subcategory_name?: string;
-  price: number;
+  price: number | Decimal; // Allow both number and Decimal for flexibility
   old_price?: number;
   image_url: string;
-  description: string;
+  description: string | null; // Make description nullable to match Prisma type
   stock?: number; // stok adedi eklendi
   brand?: string; // marka ismi eklendi
+  brandId?: string | null; // marka ID'si eklendi
   rating?: number; // 0–5 arası puanlama
   is_featured: boolean;
   created_at: string; // ürün yüklenme tarihi
@@ -80,4 +82,28 @@ export interface IdProps {
 
 export interface SlugProps {
   params: { slug: string };
+}
+
+export interface ProductWithImages {
+  id: string;
+  name: string;
+  description: string | null;
+  stock: number;
+  // Using Decimal type from Prisma for accurate decimal handling
+  // and allowing string for potential string inputs that will be converted to number
+  price: number | string | Decimal;
+  salePrice: number | string | Decimal | null;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  categoryId: string;
+  isArchived: boolean;
+  brandId: string | null;
+  defaultColor: string | null;
+  defaultSize: string | null;
+  images: {
+    id: string;
+    url: string;
+    isMain: boolean;
+  }[];
 }

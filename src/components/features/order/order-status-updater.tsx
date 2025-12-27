@@ -42,7 +42,10 @@ export default function OrderStatusUpdater({
           `Durum "${statusMap[newStatus].label}" olarak güncellendi`
         );
       } catch (error) {
-        toast.error("Güncelleme başarısız");
+        console.error("Sipariş durumu güncellenirken hata:", error);
+        toast.error(
+          `Güncelleme başarısız: ${error instanceof Error ? error.message : "Bilinmeyen hata"}`
+        );
         setStatus(currentStatus); // Hata olursa eski haline döndür
       }
     });

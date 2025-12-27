@@ -43,7 +43,7 @@ export async function POST() {
     });
 
     return response;
-  } catch (error) {
+  } catch {
     // Hata durumunda 500 Internal Server Error döndür
     return NextResponse.json(
       { error: "çıkış sırasında bir hata oluştu" },

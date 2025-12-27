@@ -1,13 +1,16 @@
 "use client";
 
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   DollarSign,
   Eye,
-  PackageCheck,
-  ShoppingCart,
-  TrendingUp,
-  UserPlus,
-  LucideIcon,
+  CheckCircle,
+  Clock,
+  XCircle,
+  Calendar,
+  Filter,
+  BarChart3,
+  ArrowRight,
 } from "lucide-react";
 
 import {
@@ -21,99 +24,73 @@ import {
   Tooltip,
   XAxis,
   YAxis,
-  TooltipProps,
+  PieLabelRenderProps,
 } from "recharts";
 
-import {
-  NameType,
-  ValueType,
-} from "recharts/types/component/DefaultTooltipContent";
-
-// --- TİP TANIMLAMALARI ---
-
-type OrderStatus = "PENDING" | "PAID" | "SHIPPED" | "DELIVERED" | "CANCELLED";
-
-// İstatistik Kartı Tipi (Dinamik hale getirildi)
-interface StatItem {
-  title: string;
-  value: string;
-  changeRate: number; // Yüzdelik değişim (Sayısal)
-  icon: LucideIcon;
-  variant: "green" | "blue" | "purple" | "orange";
-}
-
-interface Order {
+export interface Order {
   id: string;
   customer: string;
   amount: number;
-  status: OrderStatus;
+  status: string;
   date: string;
 }
 
-interface SalesDataItem {
+export interface SalesItem {
   month: string;
   income: number;
-  order: number;
+  [key: string]: string | number; // Recharts'ın dinamik veri okuması için şart knk
 }
 
-interface CategoryDataItem {
-  [key: string]: string | number;
-  id: string;
+export interface CategoryItem {
   name: string;
   value: number;
+  [key: string]: string | number; // 'Index signature missing' hatasını bu satır çözer
 }
 
-// ✅ GÜNCELLENMİŞ PROPS: Change verileri eklendi
-interface DashboardDataProps {
-  data: {
-    revenue: number;
-    revenueChange: number; // Yeni
-
-    ordersCount: number;
-    ordersChange: number; // Yeni
-
-    usersCount: number;
-    usersChange: number; // Yeni
-
-    productsSoldCount: number;
-    productsSoldChange: number; // Yeni
-
-    salesData: SalesDataItem[];
-    categoryData: CategoryDataItem[];
-    recentOrders: Order[];
-  };
+export interface DashboardData {
+  revenue: number;
+  pendingCount: number;
+  deliveredCount: number;
+  cancelledCount: number;
+  ordersCount: number;
+  usersCount: number;
+  productsSoldCount: number;
+  salesData: SalesItem[];
+  categoryData: CategoryItem[];
+  recentOrders: Order[];
+  availableYears: number[];
 }
 
-// --- SABİTLER VE HARİTALAMALAR ---
+// Merkezi tipleri import ediyoruz knk
+
+// --- SABİTLER ---
+const STATUS_LABELS: Record<string, string> = {
+  PENDING: "Bekliyor",
+  PROCESSING: "Hazırlanıyor",
+  SHIPPED: "Kargolandı",
+  DELIVERED: "Teslim Edildi",
+  CANCELLED: "İptal Edildi",
+};
+
+const STATUS_CLASSES: Record<string, string> = {
+  PENDING: "bg-yellow-100 text-yellow-700 border-yellow-200",
+  PROCESSING: "bg-blue-100 text-blue-700 border-blue-200",
+  SHIPPED: "bg-purple-100 text-purple-700 border-purple-200",
+  DELIVERED: "bg-green-100 text-green-700 border-green-200",
+  CANCELLED: "bg-red-100 text-red-700 border-red-200",
+};
 
 const COLORS = ["#3B82F6", "#10B981", "#8B5CF6", "#F59E0B", "#EF4444"];
 
-const STATUS_LABELS: Record<OrderStatus, string> = {
-  PENDING: "Bekliyor",
-  PAID: "Ödendi",
-  SHIPPED: "Kargolandı",
-  DELIVERED: "Teslim Edildi",
-  CANCELLED: "İptal",
-};
+interface DashboardClientProps {
+  data: DashboardData;
+}
 
-const STATUS_CLASSES: Record<OrderStatus, string> = {
-  PENDING: "bg-yellow-50 text-yellow-700 border-yellow-200",
-  PAID: "bg-blue-50 text-blue-700 border-blue-200",
-  SHIPPED: "bg-purple-50 text-purple-700 border-purple-200",
-  DELIVERED: "bg-green-50 text-green-700 border-green-200",
-  CANCELLED: "bg-red-50 text-red-700 border-red-200",
-};
+export default function DashboardClient({ data }: DashboardClientProps) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const currentSalesYear = searchParams.get("salesYear") || "";
 
-const STAT_VARIANTS = {
-  green: "bg-green-100 text-green-600",
-  blue: "bg-blue-100 text-blue-600",
-  purple: "bg-purple-100 text-purple-600",
-  orange: "bg-orange-100 text-orange-600",
-};
-
-// --- BİLEŞEN ---
-
-export default function DashboardClient({ data }: DashboardDataProps) {
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("tr-TR", {
       style: "currency",
@@ -121,329 +98,284 @@ export default function DashboardClient({ data }: DashboardDataProps) {
     }).format(value);
   };
 
-  // ✅ İSTATİSTİK VERİLERİNİ BAĞLAMA (Hardcoded veriler silindi)
-  const stats: StatItem[] = [
+  const currentMonthName = new Date().toLocaleDateString("tr-TR", {
+    month: "long",
+    year: "numeric",
+  });
+
+  const handleYearChange = (year: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (year) {
+      params.set("salesYear", year);
+    } else {
+      params.delete("salesYear");
+    }
+    router.push(`?${params.toString()}`, { scroll: false });
+  };
+
+  const stats = [
     {
-      title: "Toplam Gelir",
+      title: "Aylık Ciro",
       value: formatCurrency(data.revenue),
-      changeRate: data.revenueChange, // Dinamik veri
+      subText: "Bu ayki toplam kazanç",
       icon: DollarSign,
-      variant: "green",
+      color: "blue",
     },
     {
-      title: "Toplam Sipariş",
-      value: data.ordersCount.toString(),
-      changeRate: data.ordersChange, // Dinamik veri
-      icon: ShoppingCart,
-      variant: "blue",
+      title: "Bekleyen Siparişler",
+      value: data.pendingCount.toString(),
+      subText: "Bu ay işleme alınanlar",
+      icon: Clock,
+      color: "yellow",
     },
     {
-      title: "Aktif Kullanıcı",
-      value: data.usersCount.toString(),
-      changeRate: data.usersChange, // Dinamik veri
-      icon: UserPlus,
-      variant: "purple",
+      title: "Teslim Edilenler",
+      value: data.deliveredCount.toString(),
+      subText: "Bu ay teslim edilenler",
+      icon: CheckCircle,
+      color: "green",
     },
     {
-      title: "Satılan Ürün",
-      value: data.productsSoldCount.toString(),
-      changeRate: data.productsSoldChange, // Dinamik veri
-      icon: PackageCheck,
-      variant: "orange",
+      title: "İptal Edilenler",
+      value: data.cancelledCount.toString(),
+      subText: "Bu ay iptal/iade edilenler",
+      icon: XCircle,
+      color: "red",
     },
   ];
 
-  const CustomTooltip = ({
-    active,
-    payload,
-    label,
-  }: TooltipProps<ValueType, NameType> & {
-    payload?: Array<{
-      value: string | number | (string | number)[] | undefined;
-      name: string;
-      payload: {
-        month: string;
-        income: number;
-        order: number;
-        [key: string]: string | number;
-      };
-    }>;
-    label?: string;
-  }) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="bg-white p-3 border border-gray-100 shadow-lg rounded-lg">
-          <p className="font-semibold text-gray-700 mb-1">{label}</p>
-          <p className="text-blue-600 text-sm">
-            Gelir: {formatCurrency(Number(payload[0].payload.income))}
-          </p>
-          <p className="text-blue-600 text-sm">
-            Sipariş: {payload[0].payload.order}
-          </p>
-        </div>
-      );
-    }
-    return null;
-  };
-
   return (
-    <div className="min-h-screen bg-gray-50/50 p-6 md:p-8">
-      {/* Header */}
-      <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
-            Dashboard
-          </h1>
-          <p className="text-gray-500 mt-1">
-            KervanPazar Yönetim Paneli ve İstatistikleri
-          </p>
+    <div className="min-h-screen bg-gray-50/30 p-8 text-left">
+      {/* ÜST BAŞLIK VE RAPOR BUTONU */}
+      <div className="mb-10">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+          <div>
+            <h1 className="text-4xl font-black text-gray-900 tracking-tight">
+              Yönetim Paneli
+            </h1>
+            <p className="text-gray-500 mt-2 font-medium">
+              KervanPazar Mağaza İstatistikleri -{" "}
+              <span className="text-indigo-600">Hoş geldiniz!</span>
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-4">
+            <button
+              onClick={() => router.push("/admin/reports")}
+              className="group flex items-center gap-3 bg-white hover:bg-indigo-600 text-gray-700 hover:text-white px-6 py-3 rounded-2xl border border-gray-200 shadow-sm transition-all duration-300 active:scale-95"
+            >
+              <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg group-hover:bg-indigo-500 group-hover:text-white transition-colors">
+                <BarChart3 size={20} />
+              </div>
+              <div className="flex flex-col items-start">
+                <span className="text-sm font-bold">Rapor Al</span>
+                <span className="text-[10px] opacity-70 italic">
+                  Tüm verileri incele
+                </span>
+              </div>
+              <ArrowRight
+                size={16}
+                className="ml-2 opacity-0 group-hover:opacity-100 transition-all -translate-x-2 group-hover:translate-x-0"
+              />
+            </button>
+
+            <div className="flex items-center gap-3 bg-white px-5 py-3 rounded-2xl border border-gray-200 shadow-sm">
+              <Calendar className="w-5 h-5 text-indigo-500" />
+              <span className="text-sm font-bold text-gray-700 capitalize">
+                {currentMonthName}
+              </span>
+            </div>
+          </div>
         </div>
-        {/* <div className="flex items-center gap-3">
-          <button className="px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors shadow-sm">
-            Tarih Filtresi
-          </button>
-          <button className="px-4 py-2 bg-[#667EEA] text-white rounded-lg text-sm font-medium hover:bg-[#5a6fd6] transition-colors shadow-sm shadow-indigo-200">
-            Rapor İndir
-          </button>
-        </div> */}
       </div>
 
-      {/* ✅ GÜNCELLENMİŞ İSTATİSTİK KARTLARI */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
+      {/* İstatistik Kartları */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-10">
         {stats.map((stat) => {
           const Icon = stat.icon;
-
-          // Artış mı Azalış mı kontrolü
-          const isPositive = stat.changeRate >= 0;
-          // Format: +%12.5 veya %-5.2
-          const changeLabel = `${isPositive ? "+" : ""}%${stat.changeRate.toFixed(1)}`;
-
           return (
             <div
               key={stat.title}
-              className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm hover:shadow-md transition-all duration-200"
+              className="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
             >
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-500 mb-1">
-                    {stat.title}
-                  </p>
-                  <h3 className="text-2xl font-bold text-gray-900 mb-2">
-                    {stat.value}
-                  </h3>
-
-                  {/* Dinamik Trend Göstergesi */}
-                  <div
-                    className={`flex items-center gap-1.5 text-sm font-medium w-fit px-2 py-0.5 rounded-full ${
-                      isPositive
-                        ? "text-emerald-600 bg-emerald-50" // Pozitif ise Yeşil
-                        : "text-red-600 bg-red-50" // Negatif ise Kırmızı
-                    }`}
-                  >
-                    {/* Negatif ise ikonu ters çevir */}
-                    <TrendingUp
-                      className={`w-3.5 h-3.5 ${!isPositive ? "rotate-180" : ""}`}
-                    />
-                    <span>{changeLabel}</span>
-                    <span className="text-gray-400 text-xs font-normal ml-1 hidden sm:inline">
-                      geçen aya göre
-                    </span>
-                  </div>
-                </div>
-
-                <div
-                  className={`p-3 rounded-xl ${STAT_VARIANTS[stat.variant]}`}
-                >
-                  <Icon className="w-6 h-6" />
-                </div>
+              <div
+                className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-6 bg-${stat.color}-50 text-${stat.color}-600`}
+              >
+                <Icon size={28} />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">
+                  {stat.title}
+                </p>
+                <h3 className="text-3xl font-black text-gray-900 tracking-tight">
+                  {stat.value}
+                </h3>
+                <p className="text-xs text-gray-400 mt-3 font-semibold">
+                  {stat.subText}
+                </p>
               </div>
             </div>
           );
         })}
       </div>
 
-      {/* Grafikler Grid */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-8">
-        {/* Satış Grafiği */}
-        <div className="xl:col-span-2 bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-lg font-bold text-gray-900">
-              Satış Performansı (Son 6 Ay)
+      {/* Grafik Alanları */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 mb-10">
+        <div className="xl:col-span-2 bg-white rounded-[2.5rem] border border-gray-100 p-8 shadow-sm">
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="text-xl font-black text-gray-900 tracking-tight italic">
+              Satış Performansı
             </h2>
+            <div className="flex items-center gap-3 bg-gray-50 p-1.5 rounded-xl border border-gray-100">
+              <Filter size={14} className="text-gray-400 ml-2" />
+              <select
+                value={currentSalesYear}
+                onChange={(e) => handleYearChange(e.target.value)}
+                className="text-xs bg-transparent font-bold text-gray-600 outline-none pr-2 cursor-pointer"
+              >
+                <option value="">Son 6 Ay</option>
+                {data.availableYears.map((year) => (
+                  <option key={year} value={year}>
+                    {year} Yılı
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart
-                data={data.salesData}
-                margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
-              >
+              <BarChart data={data.salesData}>
                 <CartesianGrid
                   strokeDasharray="3 3"
                   vertical={false}
-                  stroke="#f0f0f0"
+                  stroke="#f1f5f9"
                 />
                 <XAxis
                   dataKey="month"
-                  stroke="#9CA3AF"
-                  fontSize={12}
-                  tickLine={false}
                   axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: "#94a3b8", fontSize: 12 }}
                   dy={10}
                 />
                 <YAxis
-                  stroke="#9CA3AF"
-                  fontSize={12}
-                  tickLine={false}
                   axisLine={false}
-                  tickFormatter={(value) => `₺${value / 1000}k`}
+                  tickLine={false}
+                  tick={{ fill: "#94a3b8", fontSize: 12 }}
                 />
                 <Tooltip
-                  content={<CustomTooltip />}
-                  cursor={{ fill: "#F3F4F6" }}
+                  cursor={{ fill: "#f8fafc" }}
+                  contentStyle={{
+                    borderRadius: "16px",
+                    border: "none",
+                    boxShadow: "0 10px 15px -3px rgba(0,0,0,0.1)",
+                  }}
                 />
                 <Bar
                   dataKey="income"
-                  fill="#667EEA"
+                  fill="#4f46e5"
                   radius={[6, 6, 0, 0]}
-                  barSize={40}
+                  barSize={32}
                 />
               </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
 
-        {/* Pasta Grafik */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
-          <h2 className="text-lg font-bold text-gray-900 mb-6">
+        <div className="bg-white rounded-[2.5rem] border border-gray-100 p-8 shadow-sm">
+          <h2 className="text-xl font-black text-gray-900 tracking-tight mb-8 italic">
             Kategori Dağılımı
           </h2>
-          <div className="h-80 relative">
+          <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
                   data={data.categoryData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={60}
-                  outerRadius={80}
-                  paddingAngle={5}
+                  innerRadius={70}
+                  outerRadius={100}
+                  paddingAngle={8}
                   dataKey="value"
-                  stroke="none"
+                  // 🔥 HATAYI BİTİREN KISIM BURASI 🔥
+                  label={({ name, percent }: PieLabelRenderProps) =>
+                    `${name} %${((percent as number) * 100).toFixed(0)}`
+                  }
                 >
-                  {data.categoryData.map((_entry, index) => (
+                  {data.categoryData.map((_, index) => (
                     <Cell
                       key={`cell-${index}`}
                       fill={COLORS[index % COLORS.length]}
+                      stroke="none"
                     />
                   ))}
                 </Pie>
-                <Tooltip formatter={(value: number) => [value, "Adet"]} />
+                <Tooltip />
               </PieChart>
             </ResponsiveContainer>
-
-            {/* Orta Kısım */}
-            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-              <span className="text-3xl font-bold text-gray-900">
-                {data.productsSoldCount}
-              </span>
-              <span className="text-xs text-gray-500 font-medium uppercase tracking-wider">
-                Toplam
-              </span>
-            </div>
-          </div>
-
-          <div className="mt-4 grid grid-cols-2 gap-2">
-            {data.categoryData.slice(0, 4).map((cat, index) => (
-              <div
-                key={cat.id}
-                className="flex items-center gap-2 text-sm text-gray-600"
-              >
-                <div
-                  className="w-3 h-3 rounded-full"
-                  style={{ backgroundColor: COLORS[index % COLORS.length] }}
-                />
-                <span className="truncate">{cat.name}</span>
-              </div>
-            ))}
           </div>
         </div>
       </div>
 
       {/* Son Siparişler Tablosu */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-        <div className="p-6 border-b border-gray-100 flex justify-between items-center">
-          <h2 className="text-lg font-bold text-gray-900">Son Siparişler</h2>
-          <button className="text-sm text-indigo-600 font-medium hover:text-indigo-700">
-            Tümünü Gör
+      <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden">
+        <div className="p-8 border-b border-gray-50 flex justify-between items-center bg-gray-50/30">
+          <h2 className="text-xl font-black text-gray-900 tracking-tight italic">
+            Son Siparişler (Bu Ay)
+          </h2>
+          <button
+            onClick={() => router.push("/admin/orders")}
+            className="text-sm font-bold text-indigo-600 hover:text-indigo-800 transition-colors"
+          >
+            Hepsini Gör
           </button>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50/50">
-              <tr>
-                <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                  Sipariş No
-                </th>
-                <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                  Müşteri
-                </th>
-                <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                  Tutar
-                </th>
-                <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                  Durum
-                </th>
-                <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                  Tarih
-                </th>
-                <th className="relative py-4 px-6">
-                  <span className="sr-only">İşlem</span>
-                </th>
+          <table className="w-full text-left">
+            <thead>
+              <tr className="text-[11px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-50">
+                <th className="py-5 px-8">Sipariş No</th>
+                <th className="py-5 px-8">Müşteri</th>
+                <th className="py-5 px-8">Tutar</th>
+                <th className="py-5 px-8">Durum</th>
+                <th className="py-5 px-8">Tarih</th>
+                <th className="py-5 px-8"></th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-gray-50">
               {data.recentOrders.map((order) => (
                 <tr
                   key={order.id}
-                  className="hover:bg-gray-50/50 transition-colors"
+                  className="group hover:bg-gray-50/80 transition-all"
                 >
-                  <td className="py-4 px-6 font-medium text-gray-900 text-sm">
-                    #{order.id.slice(0, 8)}
+                  <td className="py-6 px-8 font-mono text-xs font-bold text-indigo-500">
+                    #{order.id.slice(-6).toUpperCase()}
                   </td>
-                  <td className="py-4 px-6 text-sm text-gray-600 font-medium">
+                  <td className="py-6 px-8 font-bold text-gray-900">
                     {order.customer}
                   </td>
-                  <td className="py-4 px-6 text-sm font-semibold text-gray-900">
+                  <td className="py-6 px-8 font-black text-gray-900">
                     {formatCurrency(order.amount)}
                   </td>
-                  <td className="py-4 px-6">
+                  <td className="py-6 px-8">
                     <span
-                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${
-                        STATUS_CLASSES[order.status] ||
-                        "bg-gray-100 text-gray-800"
-                      }`}
+                      className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider border ${STATUS_CLASSES[order.status] || "bg-gray-100"}`}
                     >
                       {STATUS_LABELS[order.status] || order.status}
                     </span>
                   </td>
-                  <td className="py-4 px-6 text-sm text-gray-500">
-                    {new Date(order.date).toLocaleDateString("tr-TR")}
+                  <td className="py-6 px-8 text-xs font-bold text-gray-400">
+                    {order.date}
                   </td>
-                  <td className="py-4 px-6 text-right">
-                    <button className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all">
-                      <Eye className="w-4 h-4" />
+                  <td className="py-6 px-8 text-right">
+                    <button
+                      onClick={() => router.push(`/admin/orders/${order.id}`)}
+                      className="p-2 text-gray-300 group-hover:text-indigo-600 group-hover:bg-indigo-50 rounded-xl transition-all"
+                    >
+                      <Eye size={18} />
                     </button>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
-          {data.recentOrders.length === 0 && (
-            <div className="text-center py-10">
-              <PackageCheck className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-              <p className="text-gray-500">Henüz sipariş bulunmuyor.</p>
-            </div>
-          )}
         </div>
       </div>
     </div>

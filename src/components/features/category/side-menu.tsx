@@ -17,20 +17,13 @@ interface SideMenuProps {
   onClose: () => void;
 }
 
-// Debounce hook'u
+// Debounce hook
 function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
-
   useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedValue(value);
-    }, delay);
-
-    return () => {
-      clearTimeout(handler);
-    };
+    const handler = setTimeout(() => setDebouncedValue(value), delay);
+    return () => clearTimeout(handler);
   }, [value, delay]);
-
   return debouncedValue;
 }
 
@@ -41,55 +34,37 @@ export function SideMenu({
 }: SideMenuProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
+
   const [searchTerm, setSearchTerm] = useState("");
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
+
   const searchInputRef = useRef<HTMLInputElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
+  // 🟢 ÇÖZÜM BURADA: Sadece URL değiştiğinde çalışması için path'i takip eden bir ref
+  const lastPathnameRef = useRef(pathname);
+  // 🟢 Veri ilk yüklendiğinde bir kereye mahsus URL'i kontrol etmek için flag
+  const isInitialSyncDone = useRef(false);
+
   const debouncedSearchTerm = useDebounce(searchTerm, 150);
 
-  // Portal için sayfanın yüklendiğinden emin ol
   useEffect(() => {
     setMounted(true);
     return () => setMounted(false);
   }, []);
 
-  // Body scroll lock
   useEffect(() => {
-    if (isMenuOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
-
+    document.body.style.overflow = isMenuOpen ? "hidden" : "";
     return () => {
       document.body.style.overflow = "";
     };
   }, [isMenuOpen]);
 
-  // ESC tuşu ile kapatma
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && isMenuOpen) {
-        onClose();
-      }
-
-      // Ctrl/Cmd + K ile arama odaklama
-      if ((e.ctrlKey || e.metaKey) && e.key === "k") {
-        e.preventDefault();
-        if (isMenuOpen) {
-          searchInputRef.current?.focus();
-        }
-      }
+      if (e.key === "Escape" && isMenuOpen) onClose();
     };
-
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [isMenuOpen, onClose]);
-
-  // Dış tıklamada kapatma
-  useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
         menuRef.current &&
@@ -99,17 +74,16 @@ export function SideMenu({
         onClose();
       }
     };
-
+    document.addEventListener("keydown", handleKeyDown);
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
+      document.removeEventListener("keydown", handleKeyDown);
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [isMenuOpen, onClose]);
 
-  // Arama filtresi
   const filteredCategories = useMemo(() => {
     if (!debouncedSearchTerm.trim()) return categories;
-
     const term = debouncedSearchTerm.toLowerCase();
     return categories.filter((category) => {
       const matchesCategory = category.name.toLowerCase().includes(term);
@@ -120,25 +94,30 @@ export function SideMenu({
     });
   }, [categories, debouncedSearchTerm]);
 
-  // Arama temizleme
-  const handleClearSearch = useCallback(() => {
-    setSearchTerm("");
-    searchInputRef.current?.focus();
-  }, []);
-
-  // Kategori tıklama
+  // 🟢 Tıklama fonksiyonunu izole ettik
   const handleCategoryClick = useCallback(
-    (categoryId: string) => {
-      setActiveCategory(activeCategory === categoryId ? null : categoryId);
+    (categoryId: string, e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setActiveCategory((prev) => (prev === categoryId ? null : categoryId));
     },
-    [activeCategory]
+    []
   );
 
-  // URL'e göre aktif kategoriyi belirle
+  // 🟢 🟢 🟢 KRİTİK DÜZELTME: URL SENKRONİZASYONU 🟢 🟢 🟢
   useEffect(() => {
-    if (!pathname || !categories.length) return;
+    // 1. Durum: URL gerçekten değiştiyse (Navigasyon)
+    const isPathChanged = pathname !== lastPathnameRef.current;
 
-    if (pathname.startsWith("/category/")) {
+    // 2. Durum: İlk yükleme henüz yapılmadıysa ve veri geldiyse
+    const isFirstLoad = !isInitialSyncDone.current && categories.length > 0;
+
+    // Eğer ne URL değişti ne de ilk yükleme ise, HİÇBİR ŞEY YAPMA.
+    // Bu sayede veri güncellendiğinde senin açtığın menü kapanmaz.
+    if (!isPathChanged && !isFirstLoad) return;
+
+    // Eğer URL değiştiyse veya ilk yüklemeyse, URL'e uygun kategoriyi bul ve aç
+    if (pathname && pathname.startsWith("/category/")) {
       const categorySlug = pathname.split("/category/")[1];
       const foundCategory = categories.find(
         (cat) =>
@@ -150,9 +129,12 @@ export function SideMenu({
         setActiveCategory(foundCategory.id);
       }
     }
-  }, [pathname, categories]);
 
-  // Alt kategori toplam sayısı
+    // Flagleri güncelle
+    if (isFirstLoad) isInitialSyncDone.current = true;
+    if (isPathChanged) lastPathnameRef.current = pathname;
+  }, [pathname, categories]); // categories buraya ekli ama yukarıdaki if bloğu gereksiz çalışmayı engeller.
+
   const totalSubcategories = useMemo(
     () =>
       categories.reduce(
@@ -162,290 +144,159 @@ export function SideMenu({
     [categories]
   );
 
-  // Tüm kategoriler linki
   const allCategoriesLink = useMemo(() => {
     const params = new URLSearchParams(searchParams.toString());
     return `/categories?${params.toString()}`;
   }, [searchParams]);
 
+  const handleClearSearch = () => {
+    setSearchTerm("");
+    searchInputRef.current?.focus();
+  };
+
   if (!mounted) return null;
 
   return createPortal(
     <>
-      {/* Overlay */}
       <div
-        className={`fixed inset-0 z-50 transition-opacity duration-300 ${
-          isMenuOpen ? "opacity-100 visible" : "opacity-0 invisible"
-        }`}
-        onClick={onClose}
+        className={`fixed inset-0 z-50 transition-opacity duration-300 ${isMenuOpen ? "opacity-100 visible" : "opacity-0 invisible"}`}
         aria-hidden="true"
       >
         <div
-          className={`absolute inset-0 bg-black/70 backdrop-blur-md transition-opacity duration-300 ${
-            isMenuOpen ? "opacity-100" : "opacity-0"
-          }`}
+          className={`absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-300 ${isMenuOpen ? "opacity-100" : "opacity-0"}`}
         />
       </div>
 
-      {/* Side Menu */}
       <div
         ref={menuRef}
-        className={`fixed top-0 left-0 h-full z-50 w-full max-w-sm bg-white shadow-xl transition-transform duration-300 ease-out flex flex-col ${
-          isMenuOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
-        onClick={(e) => e.stopPropagation()}
-        role="dialog"
-        aria-modal="true"
-        aria-label="Kategoriler Menüsü"
+        className={`fixed top-0 left-0 h-full z-50 w-full max-w-sm bg-white shadow-2xl transition-transform duration-300 ease-out flex flex-col ${isMenuOpen ? "translate-x-0" : "-translate-x-full"}`}
       >
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-100 bg-white flex-shrink-0">
+        {/* HEADER */}
+        <div className="flex items-center justify-between p-5 border-b border-gray-100 bg-white">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
-              <Layers className="w-6 h-6 text-white" />
+            <div className="w-10 h-10 bg-gradient-to-br from-[#667EEA] to-[#764BA2] rounded-lg flex items-center justify-center shadow-md text-white">
+              <Layers size={20} />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-gray-900">Kategoriler</h2>
-              <p className="text-sm text-gray-500">
-                <span className="font-semibold text-blue-600">
-                  {categories.length}
-                </span>{" "}
-                ana •{" "}
-                <span className="font-semibold text-indigo-600">
-                  {totalSubcategories}
-                </span>{" "}
-                alt
+              <h2 className="text-lg font-bold text-gray-900">Kategoriler</h2>
+              <p className="text-xs text-gray-500">
+                {categories.length} Ana • {totalSubcategories} Alt
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="w-10 h-10 rounded-xl bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95"
-            aria-label="Menüyü kapat"
+            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
           >
-            <X className="w-5 h-5 text-gray-600" />
+            <X size={20} className="text-gray-500" />
           </button>
         </div>
 
-        {/* Arama */}
-        <div className="p-4 border-b border-gray-100 bg-white flex-shrink-0">
+        {/* SEARCH */}
+        <div className="p-4 border-b border-gray-100 bg-gray-50/50">
           <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Search className="w-4 h-4 text-gray-400" />
-            </div>
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
             <input
               ref={searchInputRef}
               type="text"
-              placeholder="Kategorilerde ara..."
+              placeholder="Hızlı kategori ara..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-10 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200 text-sm outline-none font-medium text-gray-700 transition-all"
-              aria-label="Kategori arama"
+              className="w-full pl-9 pr-9 py-2.5 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
             />
             {searchTerm && (
               <button
                 onClick={handleClearSearch}
-                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
-                aria-label="Aramayı temizle"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
               >
-                <X className="w-4 h-4" />
+                <X size={14} />
               </button>
             )}
           </div>
-          {searchTerm && (
-            <div className="mt-2 px-1">
-              <p className="text-xs text-gray-500">
-                <span className="font-medium text-gray-700">
-                  {filteredCategories.length}
-                </span>{" "}
-                kategori bulundu
-              </p>
-            </div>
-          )}
         </div>
 
-        {/* Liste */}
-        <div className="flex-1 overflow-y-auto bg-white">
-          <div className="p-4 space-y-1">
-            {filteredCategories.length > 0 ? (
-              filteredCategories.map((category) => {
+        {/* LIST */}
+        <div className="flex-1 overflow-y-auto p-2 scrollbar-thin scrollbar-thumb-gray-200">
+          {filteredCategories.length > 0 ? (
+            <div className="space-y-1">
+              {filteredCategories.map((category) => {
                 const hasChildren =
                   category.children && category.children.length > 0;
                 const isActive = activeCategory === category.id;
 
                 return (
-                  <div key={category.id} className="group">
-                    {/* Ana Kategori */}
+                  <div key={category.id} className="select-none">
+                    {/* ANA KATEGORİ */}
                     <div
-                      className={`flex items-center justify-between p-4 rounded-xl cursor-pointer transition-all duration-200 ${
+                      onClick={(e) => handleCategoryClick(category.id, e)}
+                      className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-all duration-200 group ${
                         isActive
-                          ? "bg-blue-50 border border-blue-200"
-                          : "bg-white hover:bg-gray-50 border border-transparent hover:border-gray-200"
+                          ? "bg-indigo-50 text-indigo-700"
+                          : "hover:bg-gray-50 text-gray-700"
                       }`}
-                      onClick={() => handleCategoryClick(category.id)}
-                      role="button"
-                      tabIndex={0}
-                      onKeyDown={(e) =>
-                        e.key === "Enter" && handleCategoryClick(category.id)
-                      }
-                      aria-expanded={isActive}
                     >
-                      <div className="flex items-center gap-3 flex-1 min-w-0">
-                        <div
-                          className={`w-2 h-2 rounded-full transition-all duration-200 ${
-                            isActive
-                              ? "bg-blue-600"
-                              : "bg-gray-300 group-hover:bg-blue-400"
-                          }`}
+                      <div className="flex items-center gap-3">
+                        <span
+                          className={`w-1.5 h-1.5 rounded-full transition-colors ${isActive ? "bg-indigo-600" : "bg-gray-300 group-hover:bg-indigo-300"}`}
                         />
-
-                        <div className="flex-1 min-w-0">
-                          <span
-                            className={`font-semibold text-sm truncate block ${
-                              isActive
-                                ? "text-blue-700"
-                                : "text-gray-700 group-hover:text-gray-900"
-                            }`}
-                          >
-                            {category.name}
-                          </span>
-                          {hasChildren && (
-                            <p className="text-xs text-gray-500 mt-0.5">
-                              {category.children.length} alt kategori
-                            </p>
-                          )}
-                        </div>
+                        <span className="font-medium text-sm">
+                          {category.name}
+                        </span>
                       </div>
 
                       {hasChildren && (
                         <div className="flex items-center gap-2">
-                          <span className="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded-full">
+                          <span
+                            className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${isActive ? "bg-indigo-100 text-indigo-600" : "bg-gray-100 text-gray-500"}`}
+                          >
                             {category.children.length}
                           </span>
                           <ChevronRight
-                            className={`w-4 h-4 transition-transform duration-200 ${
-                              isActive
-                                ? "rotate-90 text-blue-600"
-                                : "text-gray-400 group-hover:text-gray-600"
-                            }`}
+                            size={16}
+                            className={`transition-transform duration-300 ${isActive ? "rotate-90 text-indigo-600" : "text-gray-400"}`}
                           />
                         </div>
                       )}
                     </div>
 
-                    {/* Alt Kategoriler */}
-                    {isActive && hasChildren && (
-                      <div className="ml-6 mt-2 space-y-1 animate-in fade-in slide-in-from-top-1 duration-200">
-                        {category.children.map((sub, index) => (
+                    {/* ALT KATEGORİLER (CSS Transition ile) */}
+                    <div
+                      className={`overflow-hidden transition-all duration-300 ease-in-out ${
+                        isActive && hasChildren
+                          ? "max-h-[500px] opacity-100 mt-1"
+                          : "max-h-0 opacity-0"
+                      }`}
+                    >
+                      <div className="ml-4 pl-4 border-l-2 border-indigo-100 space-y-1 py-1">
+                        {category.children.map((sub) => (
                           <Link
                             key={sub.id}
                             href={`/category/${sub.slug}`}
-                            className={`flex items-center gap-3 px-4 py-3 rounded-lg text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200 ${
-                              pathname === `/category/${sub.slug}`
-                                ? "bg-blue-50 text-blue-600"
-                                : ""
-                            }`}
                             onClick={onClose}
-                            style={{
-                              animationDelay: `${index * 30}ms`,
-                              animationFillMode: "backwards",
-                            }}
+                            className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-colors ${
+                              pathname === `/category/${sub.slug}`
+                                ? "bg-indigo-50 text-indigo-700 font-medium"
+                                : "text-gray-500 hover:text-indigo-600 hover:bg-gray-50"
+                            }`}
                           >
-                            <Hash className="w-3 h-3 text-gray-400" />
-                            <span className="text-sm flex-1 truncate">
-                              {sub.name}
-                            </span>
-                            {pathname === `/category/${sub.slug}` && (
-                              <div className="w-1.5 h-1.5 rounded-full bg-blue-600" />
-                            )}
+                            <Hash size={12} className="opacity-50" />
+                            {sub.name}
                           </Link>
                         ))}
                       </div>
-                    )}
+                    </div>
                   </div>
                 );
-              })
-            ) : (
-              // Boş durum
-              <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
-                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                  <Search className="w-8 h-8 text-gray-400" />
-                </div>
-                <h3 className="text-lg font-semibold text-gray-700 mb-2">
-                  Kategori bulunamadı
-                </h3>
-                <p className="text-gray-500 text-sm max-w-xs">
-                  &quot;{searchTerm}&ldquo; araması ile eşleşen kategori
-                  bulunamadı.
-                </p>
-                {searchTerm && (
-                  <button
-                    onClick={handleClearSearch}
-                    className="mt-6 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-700 font-medium text-sm transition-colors duration-200"
-                  >
-                    Aramayı Temizle
-                  </button>
-                )}
-              </div>
-            )}
-
-            {/* Footer Link */}
-            {filteredCategories.length > 0 && !searchTerm && (
-              <div className="pt-6 mt-4 border-t border-gray-100">
-                <Link
-                  href={allCategoriesLink}
-                  className="flex items-center justify-center gap-2 px-4 py-3 bg-gray-50 hover:bg-gray-100 rounded-xl text-gray-700 hover:text-gray-900 font-medium text-sm transition-colors duration-200"
-                  onClick={onClose}
-                >
-                  <Sparkles className="w-4 h-4 text-gray-400" />
-                  <span>Tüm Kategorileri Görüntüle</span>
-                  <ChevronRight className="w-4 h-4" />
-                </Link>
-              </div>
-            )}
-          </div>
+              })}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-10 text-center text-gray-500">
+              <Search size={32} className="text-gray-200 mb-2" />
+              <p className="text-sm">Sonuç bulunamadı.</p>
+            </div>
+          )}
         </div>
       </div>
-
-      {/* Custom Scrollbar Styles */}
-      <style jsx global>{`
-        .custom-scrollbar {
-          scrollbar-width: thin;
-          scrollbar-color: #cbd5e1 transparent;
-        }
-
-        .custom-scrollbar::-webkit-scrollbar {
-          width: 6px;
-        }
-
-        .custom-scrollbar::-webkit-scrollbar-track {
-          background: transparent;
-        }
-
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-          background-color: #cbd5e1;
-          border-radius: 3px;
-        }
-
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background-color: #94a3b8;
-        }
-
-        @keyframes fadeIn {
-          from {
-            opacity: 0;
-            transform: translateY(-5px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        .animate-in {
-          animation: fadeIn 0.2s ease-out forwards;
-        }
-      `}</style>
     </>,
     document.body
   );

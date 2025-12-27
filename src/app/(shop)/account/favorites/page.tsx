@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/db";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/actions/auth";
+import { authOptions } from "@/lib/auth/options"; // Auth yolunu kontrol et
 import { redirect } from "next/navigation";
 import ProductCard from "@/components/features/product/product-card";
 import { Heart, ShoppingBag } from "lucide-react";
@@ -18,7 +18,7 @@ export default async function FavoritesPage() {
     redirect("/login?callbackUrl=/account/favorites");
   }
 
-  // 2. Favorileri çek (Ürün detaylarıyla beraber)
+  // 2. Favorileri çek (Ürün detayları ve YORUMLAR ile beraber)
   const favorites = await prisma.favorite.findMany({
     where: {
       userId: session.user.id,
@@ -27,6 +27,7 @@ export default async function FavoritesPage() {
       product: {
         include: {
           images: true,
+          reviews: { select: { rating: true } }, // 🟢 Yıldızlar için gerekli
         },
       },
     },
@@ -35,7 +36,7 @@ export default async function FavoritesPage() {
     },
   });
 
-  // 3. Veriyi ProductCard formatına uyarla (Decimal -> Number)
+  // 3. Veriyi ProductCard formatına uyarla
   const products = favorites.map((fav) => {
     const p = fav.product;
     return {
@@ -49,6 +50,8 @@ export default async function FavoritesPage() {
         url: img.url,
         isMain: img.isMain,
       })),
+      reviews: p.reviews, // 🟢 Yıldız hesaplaması için gerekli
+      variants: [], // Varyant kontrolü hata vermesin diye boş dizi
     };
   });
 
@@ -73,8 +76,11 @@ export default async function FavoritesPage() {
         {products.length > 0 ? (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
             {products.map((product) => (
-              // Zaten ProductCard içinde FavoriteButton var, o yüzden burada çalışır.
-              <ProductCard key={product.id} product={product} />
+              <ProductCard
+                key={product.id}
+                product={product}
+                isFavorited={true} // 🟢 İŞTE BU EKSİKTİ: Kalbi manuel olarak dolduruyoruz
+              />
             ))}
           </div>
         ) : (

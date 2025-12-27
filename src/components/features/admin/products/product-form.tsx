@@ -11,6 +11,9 @@ import { useState, useTransition, useRef, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import {
+  Wand2,
+  RefreshCcw,
+  Copy,
   Save,
   ArrowLeft,
   Loader2,
@@ -30,6 +33,8 @@ import {
   Check,
   ChevronsUpDown,
   Search,
+  Palette,
+  Ruler,
 } from "lucide-react";
 import { toBase64 } from "@/lib/utils/utils";
 import {
@@ -41,7 +46,7 @@ import toast from "react-hot-toast";
 // --- TİP TANIMLAMALARI ---
 type CategoryWithChildren = Category & {
   brands: Brand[];
-  children: (Category & { attributes: Attribute[]; brands: Brand[] })[]; // 🟢 Ve burada
+  children: (Category & { attributes: Attribute[]; brands: Brand[] })[];
   attributes: Attribute[];
 };
 
@@ -49,8 +54,19 @@ type ProductData = Omit<Product, "price" | "salePrice"> & {
   price: number;
   salePrice: number | null;
   attributeValues: ProductAttributeValue[];
-  variants?: any[];
-  images?: any[];
+  variants?: Array<{
+    id: string;
+    size: string;
+    color: string;
+    stock: number;
+    price: number;
+    salePrice: number | null;
+  }>;
+  images?: Array<{
+    id: string;
+    url: string;
+    isMain: boolean;
+  }>;
 };
 
 interface ImageFile {
@@ -59,22 +75,34 @@ interface ImageFile {
   previewUrl: string;
   isMain: boolean;
 }
+
 interface VariantRow {
   id: string;
   size: string;
   color: string;
   stock: number;
   priceDiff: number;
+  salePrice: number | null;
 }
 
 interface Props {
   categories: CategoryWithChildren[];
-  brands: Brand[]; // Bu tüm liste (Yedek olarak kalsın ama kullanmayacağız)
+  brands: Brand[];
   initialData?: ProductData | null;
 }
 
+interface SelectOption {
+  id: string;
+  name: string;
+  // Add any other specific properties that might be needed
+  // For example:
+  // value?: string | number;
+  // disabled?: boolean;
+  // Add more specific types as needed
+}
+
 // 🔥 ARAMALI SEÇİM KUTUSU BİLEŞENİ
-function SearchableSelect({
+export function SearchableSelect({
   label,
   options,
   value,
@@ -83,7 +111,7 @@ function SearchableSelect({
   placeholder = "Seçiniz...",
 }: {
   label?: string;
-  options: { id: string; name: string }[];
+  options: SelectOption[];
   value: string;
   onChange: (val: string) => void;
   disabled?: boolean;
@@ -202,7 +230,22 @@ export default function ProductForm({
     categoryId: initialData?.categoryId || "",
     isActive: initialData?.isActive ?? true,
     isArchived: initialData?.isArchived ?? false,
+    defaultColor: initialData?.defaultColor || "",
+    defaultSize: initialData?.defaultSize || "",
   });
+
+  const handleChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >
+  ) => {
+    const { name, value, type } = e.target as HTMLInputElement;
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: type === "number" ? Number(value) : value,
+    }));
+  };
 
   // --- 2. KATEGORİ & ATTRIBUTE MANTIĞI ---
   const [selectedParentId, setSelectedParentId] = useState<string>("");
@@ -214,6 +257,9 @@ export default function ProductForm({
   // --- 3. DİĞER STATELER ---
   const [selectedImages, setSelectedImages] = useState<ImageFile[]>([]);
   const [variants, setVariants] = useState<VariantRow[]>([]);
+  const [genColors, setGenColors] = useState("");
+  const [genSizes, setGenSizes] = useState("");
+  const [isGenOpen, setIsGenOpen] = useState(false);
 
   // --- INITIAL DATA LOAD ---
   useEffect(() => {
@@ -245,56 +291,57 @@ export default function ProductForm({
         });
         setAttributeValues(values);
       }
+
       if (initialData.variants && initialData.variants.length > 0) {
         setVariants(
-          initialData.variants.map((v: any) => ({
-            id: v.id,
-            size: v.size || "",
-            color: v.color || "",
-            stock: v.stock,
-            priceDiff: Number(v.price) || 0,
-          }))
+          initialData.variants
+            // 👇 Sadece Renk veya Bedeni olanları al (Ana ürün kaydını yoksay)
+            .filter(
+              (v: Pick<VariantRow, "color" | "size">) => v.color || v.size
+            )
+            .map(
+              (
+                v: Omit<VariantRow, "id" | "priceDiff"> & {
+                  id: string;
+                  price?: number;
+                }
+              ) => ({
+                id: v.id,
+                size: v.size || "",
+                color: v.color || "",
+                stock: v.stock,
+                priceDiff: Number(v.price) || 0,
+                salePrice: v.salePrice ? Number(v.salePrice) : null,
+              })
+            )
         );
       }
+
       if (initialData.images && initialData.images.length > 0) {
         setSelectedImages(
-          initialData.images.map((img: any) => ({
-            id: img.id,
-            previewUrl: img.url,
-            isMain: img.isMain,
-            file: undefined,
-          }))
+          initialData.images.map(
+            (img: { id: string; url: string; isMain: boolean }) => ({
+              id: img.id,
+              previewUrl: img.url,
+              isMain: img.isMain,
+              file: undefined,
+            })
+          )
         );
       }
     }
   }, [initialData, categories]);
 
-  // Kategori Değişim Handler'ı
-  const handleCategoryChange = (catId: string) => {
-    setFormData({ ...formData, categoryId: catId, brandId: "" }); // Kategori değişince markayı sıfırla
-    const parent = categories.find((p) => p.id === selectedParentId);
-    const child = parent?.children.find((c) => c.id === catId);
-    if (child) setActiveAttributes(child.attributes);
-    else setActiveAttributes([]);
-  };
-
-  // --- 🟢 YENİ: MARKA FİLTRELEME MANTIĞI ---
   const filteredBrands = useMemo(() => {
     if (!selectedParentId) return [];
-
     const parent = categories.find((c) => c.id === selectedParentId);
-
     const child = parent?.children.find((c) => c.id === formData.categoryId);
-
     const parentBrands = parent?.brands || [];
     const childBrands = child?.brands || [];
-
     const combined = [...parentBrands, ...childBrands];
-
     const uniqueBrands = Array.from(
       new Map(combined.map((item) => [item.id, item])).values()
     );
-
     return uniqueBrands;
   }, [categories, selectedParentId, formData.categoryId]);
 
@@ -307,22 +354,35 @@ export default function ProductForm({
     [categories, selectedParentId]
   );
 
-  // --- HANDLERS ---
-  const addVariant = () =>
-    setVariants([
-      ...variants,
-      { id: crypto.randomUUID(), size: "", color: "", stock: 0, priceDiff: 0 },
-    ]);
-  const removeVariant = (id: string) =>
-    setVariants(variants.filter((v) => v.id !== id));
-  const updateVariant = (
-    id: string,
-    field: keyof VariantRow,
-    value: string | number
-  ) =>
-    setVariants(
-      variants.map((v) => (v.id === id ? { ...v, [field]: value } : v))
-    );
+  // 🟢 1. KATEGORİYE GÖRE ETİKET AYARLARI
+  const variantLabels = useMemo(() => {
+    const currentCategory = categories
+      .flatMap((p) => p.children)
+      .find((c) => c.id === formData.categoryId);
+    const catName = currentCategory?.name.toLowerCase() || "";
+
+    if (
+      catName.includes("ayakkabı") ||
+      catName.includes("bot") ||
+      catName.includes("sneaker")
+    ) {
+      return { color: "Renk", size: "Numara", hasSize: true, hasColor: true };
+    }
+    if (
+      catName.includes("telefon") ||
+      catName.includes("bilgisayar") ||
+      catName.includes("tablet")
+    ) {
+      return {
+        color: "Renk",
+        size: "Hafıza",
+        hasSize: true,
+        hasColor: true,
+      };
+    }
+    // Varsayılan
+    return { color: "Renk", size: "Beden", hasSize: true, hasColor: true };
+  }, [categories, formData.categoryId]);
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -342,6 +402,7 @@ export default function ProductForm({
     setSelectedImages([...selectedImages, ...newImages]);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
+
   const handleSetMain = (id: string) =>
     setSelectedImages((prev) =>
       prev.map((img) => ({ ...img, isMain: img.id === id }))
@@ -355,6 +416,103 @@ export default function ProductForm({
     });
   };
 
+  const handleGenerateVariants = () => {
+    if (!genColors && !genSizes) return;
+    const colors = genColors
+      .split(",")
+      .map((c) => c.trim())
+      .filter(Boolean);
+    const sizes = genSizes
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+    const newVariants: VariantRow[] = [];
+    const defaultPrice =
+      Number(formData.price) > 0 ? Number(formData.price) : 0;
+    const defaultSalePrice =
+      formData.salePrice && formData.salePrice > 0
+        ? Number(formData.salePrice)
+        : null;
+
+    if (colors.length > 0 && sizes.length > 0) {
+      colors.forEach((color) => {
+        sizes.forEach((size) => {
+          newVariants.push({
+            id: crypto.randomUUID(),
+            color,
+            size,
+            stock: 10,
+            priceDiff: defaultPrice,
+            salePrice: defaultSalePrice,
+          });
+        });
+      });
+    } else if (colors.length > 0) {
+      colors.forEach((color) => {
+        newVariants.push({
+          id: crypto.randomUUID(),
+          color,
+          size: "Std",
+          stock: 10,
+          priceDiff: defaultPrice,
+          salePrice: defaultSalePrice,
+        });
+      });
+    } else if (sizes.length > 0) {
+      sizes.forEach((size) => {
+        newVariants.push({
+          id: crypto.randomUUID(),
+          color: "Std",
+          size,
+          stock: 10,
+          priceDiff: defaultPrice,
+          salePrice: defaultSalePrice,
+        });
+      });
+    }
+    setVariants([...variants, ...newVariants]);
+    setGenColors("");
+    setGenSizes("");
+    setIsGenOpen(false);
+    toast.success(`${newVariants.length} varyant oluşturuldu.`);
+  };
+
+  const addVariant = () =>
+    setVariants([
+      ...variants,
+      {
+        id: crypto.randomUUID(),
+        size: "",
+        color: "",
+        stock: 0,
+        priceDiff: Number(formData.price) > 0 ? Number(formData.price) : 0,
+        salePrice: null,
+      },
+    ]);
+
+  const removeVariant = (id: string) =>
+    setVariants(variants.filter((v) => v.id !== id));
+  const updateVariant = (
+    id: string,
+    field: keyof VariantRow,
+    value: string | number | null
+  ) =>
+    setVariants(
+      variants.map((v) => (v.id === id ? { ...v, [field]: value } : v))
+    );
+  const handleBulkUpdate = (field: keyof VariantRow, value: string) => {
+    if (!variants.length) return;
+    setVariants((prev) =>
+      prev.map((v) => {
+        if (field === "salePrice" && (value === "" || value === "0")) {
+          return { ...v, [field]: null };
+        }
+        return { ...v, [field]: Number(value) || 0 };
+      })
+    );
+    toast.success("Tüm satırlara uygulandı.");
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name || !formData.categoryId || formData.price <= 0) {
@@ -365,18 +523,27 @@ export default function ProductForm({
       toast.error("Görsel yüklemelisiniz.");
       return;
     }
+    // 🟢 ANA ÜRÜN RENGİ ZORUNLU KONTROLÜ
+    if (!formData.defaultColor) {
+      toast.error("Ana Ürün Rengi seçilmek zorundadır!");
+      return;
+    }
 
     startTransition(async () => {
       const attributesPayload = Object.entries(attributeValues).map(
         ([attrId, val]) => ({ attributeId: attrId, value: val })
       );
+
       const variantsPayload = variants.map((v) => ({
         name: `${v.color} - ${v.size}`,
         size: v.size,
         color: v.color,
         stock: Number(v.stock),
         price: Number(v.priceDiff),
+        salePrice:
+          v.salePrice && Number(v.salePrice) > 0 ? Number(v.salePrice) : null,
       }));
+
       const totalStock =
         variants.length > 0
           ? variants.reduce((acc, curr) => acc + Number(curr.stock), 0)
@@ -396,12 +563,11 @@ export default function ProductForm({
         variants: variantsPayload,
         attributeValues: attributesPayload,
       };
+
       let result;
       if (initialData) {
-        // Eğer düzenleme modundaysak (initialData varsa) -> GÜNCELLEME ÇAĞIR
         result = await updateProductWithImages(initialData.id, payload);
       } else {
-        // Eğer yeni ürünse -> OLUŞTURMA ÇAĞIR
         result = await createProductWithImages(payload);
       }
 
@@ -482,6 +648,7 @@ export default function ProductForm({
                   placeholder="Örn: iPhone 15"
                 />
               </div>
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Açıklama
@@ -498,11 +665,60 @@ export default function ProductForm({
             </div>
           </div>
 
+          {/* 🟢 YENİ BÖLÜM: ANA ÜRÜN VARYANT (RENK/BEDEN) */}
+          <div className="bg-white p-6 rounded-xl border border-indigo-100 shadow-sm">
+            <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <Palette size={18} className="text-indigo-600" /> Ana Ürün
+              Varyantı
+            </h3>
+            <div className="bg-indigo-50 p-3 rounded-lg text-xs text-indigo-800 mb-4">
+              Bu alan <strong>zorunludur</strong>. Ana ürünün rengi,
+              varyantlarla birlikte listelenir.
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">
+                  <Palette size={14} className="text-gray-400" /> Ana Ürün Rengi{" "}
+                  <span className="text-red-500">*</span>
+                </label>
+                <div className="flex items-center gap-2">
+                  <div
+                    className="w-8 h-8 rounded-full border shadow-sm flex-shrink-0"
+                    style={{ backgroundColor: formData.defaultColor || "#fff" }}
+                  />
+                  <input
+                    type="text"
+                    value={formData.defaultColor}
+                    onChange={(e) =>
+                      setFormData({ ...formData, defaultColor: e.target.value })
+                    }
+                    className="w-full px-4 py-2 rounded-lg border focus:ring-2 focus:ring-indigo-500 outline-none"
+                    placeholder="Örn: Siyah"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">
+                  <Ruler size={14} className="text-gray-400" /> Ana Ürün Bedeni
+                </label>
+                <input
+                  type="text"
+                  value={formData.defaultSize}
+                  onChange={(e) =>
+                    setFormData({ ...formData, defaultSize: e.target.value })
+                  }
+                  className="w-full px-4 py-2 rounded-lg border focus:ring-2 focus:ring-indigo-500 outline-none"
+                  placeholder="Örn: L (Opsiyonel)"
+                />
+              </div>
+            </div>
+          </div>
+
           {/* DİNAMİK ÖZELLİKLER */}
           {activeAttributes.length > 0 && (
-            <div className="bg-white p-6 rounded-xl border border-indigo-100 shadow-sm">
+            <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
               <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                <ListChecks size={18} className="text-indigo-500" /> Ürün
+                <ListChecks size={18} className="text-gray-400" /> Ürün
                 Özellikleri
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -588,102 +804,294 @@ export default function ProductForm({
             </div>
           </div>
 
-          {/* VARYANTLAR */}
-          <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold text-gray-900 flex items-center gap-2">
-                <GitFork size={18} className="text-gray-400" /> Ürün Varyantları
-              </h3>
-              <button
-                type="button"
-                onClick={addVariant}
-                className="text-sm flex items-center gap-1 text-indigo-600 font-medium hover:bg-indigo-50 px-3 py-1.5 rounded-lg transition-colors"
-              >
-                <Plus size={16} /> Varyant Ekle
-              </button>
-            </div>
-            {variants.length === 0 ? (
-              <div className="text-center py-8 bg-gray-50 rounded-lg border border-dashed border-gray-300">
-                <p className="text-gray-500 text-sm">
-                  Varyant (Renk/Beden) yok.
+          {/* VARYANTLAR - DİNAMİK */}
+          <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm transition-all hover:border-indigo-200">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+                  <GitFork size={18} className="text-indigo-600" /> Ürün
+                  Varyantları
+                </h3>
+                <p className="text-xs text-gray-500 mt-1">
+                  Bu kategori için varyant tipleri:{" "}
+                  <span className="font-bold text-indigo-600">
+                    {variantLabels.color}
+                  </span>{" "}
+                  ve{" "}
+                  <span className="font-bold text-indigo-600">
+                    {variantLabels.size}
+                  </span>
                 </p>
-                <p className="text-xs text-gray-400 mt-1">
-                  Tek tip ürün olarak kaydedilecektir.
+              </div>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsGenOpen(!isGenOpen)}
+                  className={`text-sm flex items-center gap-2 font-medium px-4 py-2 rounded-lg transition-colors border ${isGenOpen ? "bg-indigo-50 border-indigo-200 text-indigo-700" : "bg-white border-gray-200 text-gray-600 hover:bg-gray-50"}`}
+                >
+                  <Wand2 size={16} />{" "}
+                  {isGenOpen ? "Sihirbazı Gizle" : "Otomatik Oluştur"}
+                </button>
+                <button
+                  type="button"
+                  onClick={addVariant}
+                  className="text-sm flex items-center gap-1 bg-indigo-600 text-white font-medium hover:bg-indigo-700 px-4 py-2 rounded-lg transition-all shadow-sm active:scale-95"
+                >
+                  <Plus size={16} /> Tek Ekle
+                </button>
+              </div>
+            </div>
+
+            {isGenOpen && (
+              <div className="mb-6 p-5 bg-indigo-50/50 rounded-xl border border-indigo-100 animate-in slide-in-from-top-2">
+                <h4 className="text-sm font-semibold text-indigo-900 mb-3 flex items-center gap-2">
+                  <RefreshCcw size={14} /> Varyant Sihirbazı
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  {variantLabels.hasColor && (
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">
+                        {variantLabels.color} Listesi (Virgülle ayır)
+                      </label>
+                      <input
+                        value={genColors}
+                        onChange={(e) => setGenColors(e.target.value)}
+                        placeholder={`Örn: Kırmızı, Mavi, Siyah`}
+                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                      />
+                    </div>
+                  )}
+                  {variantLabels.hasSize && (
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">
+                        {variantLabels.size} Listesi (Virgülle ayır)
+                      </label>
+                      <input
+                        value={genSizes}
+                        onChange={(e) => setGenSizes(e.target.value)}
+                        placeholder="Örn: S, M, L"
+                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                      />
+                    </div>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={handleGenerateVariants}
+                  className="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors shadow-sm"
+                >
+                  Kombinasyonları Oluştur
+                </button>
+              </div>
+            )}
+
+            {variants.length === 0 ? (
+              <div className="text-center py-10 bg-gray-50/50 rounded-xl border-2 border-dashed border-gray-200 hover:border-indigo-300 transition-colors">
+                <div className="bg-white w-12 h-12 rounded-full flex items-center justify-center mx-auto shadow-sm mb-3">
+                  <GitFork className="text-gray-400" size={24} />
+                </div>
+                <p className="text-gray-900 font-medium text-sm">
+                  Henüz varyant eklenmedi.
+                </p>
+                <p className="text-xs text-gray-500 mt-1 max-w-xs mx-auto">
+                  Ürün özelliklerine göre ({variantLabels.color} /{" "}
+                  {variantLabels.size}) kombinasyonları oluşturun.
                 </p>
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm text-left">
-                  <thead className="text-xs text-gray-500 uppercase bg-gray-50">
-                    <tr>
-                      <th className="px-3 py-2">Renk</th>
-                      <th className="px-3 py-2">Beden</th>
-                      <th className="px-3 py-2">Stok</th>
-                      <th className="px-3 py-2">Fiyat Farkı</th>
-                      <th className="px-3 py-2 text-right">İşlem</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100">
-                    {variants.map((variant) => (
-                      <tr key={variant.id}>
-                        <td className="p-2">
-                          <input
-                            placeholder="Renk"
-                            value={variant.color}
-                            onChange={(e) =>
-                              updateVariant(variant.id, "color", e.target.value)
-                            }
-                            className="w-full border rounded px-2 py-1.5 focus:ring-1 focus:ring-indigo-500 outline-none"
-                          />
-                        </td>
-                        <td className="p-2">
-                          <input
-                            placeholder="Beden"
-                            value={variant.size}
-                            onChange={(e) =>
-                              updateVariant(variant.id, "size", e.target.value)
-                            }
-                            className="w-full border rounded px-2 py-1.5 focus:ring-1 focus:ring-indigo-500 outline-none"
-                          />
-                        </td>
-                        <td className="p-2">
-                          <input
-                            type="number"
-                            min="0"
-                            value={variant.stock}
-                            onChange={(e) =>
-                              updateVariant(variant.id, "stock", e.target.value)
-                            }
-                            className="w-20 border rounded px-2 py-1.5 focus:ring-1 focus:ring-indigo-500 outline-none"
-                          />
-                        </td>
-                        <td className="p-2">
-                          <input
-                            type="number"
-                            value={variant.priceDiff}
-                            onChange={(e) =>
-                              updateVariant(
-                                variant.id,
-                                "priceDiff",
-                                e.target.value
-                              )
-                            }
-                            className="w-24 border rounded px-2 py-1.5 focus:ring-1 focus:ring-indigo-500 outline-none"
-                          />
-                        </td>
-                        <td className="p-2 text-right">
-                          <button
-                            type="button"
-                            onClick={() => removeVariant(variant.id)}
-                            className="text-red-500 hover:bg-red-50 p-1.5 rounded"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </td>
+              <div className="border rounded-lg overflow-hidden shadow-sm bg-white">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm text-left">
+                    <thead className="text-xs text-gray-500 uppercase bg-gray-50/80 border-b">
+                      <tr>
+                        <th className="px-4 py-3 font-medium">
+                          Varyasyon Detayı
+                        </th>
+                        <th className="px-4 py-3 font-medium w-32">
+                          <div className="flex items-center gap-1">
+                            Stok{" "}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const val = prompt(
+                                  "Tüm varyantlar için stok girin:"
+                                );
+                                if (val) handleBulkUpdate("stock", val);
+                              }}
+                              className="text-gray-400 hover:text-indigo-600"
+                            >
+                              <Copy size={12} />
+                            </button>
+                          </div>
+                        </th>
+
+                        <th className="px-4 py-3 font-medium w-32">
+                          <div className="flex items-center gap-1">
+                            Fiyat{" "}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const val = prompt(
+                                  "Tüm varyantlar için FİYAT girin:"
+                                );
+                                if (val) handleBulkUpdate("priceDiff", val);
+                              }}
+                              className="text-gray-400 hover:text-indigo-600"
+                            >
+                              <Copy size={12} />
+                            </button>
+                          </div>
+                        </th>
+
+                        {/* 🟢 İNDİRİM SÜTUNU */}
+                        <th className="px-4 py-3 font-medium w-32">
+                          <div className="flex items-center gap-1 text-red-600">
+                            İndirimli{" "}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const val = prompt(
+                                  "Tüm varyantlar için İNDİRİMLİ FİYAT girin (İptal için 0):"
+                                );
+                                if (val) handleBulkUpdate("salePrice", val);
+                              }}
+                              className="text-red-300 hover:text-red-600"
+                            >
+                              <Copy size={12} />
+                            </button>
+                          </div>
+                        </th>
+
+                        <th className="px-4 py-3 text-right font-medium w-16">
+                          Sil
+                        </th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {variants.map((variant) => (
+                        <tr
+                          key={variant.id}
+                          className="group hover:bg-gray-50/80 transition-colors"
+                        >
+                          <td className="p-4">
+                            <div className="flex items-center gap-2">
+                              {variantLabels.hasColor && (
+                                <div className="flex-1">
+                                  <label className="text-[10px] text-gray-400 uppercase font-bold">
+                                    {variantLabels.color}
+                                  </label>
+                                  <input
+                                    value={variant.color}
+                                    onChange={(e) =>
+                                      updateVariant(
+                                        variant.id,
+                                        "color",
+                                        e.target.value
+                                      )
+                                    }
+                                    className="w-full bg-transparent border-b border-transparent focus:border-indigo-500 outline-none text-sm font-medium text-gray-900 placeholder-gray-300"
+                                    placeholder={variantLabels.color}
+                                  />
+                                </div>
+                              )}
+                              {variantLabels.hasColor &&
+                                variantLabels.hasSize && (
+                                  <span className="text-gray-300 text-lg font-light">
+                                    /
+                                  </span>
+                                )}
+                              {variantLabels.hasSize && (
+                                <div className="flex-1">
+                                  <label className="text-[10px] text-gray-400 uppercase font-bold">
+                                    {variantLabels.size}
+                                  </label>
+                                  <input
+                                    value={variant.size}
+                                    onChange={(e) =>
+                                      updateVariant(
+                                        variant.id,
+                                        "size",
+                                        e.target.value
+                                      )
+                                    }
+                                    className="w-full bg-transparent border-b border-transparent focus:border-indigo-500 outline-none text-sm font-medium text-gray-900 placeholder-gray-300"
+                                    placeholder={variantLabels.size}
+                                  />
+                                </div>
+                              )}
+                            </div>
+                          </td>
+                          <td className="p-4">
+                            <input
+                              type="number"
+                              min="0"
+                              value={variant.stock}
+                              onChange={(e) =>
+                                updateVariant(
+                                  variant.id,
+                                  "stock",
+                                  e.target.value
+                                )
+                              }
+                              className="w-full pl-3 pr-2 py-1.5 border border-gray-200 rounded-md focus:ring-1 focus:ring-indigo-500 outline-none text-center font-mono text-sm"
+                            />
+                          </td>
+                          <td className="p-4">
+                            <div className="relative">
+                              <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-xs">
+                                ₺
+                              </span>
+                              <input
+                                type="number"
+                                value={variant.priceDiff}
+                                onChange={(e) =>
+                                  updateVariant(
+                                    variant.id,
+                                    "priceDiff",
+                                    e.target.value
+                                  )
+                                }
+                                className="w-full pl-5 pr-2 py-1.5 border border-gray-200 rounded-md focus:ring-1 focus:ring-indigo-500 outline-none text-center font-mono text-sm"
+                              />
+                            </div>
+                          </td>
+
+                          {/* 🟢 İNDİRİM INPUTU */}
+                          <td className="p-4">
+                            <div className="relative">
+                              <span className="absolute left-2 top-1/2 -translate-y-1/2 text-red-400 text-xs">
+                                ₺
+                              </span>
+                              <input
+                                type="number"
+                                placeholder="-"
+                                value={variant.salePrice ?? ""}
+                                onChange={(e) =>
+                                  updateVariant(
+                                    variant.id,
+                                    "salePrice",
+                                    e.target.value
+                                  )
+                                }
+                                className="w-full pl-5 pr-2 py-1.5 border border-red-100 bg-red-50 text-red-600 rounded-md focus:ring-1 focus:ring-red-500 outline-none text-center font-mono text-sm placeholder-red-200"
+                              />
+                            </div>
+                          </td>
+
+                          <td className="p-4 text-right">
+                            <button
+                              type="button"
+                              onClick={() => removeVariant(variant.id)}
+                              className="text-gray-400 hover:text-red-500 hover:bg-red-50 p-2 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             )}
           </div>
@@ -691,7 +1099,6 @@ export default function ProductForm({
 
         {/* --- SAĞ KOLON --- */}
         <div className="space-y-8">
-          {/* ORGANİZASYON */}
           <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
             <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
               <Layers size={18} className="text-gray-400" /> Organizasyon
@@ -701,9 +1108,9 @@ export default function ProductForm({
                 label="1. Ana Kategori"
                 options={parentCategories}
                 value={selectedParentId}
-                onChange={(val) => {
+                onChange={(val: string) => {
                   setSelectedParentId(val);
-                  setFormData({ ...formData, categoryId: "", brandId: "" }); // Markayı da sıfırla
+                  setFormData({ ...formData, categoryId: "", brandId: "" });
                   setActiveAttributes([]);
                 }}
                 placeholder="Ana Kategori Ara..."
@@ -712,7 +1119,16 @@ export default function ProductForm({
                 label="2. Alt Kategori"
                 options={subCategories}
                 value={formData.categoryId}
-                onChange={handleCategoryChange}
+                onChange={(val: string) => {
+                  setFormData({ ...formData, categoryId: val, brandId: "" });
+                  const child = subCategories.find(
+                    (
+                      c: Category & { attributes: Attribute[]; brands: Brand[] }
+                    ) => c.id === val
+                  );
+                  if (child) setActiveAttributes(child.attributes);
+                  else setActiveAttributes([]);
+                }}
                 disabled={!selectedParentId}
                 placeholder={
                   selectedParentId
@@ -721,13 +1137,13 @@ export default function ProductForm({
                 }
               />
               <hr className="border-gray-100" />
-
-              {/* 🟢 GÜNCELLENEN MARKA SEÇİMİ */}
               <SearchableSelect
                 label="Marka"
-                options={filteredBrands} // 👈 SADECE FİLTRELENEN MARKALAR
+                options={filteredBrands}
                 value={formData.brandId}
-                onChange={(val) => setFormData({ ...formData, brandId: val })}
+                onChange={(val: string) =>
+                  setFormData({ ...formData, brandId: val })
+                }
                 disabled={!selectedParentId}
                 placeholder={
                   !selectedParentId
@@ -740,7 +1156,6 @@ export default function ProductForm({
             </div>
           </div>
 
-          {/* FİYAT & STOK */}
           <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
             <h3 className="font-semibold text-gray-900 mb-4">
               Satış Bilgileri
@@ -748,7 +1163,7 @@ export default function ProductForm({
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-1">
+                  <label className="text-sm font-medium text-gray-700 mb-1 flex items-center gap-1">
                     <TurkishLira size={14} /> Fiyat
                   </label>
                   <input
@@ -767,7 +1182,7 @@ export default function ProductForm({
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-red-600 mb-1 flex items-center gap-1">
+                  <label className="text-sm font-medium text-red-600 mb-1 flex items-center gap-1">
                     <BadgePercent size={14} /> İndirimli Fiyat
                   </label>
                   <input
@@ -792,7 +1207,7 @@ export default function ProductForm({
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-1">
+                <label className="text-sm font-medium text-gray-700 mb-1 flex items-center gap-1">
                   <Package size={14} /> Genel Stok
                 </label>
                 <input
@@ -817,7 +1232,6 @@ export default function ProductForm({
             </div>
           </div>
 
-          {/* DURUM */}
           <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-medium">Aktif</span>

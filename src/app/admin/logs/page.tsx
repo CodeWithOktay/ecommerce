@@ -1,9 +1,6 @@
 import { prisma } from "@/lib/db";
 import {
   Activity,
-  AlertTriangle,
-  CheckCircle2,
-  DoorOpen,
   FileEdit,
   Globe,
   LogIn,
@@ -12,7 +9,6 @@ import {
   Search,
   ShieldAlert,
   Trash2,
-  User,
 } from "lucide-react";
 
 export default async function AdminLogsPage() {

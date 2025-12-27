@@ -1,15 +1,15 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { authenticateUser } from "../auth.service";
-import { prisma } from "@/lib/test-utils/prisma";
+import { testPrisma } from "@/lib/test-utils/prisma";
 import bcrypt from "bcrypt";
 
 describe("authenticateUser", () => {
   beforeEach(async () => {
-    await prisma.user.deleteMany();
+    await testPrisma.user.deleteMany();
 
     const hash = await bcrypt.hash("123456", 10);
 
-    await prisma.user.create({
+    await testPrisma.user.create({
       data: {
         email: "test@test.com",
         passwordHash: hash,

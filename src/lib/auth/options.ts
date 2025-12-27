@@ -1,21 +1,20 @@
-// src/lib/auth/options.ts
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { type NextAuthOptions } from "next-auth";
-import prisma from "@/lib/db";
-import { authenticateUser } from "./auth.service"; // Güvenli servis
+import { prisma } from "@/lib/db";
+import { authenticateUser } from "./auth.service";
 import { Role } from "@prisma/client";
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
-  secret: process.env.NEXTAUTH_SECRET,
+  secret: process.env.NEXTAUTH_SECRET, // .env dosyasında olduğundan emin ol!
   session: {
     strategy: "jwt",
     maxAge: 30 * 24 * 60 * 60, // 30 gün
   },
   pages: {
     signIn: "/login",
-    error: "/login",
+    error: "/login", // Hata durumunda login sayfasına at
   },
   providers: [
     CredentialsProvider({
@@ -25,41 +24,54 @@ export const authOptions: NextAuthOptions = {
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
+        // 1. Basit validasyon
         if (!credentials?.email || !credentials?.password) {
-          throw new Error("Lütfen tüm alanları doldurun.");
+          throw new Error("Lütfen e-posta ve şifrenizi girin.");
         }
 
+        // 2. Servis üzerinden kullanıcıyı doğrula
+        // (Servisin null veya user objesi döndüğünden emin ol)
         const user = await authenticateUser(
           credentials.email,
           credentials.password
         );
 
         if (!user) {
-          throw new Error("Geçersiz e-posta veya şifre"); // Genel mesaj
+          // Buradaki hata mesajı login sayfasında ?error=CredentialsSignin olarak görünür
+          throw new Error("E-posta veya şifre hatalı.");
         }
 
-        // NextAuth tipleriyle uyumlu
+        // 3. Kullanıcı Pasif mi? (Ekstra Güvenlik)
+        if (user.isActive === false) {
+          throw new Error("Hesabınız devre dışı bırakılmıştır.");
+        }
+
+        // 4. Başarılı dönüş (User objesi oluşturuyoruz)
         return {
           id: user.id,
-          email: user.email ?? "",
+          email: user.email,
           name: user.firstName
             ? `${user.firstName} ${user.lastName}`
-            : (user.email ?? ""),
-          role: user.role,
+            : user.email,
+          role: user.role as Role, // Rolü burada açıkça belirtiyoruz
+          image: user.image, // Varsa resmi de ekle
         };
       },
     }),
   ],
+  // 🔄 JWT Callback: Giriş anında çalışır, user verisini token'a yazar
   callbacks: {
     async jwt({ token, user }) {
-      // Kullanıcı sadece girişte gelir, token’a işliyoruz
+      // Login anında çalışır
       if (user) {
+        console.log("🔥 [JWT Callback] User Rolü:", user.role); // Log 1
         token.id = user.id;
         token.role = user.role;
       }
       return token;
     },
     async session({ session, token }) {
+      console.log("🔥 [Session Callback] Token Rolü:", token.role); // Log 2
       if (session.user) {
         session.user.id = token.id as string;
         session.user.role = token.role as Role;

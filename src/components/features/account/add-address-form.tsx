@@ -81,7 +81,6 @@ export default function AddAddressForm() {
             definitions={{
               "0": /[0-9]/,
             }}
-            inputRef={(el) => {}}
             name="phone"
             placeholder="0 (5XX) XXX XX XX"
             className={inputClass}

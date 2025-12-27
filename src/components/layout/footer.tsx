@@ -1,25 +1,17 @@
 import { prisma } from "@/lib/db";
-import { Facebook, Instagram, Twitter } from "lucide-react";
+import { Facebook, Instagram, Twitter, ShieldCheck } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
 /**
- * Yardımcı Fonksiyon: Sosyal Medya Linki Oluşturucu
- * Kullanıcı "ahmet" yazarsa -> "https://instagram.com/ahmet" yapar.
- * Kullanıcı "https://instagram.com/ahmet" yazarsa -> Dokunmaz.
+ * Yardımcı Fonksiyon: Sosyal Medya Linki
  */
 function getSocialUrl(baseUrl: string, input: string | null) {
-  if (!input) return ""; // Veri yoksa boş dön
-
-  // Eğer kullanıcı zaten tam link girdiyse (http veya https ile başlıyorsa)
+  if (!input) return "";
   if (input.startsWith("http://") || input.startsWith("https://")) {
     return input;
   }
-
-  // Kullanıcı başına @ koyduysa onu temizleyelim (@ahmet -> ahmet)
   const cleanHandle = input.startsWith("@") ? input.substring(1) : input;
-
-  // Base URL ile birleştir (https://instagram.com/ahmet)
   return `${baseUrl}${cleanHandle}`;
 }
 
@@ -40,7 +32,7 @@ export default async function Footer() {
     <footer className="bg-gradient-to-br from-white to-gray-200 border-t border-gray-300 mt-16">
       <div className="container max-w-screen-xl mx-auto px-4 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-10 mb-12 text-center md:text-left">
-          {/* 1. Sütun */}
+          {/* 1. Sütun - Logo & Sosyal Medya */}
           <div className="flex flex-col items-center md:items-start">
             <div className="mb-4">
               <Link href="/">
@@ -60,10 +52,8 @@ export default async function Footer() {
             </p>
 
             <div className="flex gap-3">
-              {/* Facebook */}
               {data.facebook && (
                 <Link
-                  // ✅ DÜZELTME BURADA:
                   href={getSocialUrl("https://facebook.com/", data.facebook)}
                   target="_blank"
                   rel="noopener noreferrer"
@@ -72,11 +62,8 @@ export default async function Footer() {
                   <Facebook size={18} />
                 </Link>
               )}
-
-              {/* Instagram */}
               {data.instagram && (
                 <Link
-                  // ✅ DÜZELTME BURADA:
                   href={getSocialUrl("https://instagram.com/", data.instagram)}
                   target="_blank"
                   rel="noopener noreferrer"
@@ -85,11 +72,8 @@ export default async function Footer() {
                   <Instagram size={18} />
                 </Link>
               )}
-
-              {/* Twitter */}
               {data.twitter && (
                 <Link
-                  // ✅ DÜZELTME BURADA:
                   href={getSocialUrl("https://twitter.com/", data.twitter)}
                   target="_blank"
                   rel="noopener noreferrer"
@@ -117,24 +101,65 @@ export default async function Footer() {
             <FooterLink href="/privacy">Gizlilik Politikası</FooterLink>
           </div>
 
-          {/* 4. Sütun */}
+          {/* 4. Sütun - GÜVENLİ ÖDEME (GÜNCELLENDİ) */}
           <div className="space-y-4">
             <h3 className="font-bold text-gray-900 text-center md:text-left">
-              Bülten
+              Güvenli Ödeme
             </h3>
             <p className="text-gray-600 mb-4 text-sm leading-relaxed text-center md:text-left">
-              Kampanyalardan haberdar olmak için abone olun.
+              Tüm ödemeleriniz 256-bit SSL ile şifrelenir.
             </p>
-            <form className="flex flex-col sm:flex-row gap-2">
-              <input
-                type="email"
-                placeholder="E-posta adresiniz"
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
-              />
-              <button className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium">
-                Gönder
-              </button>
-            </form>
+
+            {/* Ödeme Logoları - Next/Image ile Cam Gibi Net */}
+            <div className="flex flex-wrap justify-center md:justify-start items-center gap-3">
+              {/* VISA */}
+              <div className="bg-white border border-gray-200 rounded-md p-1 w-14 h-9 flex items-center justify-center shadow-sm transition-transform hover:scale-105">
+                <Image
+                  src="/images/payment/visa.svg"
+                  alt="Visa"
+                  width={50}
+                  height={30}
+                  className="h-full w-auto object-contain"
+                />
+              </div>
+
+              {/* MASTERCARD */}
+              <div className="bg-white border border-gray-200 rounded-md p-1 w-14 h-9 flex items-center justify-center shadow-sm transition-transform hover:scale-105">
+                <Image
+                  src="/images/payment/mastercard.svg"
+                  alt="Mastercard"
+                  width={50}
+                  height={30}
+                  className="h-full w-auto object-contain"
+                />
+              </div>
+
+              {/* TROY */}
+              <div className="bg-white border border-gray-200 rounded-md p-1 w-14 h-9 flex items-center justify-center shadow-sm transition-transform hover:scale-105">
+                <Image
+                  src="/images/payment/troy.svg"
+                  alt="Troy"
+                  width={50}
+                  height={30}
+                  className="h-full w-auto object-contain"
+                />
+              </div>
+            </div>
+
+            {/* Güvenlik Rozeti */}
+            <div className="flex items-center justify-center md:justify-start gap-2 bg-green-200 border border-green-200 rounded-lg p-2 max-w-[200px] mx-auto md:mx-0">
+              <div className="bg-green-300 p-1.5 rounded-full flex-shrink-0">
+                <ShieldCheck size={20} />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-[10px] text-gray-500 font-semibold leading-tight">
+                  GÜVENLİ ÖDEME
+                </span>
+                <span className="text-xs text-gray-900 font-bold leading-tight">
+                  256 Bit SSL
+                </span>
+              </div>
+            </div>
           </div>
         </div>
 

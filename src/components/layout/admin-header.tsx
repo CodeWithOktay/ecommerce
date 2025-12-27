@@ -8,7 +8,6 @@ import {
   User as UserIcon,
   ChevronDown,
   LayoutDashboard,
-  HelpCircle,
 } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
 import Image from "next/image";

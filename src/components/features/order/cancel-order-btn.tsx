@@ -48,7 +48,7 @@ export default function CancelOrderButton({
       } else {
         toast.error(result.message);
       }
-    } catch (error) {
+    } catch {
       toast.error("Bir hata oluştu.");
     } finally {
       setLoading(false);

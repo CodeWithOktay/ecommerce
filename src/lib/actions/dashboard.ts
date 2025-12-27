@@ -1,6 +1,6 @@
 "use server";
 
-import prisma from "@/lib/db";
+import { prisma } from "@/lib/db";
 
 /**
  * Helper function to calculate percentage change
@@ -121,8 +121,33 @@ export async function getDashboardData() {
   const currentProductsSold = Number(productQueries[1]._sum.quantity) || 0;
   const prevProductsSold = Number(productQueries[2]._sum.quantity) || 0;
 
-  // --- 5. CHARTS & LISTS DATA ---
+  // --- 5. ORDER STATUS COUNTS ---
+  const orderStatusCounts = await prisma.order.groupBy({
+    by: ["status"],
+    _count: { _all: true },
+  });
 
+  const pendingCount =
+    orderStatusCounts.find((c) => c.status === "PENDING")?._count?._all || 0;
+  const deliveredCount =
+    orderStatusCounts.find((c) => c.status === "DELIVERED")?._count?._all || 0;
+  const cancelledCount =
+    orderStatusCounts.find((c) => c.status === "CANCELLED")?._count?._all || 0;
+
+  // --- 6. AVAILABLE YEARS ---
+  // Get distinct years from orders for the year filter
+  const orderYears = await prisma.$queryRaw<{ year: number }[]>`
+    SELECT DISTINCT EXTRACT(YEAR FROM "createdAt") as year 
+    FROM "Order"
+    ORDER BY year DESC
+  `;
+
+  const availableYears = orderYears.map((item) => Number(item.year));
+  if (availableYears.length === 0) {
+    availableYears.push(new Date().getFullYear()); // Add current year if no orders exist
+  }
+
+  // --- 7. CHARTS & LISTS DATA ---
   // Recent Orders (Son 5 Sipariş)
   const recentOrders = await prisma.order.findMany({
     take: 5,
@@ -176,6 +201,11 @@ export async function getDashboardData() {
       prevMonthRevenue
     ),
 
+    // Status counts
+    pendingCount,
+    deliveredCount,
+    cancelledCount,
+
     ordersCount: totalOrders,
     ordersChange: calculatePercentageChange(
       currentMonthOrders,
@@ -210,5 +240,8 @@ export async function getDashboardData() {
       status: order.status,
       date: order.createdAt.toLocaleDateString("tr-TR"),
     })),
+
+    // Available years for filtering
+    availableYears,
   };
 }

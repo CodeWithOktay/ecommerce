@@ -1,77 +1,11 @@
 "use server";
 
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/actions/auth";
+import { authOptions } from "@/lib/auth/options";
 import { prisma } from "@/lib/db";
 import { revalidatePath } from "next/cache";
-import { OrderStatus } from "@prisma/client";
+import { OrderStatus, Role } from "@prisma/client";
 import { createLog } from "@/lib/logger";
-
-//  1. SİPARİŞ DURUM GÜNCELLEME (ADMIN)
-export async function updateOrderStatus(orderId: string, formData: FormData) {
-  try {
-    const rawStatus = formData.get("status");
-
-    if (!rawStatus || typeof rawStatus !== "string") {
-      return;
-    }
-
-    const newStatus = rawStatus as OrderStatus;
-    if (!Object.values(OrderStatus).includes(newStatus)) {
-      throw new Error("Geçersiz sipariş durumu.");
-    }
-
-    await prisma.order.update({
-      where: { id: orderId },
-      data: { status: newStatus },
-    });
-
-    //  LOG KAYDI
-    await createLog({
-      action: "UPDATE_ORDER_STATUS",
-      details: `Sipariş #${orderId.slice(-6).toUpperCase()} durumu güncellendi: ${newStatus}`,
-      success: true,
-    });
-
-    revalidatePath(`/admin/orders/${orderId}`);
-    revalidatePath("/admin/orders");
-    revalidatePath("/admin/dashboard");
-  } catch (error) {
-    console.error("Durum güncelleme hatası:", error);
-    await createLog({
-      action: "UPDATE_ORDER_STATUS_ERROR",
-      details: `Sipariş durumu güncellenemedi (ID: ${orderId})`,
-      success: false,
-    });
-  }
-}
-
-// 2. KULLANICI SİPARİŞLERİNİ GETİRME
-export async function getUserOrders() {
-  const session = await getServerSession(authOptions);
-  if (!session || !session.user?.id) return null;
-
-  try {
-    return await prisma.order.findMany({
-      where: { userId: session.user.id },
-      orderBy: { createdAt: "desc" },
-      include: {
-        items: {
-          include: {
-            product: {
-              include: {
-                images: true,
-              },
-            },
-          },
-        },
-      },
-    });
-  } catch (error) {
-    console.error("Siparişler çekilemedi:", error);
-    return null;
-  }
-}
 
 interface CartItemInput {
   productId: string;
@@ -79,7 +13,7 @@ interface CartItemInput {
   price: number;
 }
 
-// 3. SİPARİŞ OLUŞTURMA
+// 🟢 1. SİPARİŞ OLUŞTURMA (P2003 Fixli)
 export async function createOrder(
   cartItems: CartItemInput[],
   totalAmount: number,
@@ -88,34 +22,49 @@ export async function createOrder(
   const session = await getServerSession(authOptions);
 
   if (!session || !session.user?.id) {
-    return {
-      success: false,
-      message: "Sipariş vermek için giriş yapmalısınız.",
-    };
+    return { success: false, message: "Sipariş vermek için giriş yapmalısınız." };
   }
 
-  // GÜVENLİK DUVARI: ADMIN KONTROLÜ
-  if (session.user.role === "ADMIN") {
+  // 🛡️ GÜVENLİK DUVARI: ADMIN KONTROLÜ
+  // Adminler genelde test yaparken sepeti bozabiliyor, onları engelliyoruz.
+  if (session.user.role === Role.ADMIN || session.user.role === Role.SUPER_ADMIN) {
     await createLog({
       action: "ADMIN_ORDER_ATTEMPT",
       details: `Admin hesabı (${session.user.email}) sipariş vermeye çalıştı, engellendi.`,
       success: false,
     });
-
     return {
       success: false,
-      message:
-        "Yönetici (Admin) hesaplarıyla alışveriş yapılamaz. Lütfen müşteri hesabına geçin.",
+      message: "Yönetici hesaplarıyla sipariş verilemez. Lütfen müşteri hesabıyla deneyin.",
     };
   }
 
   try {
+    // 🔍 KRİTİK KONTROL: ID Doğrulama (P2003 Hatasını Önler)
+    const productIds = cartItems.map((item) => item.productId);
+    const existingProducts = await prisma.product.findMany({
+      where: { id: { in: productIds } },
+      select: { id: true },
+    });
+
+    if (existingProducts.length !== productIds.length) {
+      const existingIds = existingProducts.map((p) => p.id);
+      const missingIds = productIds.filter((id) => !existingIds.includes(id));
+      console.error("❌ Veritabanında bulunamayan ürünler var:", missingIds);
+      
+      return {
+        success: false,
+        message: "Sepetinizdeki bazı ürünler güncelliğini yitirmiş. Lütfen sepeti yenileyin.",
+      };
+    }
+
+    // 🚀 SİPARİŞİ OLUŞTUR
     const order = await prisma.order.create({
       data: {
         userId: session.user.id,
         total: totalAmount,
-        status: "PENDING",
-        customerName: session.user.name || "Kullanıcı",
+        status: OrderStatus.PENDING,
+        customerName: session.user.name || "İsimsiz Kullanıcı",
         customerEmail: session.user.email || "",
         address,
         items: {
@@ -128,14 +77,15 @@ export async function createOrder(
       },
     });
 
-    //  LOG KAYDI
+    // ✅ BAŞARILI LOGU
     await createLog({
       action: "CREATE_ORDER",
-      details: `Yeni sipariş alındı: #${order.id.slice(-6).toUpperCase()} - Tutar: ${totalAmount}₺ - Müşteri: ${session.user.email}`,
+      details: `Yeni sipariş alındı: #${order.id.slice(-6).toUpperCase()} - Tutar: ${totalAmount}₺`,
       success: true,
     });
 
     revalidatePath("/admin/orders");
+    revalidatePath("/account/orders");
 
     return {
       success: true,
@@ -143,83 +93,110 @@ export async function createOrder(
       orderId: order.id,
     };
   } catch (error) {
-    console.error("Sipariş oluşturma hatası:", error);
-
+    console.error("🔥 Sipariş oluşturma hatası:", error);
+    
     await createLog({
       action: "CREATE_ORDER_ERROR",
-      details: `Sipariş oluşturulamadı: ${(error as Error).message}`,
+      details: `Sipariş hatası: ${(error as Error).message}`,
       success: false,
     });
 
     return {
       success: false,
-      message: "Sipariş oluşturulurken bir hata meydana geldi.",
+      message: "Sipariş işlenirken bir sorun oluştu. Lütfen tekrar deneyin.",
     };
   }
 }
 
-// 4. SİPARİŞ İPTALİ
-export async function cancelOrder(orderId: string, reason: string) {
+// 🟢 2. SİPARİŞ DURUM GÜNCELLEME (ADMIN)
+export async function updateOrderStatus(
+  orderIds: string | string[],
+  status: OrderStatus
+) {
+  try {
+    const ids = Array.isArray(orderIds) ? orderIds : [orderIds];
+
+    const updates = await prisma.$transaction(
+      ids.map((id) =>
+        prisma.order.update({
+          where: { id },
+          data: { status },
+        })
+      )
+    );
+
+    await Promise.all(
+      updates.map((order) =>
+        createLog({
+          action: "UPDATE_ORDER_STATUS",
+          details: `Sipariş #${order.id.slice(-6).toUpperCase()} yeni durum: ${status}`,
+          success: true,
+        })
+      )
+    );
+
+    revalidatePath("/admin/orders");
+    ids.forEach((id) => revalidatePath(`/admin/orders/${id}`));
+
+    return { success: true };
+  } catch (error) {
+    console.error("Durum güncelleme hatası:", error);
+    return { success: false, error: "Durum güncellenemedi." };
+  }
+}
+
+// 🟢 3. KULLANICI SİPARİŞLERİNİ GETİRME
+export async function getUserOrders() {
   const session = await getServerSession(authOptions);
-
-  if (!session || !session.user?.id) {
-    return { success: false, message: "Oturum açmanız gerekiyor." };
-  }
-
-  if (!reason) {
-    return { success: false, message: "Lütfen bir iptal nedeni belirtin." };
-  }
+  if (!session?.user?.id) return null;
 
   try {
-    const order = await prisma.order.findUnique({
-      where: { id: orderId },
+    return await prisma.order.findMany({
+      where: { userId: session.user.id },
+      orderBy: { createdAt: "desc" },
+      include: {
+        items: {
+          include: {
+            product: {
+              include: { images: true },
+            },
+          },
+        },
+      },
     });
+  } catch (error) {
+    console.error("Siparişler çekilemedi:", error);
+    return null;
+  }
+}
 
-    if (!order) {
-      return { success: false, message: "Sipariş bulunamadı." };
+// 🟢 4. SİPARİŞ İPTALİ
+export async function cancelOrder(orderId: string, reason: string) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) return { success: false, message: "Oturum açın." };
+
+  try {
+    const order = await prisma.order.findUnique({ where: { id: orderId } });
+
+    if (!order || (order.userId !== session.user.id && session.user.role !== Role.ADMIN)) {
+      return { success: false, message: "Yetkisiz işlem." };
     }
 
-    if (order.userId !== session.user.id && session.user.role !== "ADMIN") {
-      // LOG: Yetkisiz iptal denemesi
-      await createLog({
-        action: "UNAUTHORIZED_CANCEL",
-        details: `Yetkisiz sipariş iptal denemesi. Sipariş: ${orderId}, Kullanıcı: ${session.user.email}`,
-        success: false,
-      });
-      return { success: false, message: "Bu işlem için yetkiniz yok." };
-    }
-
-    if (order.status !== "PENDING") {
-      return {
-        success: false,
-        message: "Sipariş işleme alındığı için iptal edilemiyor.",
-      };
+    if (order.status !== OrderStatus.PENDING) {
+      return { success: false, message: "Bu aşamada iptal edilemez." };
     }
 
     await prisma.order.update({
       where: { id: orderId },
       data: {
-        status: "CANCELLED",
+        status: OrderStatus.CANCELLED,
         cancelReason: reason,
       },
     });
 
-    // LOG KAYDI
-    await createLog({
-      action: "CANCEL_ORDER",
-      details: `Sipariş iptal edildi #${order.id.slice(-6).toUpperCase()}. Sebep: ${reason}`,
-      success: true,
-    });
-
     revalidatePath("/account/orders");
-    revalidatePath("/orders");
-
-    return {
-      success: true,
-      message: "Sipariş iptal edildi. Geri bildiriminiz için teşekkürler.",
-    };
+    return { success: true, message: "Sipariş iptal edildi." };
   } catch (error) {
-    console.error("İptal hatası:", error);
-    return { success: false, message: "İşlem sırasında hata oluştu." };
+    return { success: false, message: "Hata oluştu." };
   }
 }

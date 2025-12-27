@@ -4,19 +4,26 @@ import toast from "react-hot-toast";
 
 // 1. Tipleri Tanımlayalım
 export interface Product {
-  id: string;
+  id: string; // Bu Product ID'dir
   name: string;
   price: number;
+  salePrice?: number; // İndirimli fiyat
   imageUrl?: string;
   images?: Array<{
     url: string;
     isMain?: boolean;
   }>;
   stock?: number;
+  // 🟢 YENİ: Varyant verileri eklendi
+  variantId?: string;
+  color?: string;
+  size?: string;
 }
 
 export interface CartItem extends Product {
   quantity: number;
+  // 🟢 YENİ: Sepet satır ID'si ile Ürün ID'sini ayırıyoruz
+  productId: string;
 }
 
 interface CartStore {
@@ -25,7 +32,6 @@ interface CartStore {
   removeItem: (id: string) => void;
   updateQuantity: (id: string, quantity: number) => void;
   removeAll: () => void;
-  // Hesaplanan değerler (Component içinde selector ile de yapılabilir ama burası pratik)
   getTotalItems: () => number;
   getTotalPrice: () => number;
 }
@@ -36,16 +42,26 @@ const useCart = create(
     (set, get) => ({
       items: [],
 
-      // Ürün Ekleme
+      // 🟢 GÜNCELLENEN EKLEME MANTIĞI
       addItem: (data: Product, quantity = 1) => {
         const currentItems = get().items;
-        const existingItem = currentItems.find((item) => item.id === data.id);
+
+        // 🛠️ KRİTİK NOKTA: Benzersiz Sepet ID'si Oluşturma
+        // Eğer varyant varsa ID: "urunID-varyantID" olur, yoksa "urunID" olur.
+        // Bu sayede Kırmızı M ile Kırmızı L sepette ayrı satır olur.
+        const cartItemId = data.variantId
+          ? `${data.id}-${data.variantId}`
+          : data.id;
+
+        const existingItem = currentItems.find(
+          (item) => item.id === cartItemId
+        );
 
         if (existingItem) {
-          // Ürün zaten varsa miktarını artır
+          // Ürün (veya aynı varyant) zaten varsa miktarını artır
           set({
             items: currentItems.map((item) =>
-              item.id === data.id
+              item.id === cartItemId
                 ? { ...item, quantity: item.quantity + quantity }
                 : item
             ),
@@ -53,7 +69,17 @@ const useCart = create(
           toast.success("Ürün miktarı güncellendi.");
         } else {
           // Ürün yoksa yeni ekle
-          set({ items: [...get().items, { ...data, quantity }] });
+          set({
+            items: [
+              ...get().items,
+              {
+                ...data,
+                id: cartItemId, // Sepet için benzersiz ID
+                productId: data.id, // Orijinal ürün ID'si (Link vermek için lazım)
+                quantity,
+              },
+            ],
+          });
           toast.success(`${data.name} sepete eklendi!`);
         }
       },
@@ -64,10 +90,9 @@ const useCart = create(
         toast.error("Ürün sepetten çıkarıldı.");
       },
 
-      // Miktar Güncelleme (Artır/Azalt)
+      // Miktar Güncelleme
       updateQuantity: (id: string, quantity: number) => {
-        if (quantity < 1) return; // 1'in altına düşmesin
-
+        if (quantity < 1) return;
         set({
           items: get().items.map((item) =>
             item.id === id ? { ...item, quantity } : item
@@ -75,15 +100,15 @@ const useCart = create(
         });
       },
 
-      // Sepeti Temizle (Sipariş sonrası)
+      // Sepeti Temizle
       removeAll: () => set({ items: [] }),
 
-      // Toplam Adet (Badge için)
+      // Toplam Adet
       getTotalItems: () => {
         return get().items.reduce((total, item) => total + item.quantity, 0);
       },
 
-      // Toplam Tutar (Checkout için)
+      // Toplam Tutar
       getTotalPrice: () => {
         return get().items.reduce(
           (total, item) => total + Number(item.price) * item.quantity,
@@ -92,7 +117,7 @@ const useCart = create(
       },
     }),
     {
-      name: "kervan-cart-storage", // LocalStorage anahtar adı
+      name: "kervan-cart-storage",
       storage: createJSONStorage(() => localStorage),
     }
   )

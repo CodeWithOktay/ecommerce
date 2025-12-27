@@ -45,7 +45,11 @@ export default async function OrdersPage() {
   const getStatusBadge = (status: string) => {
     const statusMap: Record<
       string,
-      { label: string; className: string; icon: any }
+      {
+        label: string;
+        className: string;
+        icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
+      }
     > = {
       PENDING: {
         label: "Sipariş Alındı",
@@ -86,7 +90,7 @@ export default async function OrdersPage() {
       <span
         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border ${info.className}`}
       >
-        <Icon size={14} />
+        <Icon width={14} height={14} />
         {info.label}
       </span>
     );

@@ -63,7 +63,7 @@ export default function FavoriteButton({
       title={isFavorite ? "Favorilerden çıkar" : "Favorilere ekle"}
     >
       <Heart
-        size={20}
+        size={30}
         className={`transition-all duration-300 ${isFavorite ? "fill-current" : ""}`}
       />
     </button>
