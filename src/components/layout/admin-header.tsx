@@ -21,7 +21,7 @@ interface User {
   email?: string | null;
   image?: string | null;
   role: Role;
-  firstName?: string;
+  firstName?: string | null;
   lastName?: string | null;
 }
 
@@ -46,11 +46,7 @@ export default function AdminHeader({ onMenuToggle }: AdminHeaderProps) {
   }, []);
 
   const getInitials = (): string => {
-    return (
-      session?.user?.name?.charAt(0) ||
-      session?.user?.email?.charAt(0) ||
-      "A"
-    ).toUpperCase();
+    return (session?.user?.firstName?.charAt(0) || "A").toUpperCase();
   };
 
   const handleLogout = async () => {
