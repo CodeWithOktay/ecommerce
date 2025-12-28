@@ -98,12 +98,12 @@ export default async function EditProductPage({ params }: PageProps) {
       // Eğer veritabanında obje ise ismini al, string ise direkt kendisini al
       size: v.size
         ? typeof v.size === "object" && v.size !== null
-          ? (v.size as any).name
+          ? (v.size as { name: string }).name
           : String(v.size)
         : "",
       color: v.color
         ? typeof v.color === "object" && v.color !== null
-          ? (v.color as any).name
+          ? (v.color as { name: string; value: string }).name
           : String(v.color)
         : "",
       stock: v.stock ?? 0,
