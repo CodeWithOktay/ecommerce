@@ -12,13 +12,14 @@ import { authOptions } from "@/lib/auth/options";
 export default async function ProductDetailPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
+  const { id } = await params;
   const session = await getServerSession(authOptions);
 
   // 1. ÜRÜN VERİSİNİ ÇEK
   const product = await prisma.product.findUnique({
-    where: { id: params.id },
+    where: { id },
     include: {
       category: true,
       brand: true,
@@ -71,10 +72,10 @@ export default async function ProductDetailPage({
     value: Number(coupon.value),
     minAmount: Number(coupon.minAmount),
     // Tarihleri string'e çevirmek de bazen hydration hatasını önler:
-    startDate: coupon.startDate?.toISOString() || null,
-    endDate: coupon.endDate?.toISOString() || null,
-    createdAt: coupon.createdAt.toISOString(),
-    updatedAt: coupon.updatedAt.toISOString(),
+    startDate: coupon.startDate,
+    endDate: coupon.endDate,
+    createdAt: coupon.createdAt,
+    updatedAt: coupon.updatedAt,
   }));
 
   // 3. FAVORİ KONTROLÜ

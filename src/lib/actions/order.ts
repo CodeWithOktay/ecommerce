@@ -200,3 +200,42 @@ export async function cancelOrder(orderId: string, reason: string) {
     return { success: false, message: "Hata oluştu." };
   }
 }
+
+// 🟢 5. ADRES GÜNCELLEME (PENDING only)
+export async function updateOrderAddress(orderId: string, address: string) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) return { success: false, message: "Oturum açın." };
+
+  try {
+    const order = await prisma.order.findUnique({ where: { id: orderId } });
+
+    if (!order || (order.userId !== session.user.id && session.user.role !== Role.ADMIN)) {
+      return { success: false, message: "Yetkisiz işlem." };
+    }
+
+    if (order.status !== OrderStatus.PENDING) {
+      return { success: false, message: "Sadece beklemedeki siparişlerin adresi güncellenebilir." };
+    }
+
+    await prisma.order.update({
+      where: { id: orderId },
+      data: { address },
+    });
+
+    await createLog({
+      action: "UPDATE_ORDER_ADDRESS",
+      details: `Sipariş #${order.id.slice(-6).toUpperCase()} adres güncellendi. Yeni Adres: ${address.slice(0, 50)}...`,
+      success: true,
+    });
+
+    revalidatePath("/account/orders");
+    if (session.user.role === Role.ADMIN) {
+      revalidatePath(`/admin/orders/${orderId}`);
+    }
+
+    return { success: true, message: "Adres başarıyla güncellendi." };
+  } catch (error) {
+    console.error("Adres güncelleme hatası:", error);
+    return { success: false, message: "Adres güncellenemedi." };
+  }
+}

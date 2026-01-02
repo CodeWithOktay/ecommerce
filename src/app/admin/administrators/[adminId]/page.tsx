@@ -21,11 +21,14 @@ export default async function AdminEditPage({
   params,
   searchParams,
 }: {
-  params: { adminId: string };
-  searchParams?: { [key: string]: string | undefined };
+  params: Promise<{ adminId: string }>;
+  searchParams?: Promise<{ [key: string]: string | undefined }>;
 }) {
+  const { adminId } = await params;
+  const resolvedSearchParams = await searchParams;
+
   const user = await prisma.user.findUnique({
-    where: { id: params.adminId },
+    where: { id: adminId },
   });
 
   if (!user || (user.role !== "ADMIN" && user.role !== "SUPER_ADMIN"))
@@ -43,13 +46,13 @@ export default async function AdminEditPage({
         Yönetici Düzenle
       </h1>
 
-      {searchParams?.error && (
+      {resolvedSearchParams?.error && (
         <div
           className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4"
           role="alert"
         >
           <p className="font-bold">Hata</p>
-          <p>{searchParams.error}</p>
+          <p>{resolvedSearchParams.error}</p>
         </div>
       )}
 

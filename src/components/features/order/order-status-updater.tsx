@@ -32,12 +32,10 @@ export default function OrderStatusUpdater({
     const newStatus = e.target.value;
     setStatus(newStatus); // UI'ı hemen güncelle
 
-    const formData = new FormData();
-    formData.append("status", newStatus);
-
     startTransition(async () => {
       try {
-        await updateOrderStatus(orderId, formData);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await updateOrderStatus(orderId, newStatus as any);
         toast.success(
           `Durum "${statusMap[newStatus].label}" olarak güncellendi`
         );

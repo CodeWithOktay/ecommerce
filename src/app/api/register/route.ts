@@ -2,7 +2,7 @@
 import bcrypt from "bcrypt";
 import { NextResponse } from "next/server";
 // Prisma client'ını lib klasöründen import et (varsayılan yol)
-import prisma from "@/lib/db";
+import { prisma } from "@/lib/db";
 
 export async function POST(request: Request) {
   try {

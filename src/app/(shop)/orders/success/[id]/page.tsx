@@ -14,15 +14,16 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 interface PageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export default async function OrderSuccessPage({ params }: PageProps) {
-  // 1. Siparişi ve İçindeki Ürünleri Çek
+  const { id } = await params;
+  // 1. Sipariş ve İçindeki Ürünleri Çek
   const order = await prisma.order.findUnique({
-    where: { id: params.id },
+    where: { id },
     include: {
       items: {
         include: {

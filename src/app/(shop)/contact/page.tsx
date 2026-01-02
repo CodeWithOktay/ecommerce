@@ -1,4 +1,4 @@
-import prisma from "@/lib/db"; // Prisma client'ının olduğu yer
+import { prisma } from "@/lib/db"; // Prisma client'ının olduğu yer
 import ContactClient from "./contact-client";
 
 export const metadata = {

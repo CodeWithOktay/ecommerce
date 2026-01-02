@@ -3,15 +3,16 @@ import { CategoryBrandForm } from "@/components/features/category/category-brand
 
 // Sayfa parametreleri (Next.js App Router standartı)
 interface PageProps {
-  params: {
+  params: Promise<{
     categoryId: string;
-  };
+  }>;
 }
 
 const CategoryPage = async ({ params }: PageProps) => {
+  const { categoryId } = await params;
   // Kategoriyi ve içindeki markaları çekiyoruz
   const category = await prisma.category.findUnique({
-    where: { id: params.categoryId },
+    where: { id: categoryId },
     include: { brands: true }, // Markaları da getir!
   });
 

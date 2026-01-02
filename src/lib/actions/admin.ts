@@ -128,7 +128,12 @@ export async function updateAdmin(userId: string, formData: FormData) {
   }
 
   // Typescript için veri yapısı
-  const dataToUpdate: any = {
+  const dataToUpdate: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    passwordHash?: string;
+  } = {
     firstName,
     lastName,
     email: email.toLowerCase(),
@@ -146,9 +151,10 @@ export async function updateAdmin(userId: string, formData: FormData) {
 
     revalidatePath("/admin/administrators");
     return { success: true, message: "Yönetici bilgileri güncellendi." };
-  } catch (error: any) {
+  } catch (error) {
     // Unique constraint hatası kontrolü (P2002)
-    if (error.code === "P2002") {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if ((error as any).code === "P2002") {
       return { success: false, message: "Bu e-posta adresi kullanımda." };
     }
     return { success: false, message: "Güncelleme hatası oluştu." };

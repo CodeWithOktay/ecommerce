@@ -41,35 +41,6 @@ interface CreateProductFormState {
   }[];
 }
 
-// 🟢 ÜRÜN ARAMA
-export async function searchProductsInDb(query: string) {
-  try {
-    if (!query) return [];
-
-    const products = await prisma.product.findMany({
-      where: {
-        OR: [
-          { name: { contains: query, mode: "insensitive" } },
-          { description: { contains: query, mode: "insensitive" } },
-        ],
-        isActive: true,
-      },
-      include: {
-        images: true,
-      },
-      orderBy: { createdAt: "desc" },
-    });
-
-    return products.map((p) => ({
-      ...p,
-      price: Number(p.price),
-      salePrice: p.salePrice ? Number(p.salePrice) : null,
-    }));
-  } catch (error) {
-    console.error("Arama hatası:", error);
-    return [];
-  }
-}
 
 // 🟢 YENİ ÜRÜN OLUŞTURMA
 export async function createProductWithImages(data: CreateProductFormState) {
