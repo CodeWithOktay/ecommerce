@@ -9,6 +9,7 @@ import useCart from "@/hooks/use-cart";
 import FavoriteButton from "./favorite-button";
 import { useRouter } from "next/navigation";
 import { GiShoppingCart } from "react-icons/gi";
+import { useSession } from "next-auth/react";
 
 interface ProductCardProps {
   product: {
@@ -79,9 +80,14 @@ export default function ProductCard({
       ? reviews.reduce((acc, r) => acc + r.rating, 0) / reviewCount
       : 0;
 
+  const { data: session } = useSession();
+  const isAdmin = session?.user?.role === "ADMIN" || session?.user?.role === "SUPER_ADMIN";
+
   const handleAction = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+
+    if (isAdmin) return;
 
     if (hasVariants) {
       router.push(`/products/${product.id}`);
@@ -229,18 +235,22 @@ export default function ProductCard({
           {/* ACTION BUTTON - Yükseklik azaltıldı */}
           <button
             onClick={handleAction}
-            disabled={product.stock <= 0}
+            disabled={product.stock <= 0 || isAdmin}
             className={`w-full py-2.5 rounded-lg font-bold text-xs flex items-center justify-center gap-2 transition-all duration-300 relative overflow-hidden group/btn
               ${
-                product.stock > 0
-                  ? isAdded
-                    ? "bg-green-500 text-white shadow-md shadow-green-200"
-                    : "bg-gradient-to-r from-[#667EEA] to-[#764BA2] text-white shadow-md shadow-[#667EEA]/30 hover:shadow-[#667EEA]/50 hover:-translate-y-0.5 active:scale-95"
-                  : "bg-gray-100 text-gray-400 cursor-not-allowed"
+                isAdmin 
+                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                  : product.stock > 0
+                    ? isAdded
+                      ? "bg-green-500 text-white shadow-md shadow-green-200"
+                      : "bg-gradient-to-r from-[#667EEA] to-[#764BA2] text-white shadow-md shadow-[#667EEA]/30 hover:shadow-[#667EEA]/50 hover:-translate-y-0.5 active:scale-95"
+                    : "bg-gray-100 text-gray-400 cursor-not-allowed"
               }
             `}
           >
-            {product.stock > 0 ? (
+            {isAdmin ? (
+               "YÖNETİCİ" 
+            ) : product.stock > 0 ? (
               isAdded ? (
                 <>
                   <Check size={16} /> Eklendi
@@ -263,7 +273,7 @@ export default function ProductCard({
             )}
 
             {/* SHIMMER EFFECT */}
-            {product.stock > 0 && !isAdded && (
+            {product.stock > 0 && !isAdded && !isAdmin && (
               <div className="absolute inset-0 -translate-x-full group-hover/btn:animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/20 to-transparent z-10" />
             )}
           </button>

@@ -307,7 +307,7 @@ export async function toggleProductArchive(
   isArchived: boolean
 ) {
   try {
-    const updatedProduct = await prisma.product.update({
+    await prisma.product.update({
       where: { id: productId },
       data: { isArchived: !isArchived },
     });

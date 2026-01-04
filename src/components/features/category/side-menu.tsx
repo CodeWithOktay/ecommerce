@@ -1,8 +1,8 @@
 "use client";
 
-import { ChevronRight, Search, Sparkles, X, Hash, Layers } from "lucide-react";
+import { ChevronRight, Search, X, Hash, Layers } from "lucide-react";
 import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { Category } from "@prisma/client";
@@ -41,7 +41,6 @@ export function SideMenu({
   onClose,
 }: SideMenuProps) {
   const pathname = usePathname();
-  const searchParams = useSearchParams();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
@@ -152,10 +151,7 @@ export function SideMenu({
     [categories]
   );
 
-  const allCategoriesLink = useMemo(() => {
-    const params = new URLSearchParams(searchParams.toString());
-    return `/categories?${params.toString()}`;
-  }, [searchParams]);
+  // Unused allCategoriesLink removed
 
   const handleClearSearch = () => {
     setSearchTerm("");

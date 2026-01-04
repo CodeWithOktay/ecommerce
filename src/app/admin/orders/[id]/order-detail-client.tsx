@@ -15,16 +15,13 @@ import {
   Printer,
   Truck,
   User,
-  MoreVertical,
   CheckCircle2,
-  Box,
   Undo2,
   Ban,
   Loader2,
   Mail,
   Phone,
   AlertTriangle,
-  Info
 } from "lucide-react";
 
 interface OrderDetailClientProps {
@@ -74,7 +71,7 @@ export default function OrderDetailClient({ order }: OrderDetailClientProps) {
     try {
       await updateOrderStatus(order.id, newStatus);
       router.refresh();
-    } catch (error) {
+    } catch {
       alert("Hata oluştu.");
     } finally {
       setIsUpdating(false);

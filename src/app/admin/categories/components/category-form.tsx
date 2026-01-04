@@ -14,7 +14,6 @@ import {
   Type,
   LayoutGrid,
   Check,
-  ArrowRight,
 } from "lucide-react";
 import { CategoryBrandForm } from "@/components/features/category/category-brand-form";
 import { Category, Brand, Attribute } from "@prisma/client";

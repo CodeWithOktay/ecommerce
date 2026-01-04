@@ -2,7 +2,7 @@
 
 import { updateUserProfile } from "@/lib/actions/user";
 import { User as UserType } from "@prisma/client";
-import { Save, Loader2, User, Mail, Phone, ArrowLeft } from "lucide-react";
+import { Save, Loader2, User, Mail, Phone } from "lucide-react";
 import { useTransition } from "react";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation"; // 🟢 1. Router'ı ekledik

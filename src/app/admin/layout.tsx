@@ -1,27 +1,26 @@
 // app/admin/layout.tsx
 
-import { getSidebarStats } from "@/lib/actions/sidebar"; // Önceki adımda yazdığımız action
-import AdminLayoutClient from "@/components/features/admin/admin-layout-client"; // Yukarıdaki yeni bileşen
+import { getSidebarStats } from "@/lib/actions/sidebar"; 
+import AdminLayoutClient from "@/components/features/admin/admin-layout-client"; 
+import { getAdminSession } from "@/lib/auth/session";
 
-/**
- * Admin Paneli Düzeni (Server Component)
- * 
- * Yönetim panelinin ana iskeletini oluşturur.
- * - Sidebar menüsündeki canlı sayaçlar (bekleyen sipariş, stok uyarısı vb.) için
- *   sunucu tarafında veri çeker (`getSidebarStats`).
- * - Bu verileri `AdminLayoutClient` bileşenine ileterek UI'ı oluşturur.
- */
 export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  // 1. Veritabanından canlı istatistikleri çek (Server-Side)
-  // Login sayfasındaysak bile çekebiliriz, sorun olmaz.
-  // Performans takıntın varsa pathname kontrolü burada yapılamaz (Layout statiktir),
-  // ama veritabanı sorgusu çok hafif olduğu için sorun yok.
+  const adminSession = await getAdminSession();
+  
+  if (!adminSession?.user) {
+    // Session is handled by middleware but if it slips through or for data safety:
+    return null; // Or redirect
+  }
+
+  // Since middleware protects this, we might not need strict checks here, 
+  // but keeping stats fetching logic.
   const stats = await getSidebarStats();
 
-  // 2. Client bileşeni render et ve veriyi gönder
-  return <AdminLayoutClient stats={stats}>{children}</AdminLayoutClient>;
+  return (
+      <AdminLayoutClient stats={stats}>{children}</AdminLayoutClient>
+  );
 }

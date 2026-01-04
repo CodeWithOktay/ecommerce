@@ -230,7 +230,7 @@ export function SearchableSelect({
  */
 export default function ProductForm({
   categories,
-  brands,
+  // brands - unused
   initialData,
 }: Props) {
   const router = useRouter();
@@ -253,18 +253,7 @@ export default function ProductForm({
     defaultSize: initialData?.defaultSize || "",
   });
 
-  const handleChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
-    >
-  ) => {
-    const { name, value, type } = e.target as HTMLInputElement;
-
-    setFormData((prev) => ({
-      ...prev,
-      [name]: type === "number" ? Number(value) : value,
-    }));
-  };
+  // Unused handleChange removed
 
   // --- 2. KATEGORİ & ATTRIBUTE MANTIĞI ---
   const [selectedParentId, setSelectedParentId] = useState<string>("");

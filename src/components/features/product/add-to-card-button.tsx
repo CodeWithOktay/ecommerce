@@ -5,6 +5,7 @@ import useCart, { Product } from "@/hooks/use-cart";
 import { ShoppingCart } from "lucide-react";
 import { MouseEventHandler } from "react";
 import { cn } from "@/lib/utils/utils";
+import { useSession } from "next-auth/react";
 
 interface AddToCartButtonProps {
   product: Product;
@@ -26,11 +27,27 @@ export default function AddToCartButton({
   className,
 }: AddToCartButtonProps) {
   const cart = useCart();
+  // 🟢 Session Hook
+  const { data: session } = useSession();
+  const isAdmin = session?.user?.role === "ADMIN" || session?.user?.role === "SUPER_ADMIN";
 
   const onAddToCart: MouseEventHandler<HTMLButtonElement> = (e) => {
     e.stopPropagation();
+    if (isAdmin) return; // Fail-safe
     cart.addItem(product);
   };
+
+  if (isAdmin) {
+      return (
+        <div className={cn(
+            "flex items-center justify-center gap-2 rounded-lg font-bold bg-gray-200 text-gray-500 cursor-not-allowed opacity-70",
+             !className && (showText ? "py-4 px-20 w-full" : "py-4 px-20 w-full"),
+             className
+        )}>
+             <span className="text-xs">Yönetici Modu</span>
+        </div>
+      );
+  }
 
   return (
     <button

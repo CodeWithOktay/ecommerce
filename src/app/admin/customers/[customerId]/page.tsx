@@ -2,7 +2,7 @@ import { prisma } from "@/lib/db";
 import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { ArrowLeft, MapPin, User, ShieldCheck, Mail, Calendar, Package } from "lucide-react";
+import { ArrowLeft, MapPin, User, Mail, Calendar, Package } from "lucide-react";
 import CustomerEditForm from "@/components/features/admin/customers/customer-edit-form";
 
 interface PageProps {

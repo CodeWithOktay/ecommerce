@@ -249,7 +249,7 @@ export async function cancelOrder(orderId: string, reason: string) {
 
     revalidatePath("/account/orders");
     return { success: true, message: "Sipariş iptal edildi." };
-  } catch (error) {
+  } catch {
     return { success: false, message: "Hata oluştu." };
   }
 }

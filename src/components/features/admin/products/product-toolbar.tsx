@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams, useRouter } from "next/navigation";
-import { Search, LayoutList, Archive, Filter, Sparkles, AlertCircle, ChevronDown, AlignLeft, Layers } from "lucide-react";
+import { Search, LayoutList, Archive, Sparkles, AlertCircle, ChevronDown, AlignLeft, Layers } from "lucide-react";
 
 interface Props {
   count: number;
@@ -16,7 +16,7 @@ interface Props {
  * - Arama: İsim, kategori veya marka ile arama
  * - Filtreler: Ana Kategori -> Alt Kategori (Kademeli), Stok Az, Yeni Eklenenler
  */
-export default function ProductToolbar({ count, categories }: Props) {
+export default function ProductToolbar({ categories }: Props) {
   const searchParams = useSearchParams();
   const router = useRouter();
 

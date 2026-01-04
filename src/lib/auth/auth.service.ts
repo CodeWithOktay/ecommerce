@@ -35,6 +35,7 @@ export const authenticateUser = async (
     }
 
     // 6. Başarılı! Şifreyi silip kullanıcıyı döndür
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { passwordHash, ...userWithoutPassword } = user;
 
     console.log(`✅ Giriş Başarılı: ${user.email} (Rol: ${user.role})`);

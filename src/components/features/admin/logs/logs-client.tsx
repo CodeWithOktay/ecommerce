@@ -4,8 +4,7 @@ import { useState } from "react";
 import { 
   ShieldAlert, 
   LogIn, 
-  Search, 
-  Calendar,
+  Search,
   Activity,
   History
 } from "lucide-react";

@@ -66,6 +66,7 @@ export default function RegisterPage() {
 
     try {
       // confirmPassword backend'e gitmez, onu çıkarıyoruz
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { confirmPassword: _confirmPassword, ...payload } = data;
 
       const res = await fetch("/api/register", {

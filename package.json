@@ -7,12 +7,7 @@
     "dev": "next dev ",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint",
-    "test:db:setup": "dotenv -e .env.test -- prisma db push",
-    "test:db:reset": "dotenv -e .env.test -- prisma db push --force-reset",
-    "test:db:seed": "dotenv -e .env.test -- prisma db seed",
-    "test": "vitest --run --environment jsdom --config vitest.config.ts",
-    "test:db": "NODE_ENV=test vitest"
+    "lint": "eslint"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

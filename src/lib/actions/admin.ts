@@ -12,9 +12,7 @@
 import { prisma } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import bcrypt from "bcryptjs";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth/options";
-import { Role } from "@prisma/client";
+import { getAdminSession } from "@/lib/auth/session";
 
 /**
  * Süper Admin Yetki Kontrolü
@@ -23,7 +21,7 @@ import { Role } from "@prisma/client";
  * @returns {Promise<boolean>} Yetkili ise true, değilse false
  */
 async function checkSuperAdmin() {
-  const session = await getServerSession(authOptions);
+  const session = await getAdminSession();
 
   // Kullanıcı giriş yapmamışsa veya rolü SUPER_ADMIN değilse hata fırlat
   if (!session || session.user.role !== "SUPER_ADMIN") {
@@ -95,7 +93,7 @@ export async function deleteAdmin(userId: string) {
   }
 
   // Kendini silmeye çalışırsa engelle
-  const session = await getServerSession(authOptions);
+  const session = await getAdminSession();
   if (session?.user.id === userId) {
     return { success: false, message: "Kendinizi silemezsiniz." };
   }
@@ -141,7 +139,7 @@ export async function toggleAdminStatus(
     });
     revalidatePath("/admin/administrators");
     return { success: true };
-  } catch (error) {
+  } catch {
     return { success: false, message: "Güncellenemedi." };
   }
 }

@@ -8,7 +8,7 @@
 import { prisma } from "@/lib/db";
 import { headers } from "next/headers";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/actions/auth";
+import { authOptions } from "@/lib/auth/options";
 
 /**
  * Log Parametreleri
@@ -54,7 +54,7 @@ export async function createLog({
     if (!email && !userId) {
        try {
          session = await getServerSession(authOptions);
-       } catch (e) {
+       } catch {
          // Session alınamazsa yoksay
        }
     }
@@ -62,7 +62,7 @@ export async function createLog({
     let headersList: { get: (key: string) => string | null } = { get: () => null };
     try {
       headersList = await headers();
-    } catch (e) {
+    } catch {
       // Headers alınamazsa yoksay
     }
 
