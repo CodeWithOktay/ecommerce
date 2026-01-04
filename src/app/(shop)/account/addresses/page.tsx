@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/db";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/actions/auth";
+import { authOptions } from "@/lib/auth/options";
 import { redirect } from "next/navigation";
 import AddAddressForm from "@/components/features/account/add-address-form";
 import DeleteAddressBtn from "@/components/features/account/delete-address-btn";

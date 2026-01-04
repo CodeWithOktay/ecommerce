@@ -8,7 +8,7 @@ import { Role } from "@prisma/client";
 import { createLog } from "@/lib/logger";
 
 // ... existing imports ...
-import { cookies } from "next/headers";
+// ... existing imports ...
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),

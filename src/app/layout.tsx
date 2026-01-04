@@ -34,7 +34,7 @@ export default async function RootLayout({
 
   return (
     <html suppressHydrationWarning={true}>
-      <body id="top" className={`${geist.variable}`}>
+      <body id="top" className={`${geist.variable}`} suppressHydrationWarning={true}>
         <AuthProvider session={session}>
           {children}
           <Toaster

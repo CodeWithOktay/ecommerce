@@ -10,7 +10,7 @@
 
 import {prisma} from "@/lib/db";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/actions/auth";
+import { authOptions } from "@/lib/auth/options";
 
 /**
  * Sepet Öğesi Tipi
