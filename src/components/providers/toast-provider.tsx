@@ -2,6 +2,12 @@
 
 import { Toaster } from "react-hot-toast";
 
+/**
+ * Bildirim (Toast) Sağlayıcısı
+ * 
+ * Uygulama genelinde başarı/hata mesajlarını göstermek için kullanılır.
+ * 'react-hot-toast' kütüphanesini yapılandırır.
+ */
 export default function ToastProvider() {
   return (
     <Toaster

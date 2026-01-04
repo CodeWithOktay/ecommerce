@@ -146,6 +146,15 @@ const getStatusLabel = (status: string) => {
   return found ? found.label : status;
 };
 
+/**
+ * Sipariş Yönetimi Client Bileşeni
+ * 
+ * Siparişlerin listelendiği, filtrelendiği ve yönetildiği ana bileşen.
+ * - Tab'li yapı ile sipariş durumlarını (Bekliyor, Hazırlanıyor, Kargolandı vb.) filtreler.
+ * - Seçili siparişler üzerinde toplu işlem (Durum güncelleme, İptal, Geri Yükle) yapabilir.
+ * - Her siparişin detaylarını (ürünler, müşteri bilgisi) expand edilebilir satırda gösterir.
+ * - Arama sonuçlarını highlight eder.
+ */
 export default function OrdersClient({
   orders,
   counts,

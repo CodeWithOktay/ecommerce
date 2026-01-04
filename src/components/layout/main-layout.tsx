@@ -8,6 +8,9 @@ import { ReactNode } from "react";
  *
  * Hem sayfa yapısını (padding, container) hem de
  * Admin/User ayrımını tek bir dosyada yönetir.
+ * 
+ * - Admin sayfaları (/admin) için children'ı olduğu gibi döner (AdminLayout ayrıca sarar).
+ * - Normal sayfalar için header/footer arası boşluğu (container) ayarlar.
  */
 export default function MainLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();

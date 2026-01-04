@@ -1,9 +1,26 @@
+/**
+ * Banner Yönetimi Server Actions
+ * 
+ * Bu modül, ana sayfa afişlerinin (banner) yönetimini sağlar:
+ * - Banner oluşturma, silme, güncelleme
+ * - Gösterim sırasını ve aktiflik durumunu yönetme
+ */
+
 "use server";
 
 import { prisma } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 
 // --- BANNER EKLE ---
+/**
+ * Yeni Banner Oluşturur
+ * 
+ * Ana sayfa slider'ı için yeni bir banner ekler.
+ * Değişiklik sonrası ana sayfa cache'ini temizler.
+ * 
+ * @param formData - Banner form verileri
+ * @returns Başarı/hata durumu
+ */
 export async function createBanner(formData: FormData) {
   try {
     const title = formData.get("title") as string;
@@ -40,6 +57,12 @@ export async function createBanner(formData: FormData) {
 }
 
 // --- BANNER SİL ---
+/**
+ * Banner Siler
+ * 
+ * @param id - Silinecek banner ID'si
+ * @returns Başarı/hata durumu
+ */
 export async function deleteBanner(id: string) {
   try {
     await prisma.banner.delete({ where: { id } });
@@ -54,6 +77,15 @@ export async function deleteBanner(id: string) {
 }
 
 // --- AKTİF/PASİF YAP ---
+/**
+ * Banner Durumunu Değiştirir
+ * 
+ * Aktif/Pasif durumunu günceller.
+ * 
+ * @param id - Banner ID'si
+ * @param currentStatus - Mevcut durum
+ * @returns Başarı/hata durumu
+ */
 export async function toggleBannerStatus(id: string, currentStatus: boolean) {
   try {
     await prisma.banner.update({
@@ -70,6 +102,14 @@ export async function toggleBannerStatus(id: string, currentStatus: boolean) {
   }
 }
 
+/**
+ * Banner Günceller
+ * 
+ * Mevcut banner'ın tüm bilgilerini günceller.
+ * 
+ * @param formData - Yeni banner verileri
+ * @returns Başarı/hata durumu
+ */
 export async function updateBanner(formData: FormData) {
   try {
     const id = formData.get("id") as string;

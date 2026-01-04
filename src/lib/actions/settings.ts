@@ -1,10 +1,20 @@
-// src/lib/actions/settings-actions.ts
+/**
+ * Genel Ayarlar Yönetimi
+ * 
+ * Sitenin başlık, slogan, iletişim bilgileri ve sosyal medya linklerini yönetir.
+ * Tek bir kayıt (general_settings) üzerinden çalışır.
+ */
+
 "use server";
 
 import {prisma} from "@/lib/db";
 import { revalidatePath } from "next/cache";
 
-// 1. Ayarları Getir (Yoksa varsayılanları oluşturur)
+/**
+ * Ayarları Getir
+ * 
+ * Veritabanından ayarları çeker. Eğer yoksa varsayılan değerlerle oluşturur.
+ */
 export async function getSettings() {
   const settings = await prisma.settings.upsert({
     where: { id: "general_settings" },
@@ -17,7 +27,14 @@ export async function getSettings() {
   return settings;
 }
 
-// 2. Ayarları Güncelle
+/**
+ * Ayarları Güncelle
+ * 
+ * Admin panelinden gelen form verileriyle site ayarlarını günceller.
+ * 
+ * @param formData - Ayar verileri
+ * @returns Başarı/hata durumu
+ */
 export async function updateSettings(formData: FormData) {
   const data = {
     siteTitle: formData.get("siteTitle") as string,

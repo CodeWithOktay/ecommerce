@@ -4,6 +4,14 @@ import { NextResponse } from "next/server";
 // Prisma client'ını lib klasöründen import et (varsayılan yol)
 import { prisma } from "@/lib/db";
 
+/**
+ * Kayıt Olma (API Route)
+ * 
+ * Yeni kullanıcı kaydı oluşturur.
+ * - E-posta, şifre ve isim alanlarının doluluğunu kontrol eder.
+ * - E-postanın benzersiz olup olmadığını (duplicate check) doğrular.
+ * - Şifreyi bcrypt ile güvenli bir şekilde hashler.
+ */
 export async function POST(request: Request) {
   try {
     const body = await request.json();

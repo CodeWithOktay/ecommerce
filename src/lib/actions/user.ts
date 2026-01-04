@@ -1,3 +1,12 @@
+/**
+ * Kullanıcı Profil Yönetimi Server Actions
+ * 
+ * Bu modül, kullanıcıların profil bilgilerini yönetmesini sağlar:
+ * - Kişisel bilgileri güncelleme (Ad, Soyad, Email)
+ * - Şifre değiştirme
+ * - Adres bilgilerini güncelleme
+ */
+
 "use server";
 
 import { prisma } from "@/lib/db";
@@ -6,7 +15,10 @@ import { z } from "zod";
 import bcrypt from "bcryptjs";
 import { Role } from "@prisma/client";
 
-// 🟢 ZOD ŞEMASI (Yapı bozulmadı, sadece formdaki diğer alanlar eklendi)
+/**
+ * Kullanıcı Güncelleme Şeması (Zod)
+ * Form validasyonu için kullanılır.
+ */
 const userSchema = z.object({
   id: z.string(),
   firstName: z.string().min(2, "Ad en az 2 karakter olmalı"),
@@ -35,6 +47,17 @@ const userSchema = z.object({
   isActive: z.string().optional().nullable(),
 });
 
+/**
+ * Kullanıcı Profilini Günceller
+ * 
+ * 1. Form verilerini doğrular (Zod).
+ * 2. Temel bilgileri günceller.
+ * 3. Şifre değişikliği varsa, eski şifreyi kontrol edip yenisini hashlari.
+ * 4. Adres bilgilerini günceller (Yoksa oluşturur).
+ * 
+ * @param formData - Profil formu verileri
+ * @returns Başarı/hata durumu
+ */
 export async function updateUserProfile(formData: FormData) {
   try {
     const rawData = Object.fromEntries(formData.entries());
@@ -160,6 +183,12 @@ export async function updateUserProfile(formData: FormData) {
   }
 }
 
+/**
+ * Kullanıcı Adreslerini Getirir
+ * 
+ * Oturum açmış kullanıcının kayıtlı adreslerini listeler.
+ * Varsayılan adres en üstte olacak şekilde sıralama yapar.
+ */
 export async function getUserAddresses() {
   try {
     // Session'ı burada kontrol etmemiz lazım çünkü bu bir Server Action

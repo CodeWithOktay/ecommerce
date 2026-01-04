@@ -1,3 +1,14 @@
+/**
+ * Sipariş Yönetimi Server Actions
+ * 
+ * Bu modül, e-ticaret siparişlerinin tüm yaşam döngüsünü yönetir:
+ * - Sipariş oluşturma (güvenlik kontrolleri ile)
+ * - Sipariş durum güncelleme
+ * - Sipariş iptali
+ * - Adres güncelleme
+ * - Kullanıcı siparişlerini listeleme
+ */
+
 "use server";
 
 import { getServerSession } from "next-auth";
@@ -7,13 +18,30 @@ import { revalidatePath } from "next/cache";
 import { OrderStatus, Role } from "@prisma/client";
 import { createLog } from "@/lib/logger";
 
+/**
+ * Sepet Öğesi Tipi
+ * Sipariş oluştururken kullanılan sepet verisi
+ */
 interface CartItemInput {
-  productId: string;
-  quantity: number;
-  price: number;
+  productId: string;     // Ürün ID'si
+  quantity: number;      // Miktar
+  price: number;         // Birim fiyat
 }
 
-// 🟢 1. SİPARİŞ OLUŞTURMA (P2003 Fixli)
+/**
+ * Sipariş Oluşturur
+ * 
+ * Kullanıcının sepetindeki ürünlerden yeni sipariş oluşturur.
+ * Güvenlik kontrolleri:
+ * - Kullanıcı girişi kontrolü
+ * - Admin hesaplarının sipariş vermesini engelleme
+ * - Ürün ID'lerinin geçerliliğini doğrulama (P2003 hatası önleme)
+ * 
+ * @param cartItems - Sepetteki ürünler
+ * @param totalAmount - Toplam tutar
+ * @param address - Teslimat adresi
+ * @returns Başarı/hata durumu ve sipariş ID'si
+ */
 export async function createOrder(
   cartItems: CartItemInput[],
   totalAmount: number,
@@ -108,7 +136,16 @@ export async function createOrder(
   }
 }
 
-// 🟢 2. SİPARİŞ DURUM GÜNCELLEME (ADMIN)
+/**
+ * Sipariş Durumunu Günceller (Admin)
+ * 
+ * Bir veya birden fazla siparişin durumunu günceller.
+ * Tüm güncellemeler audit log'a kaydedilir.
+ * 
+ * @param orderIds - Güncellenecek sipariş ID'leri (tekil veya array)
+ * @param status - Yeni sipariş durumu
+ * @returns Başarı/hata durumu
+ */
 export async function updateOrderStatus(
   orderIds: string | string[],
   status: OrderStatus
@@ -145,7 +182,14 @@ export async function updateOrderStatus(
   }
 }
 
-// 🟢 3. KULLANICI SİPARİŞLERİNİ GETİRME
+/**
+ * Kullanıcının Siparişlerini Getirir
+ * 
+ * Oturum açmış kullanıcının tüm siparişlerini listeler.
+ * Sipariş öğeleri ve ürün bilgileri dahil edilir.
+ * 
+ * @returns Kullanıcının siparişleri veya null
+ */
 export async function getUserOrders() {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return null;
@@ -170,7 +214,16 @@ export async function getUserOrders() {
   }
 }
 
-// 🟢 4. SİPARİŞ İPTALİ
+/**
+ * Siparişi İptal Eder
+ * 
+ * Kullanıcı veya admin siparişi iptal edebilir.
+ * Sadece PENDING durumundaki siparişler iptal edilebilir.
+ * 
+ * @param orderId - İptal edilecek sipariş ID'si
+ * @param reason - İptal nedeni
+ * @returns Başarı/hata durumu
+ */
 export async function cancelOrder(orderId: string, reason: string) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return { success: false, message: "Oturum açın." };
@@ -201,7 +254,16 @@ export async function cancelOrder(orderId: string, reason: string) {
   }
 }
 
-// 🟢 5. ADRES GÜNCELLEME (PENDING only)
+/**
+ * Sipariş Adresini Günceller
+ * 
+ * Sadece PENDING durumundaki siparişlerin adresi güncellenebilir.
+ * Kullanıcı sadece kendi siparişlerini, admin tüm siparişleri güncelleyebilir.
+ * 
+ * @param orderId - Sipariş ID'si
+ * @param address - Yeni teslimat adresi
+ * @returns Başarı/hata durumu
+ */
 export async function updateOrderAddress(orderId: string, address: string) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return { success: false, message: "Oturum açın." };

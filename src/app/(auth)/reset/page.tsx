@@ -13,6 +13,12 @@ const resetSchema = z.object({
 
 type ResetFormValues = z.infer<typeof resetSchema>;
 
+/**
+ * Şifre Sıfırlama İsteği Sayfası
+ * 
+ * Kullanıcının e-posta adresini girerek sıfırlama linki talep ettiği sayfa.
+ * Başarılı gönderim sonrası bilgilendirme ekranı gösterir.
+ */
 export default function ResetPage() {
   // 🟢 State: Başarılı oldu mu?
   const [isSuccess, setIsSuccess] = useState(false);

@@ -2,6 +2,14 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import bcrypt from "bcryptjs";
 
+/**
+ * Yeni Şifre Belirleme (API Route)
+ * 
+ * Şifre sıfırlama sürecinin son adımıdır.
+ * - Token'in geçerliliğini ve süresini kontrol eder.
+ * - Geçerliyse kullanıcının şifresini hashleyerek günceller.
+ * - Güvenlik için kullanılan token'i veritabanından siler.
+ */
 export async function POST(req: Request) {
   try {
     const { password, token } = await req.json();

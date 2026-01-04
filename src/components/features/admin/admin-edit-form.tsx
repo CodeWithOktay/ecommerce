@@ -17,6 +17,13 @@ interface AdminEditFormProps {
   user: User;
 }
 
+/**
+ * Yönetici Düzenleme Formu
+ * 
+ * Mevcut yönetici bilgilerini güncellemek için kullanılır.
+ * - Server Action (updateAdmin) ile iletişim kurar.
+ * - İşlem başarılı olursa sayfayı yeniler (router.refresh).
+ */
 export default function AdminEditForm({ user }: AdminEditFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();

@@ -1,20 +1,34 @@
+/**
+ * Veritabanı Tohumlama (Seeding) Betiği
+ * 
+ * Bu script, geliştirme ve test ortamları için gerekli başlangıç verilerini oluşturur:
+ * - Admin kullanıcısı
+ * - Kategoriler (Hiyerarşik: Ana ve Alt kategoriler)
+ * - Ürün Özellikleri (Attributes)
+ * - Örnek Ürünler (Özellik değerleri ile birlikte)
+ * - Markalar
+ */
+
 import { PrismaClient, Role } from "@prisma/client";
 import { hash } from "bcrypt";
 import slugify from "slugify";
 
 const prisma = new PrismaClient();
 
-// Türkçe karakter destekli slug oluşturucu
+// Türkçe karakter destekli slug oluşturucu yardımcı fonksiyon
 const createSlug = (text: string) =>
   slugify(text, { lower: true, strict: true, locale: "tr" });
 
-// 🛠️ TÜM KATEGORİ, ÖZELLİK VE ÜRÜN VERİSİ
+// 🛠️ ÖRNEK VERİ SETİ
+// Bu yapı, categories -> children (alt kategoriler) -> products (ürünler) hiyerarşisini içerir.
+// Her alt kategori kendi özellik tanımlarına (attributes) sahiptir.
 const categoriesData = [
   {
     name: "Elektronik",
     children: [
       {
         name: "Bilgisayar",
+        // Bu kategoriye ait dinamik özellikler
         attributes: [
           "İşlemci",
           "RAM",
@@ -23,11 +37,13 @@ const categoriesData = [
           "Ekran Boyutu",
           "İşletim Sistemi",
         ],
+        // Bu kategorideki örnek ürünler
         products: [
           {
             name: "Asus ROG Strix G16",
             brand: "Asus",
             price: 48000,
+            // Ürün özellik değerleri (Key-Value)
             specs: {
               İşlemci: "Intel Core i7",
               RAM: "32GB",
@@ -448,6 +464,7 @@ async function main() {
   console.log("🌱 Tohumlama Başlatılıyor...");
 
   // 1. ADMIN USER
+  // Varsayılan admin kullanıcısını oluşturur.
   const password = await hash("admin12345", 12);
   await prisma.user.upsert({
     where: { email: "admin@kervanpazar.com" },
@@ -463,6 +480,7 @@ async function main() {
   console.log("👤 Admin Kullanıcısı Hazır.");
 
   // 2. KATEGORİ - ÖZELLİK - MARKA - ÜRÜN DÖNGÜSÜ
+  // categoriesData dizisindeki tüm verileri sırayla işler
   for (const parentCat of categoriesData) {
     // --- Ana Kategori Oluştur ---
     const parentSlug = createSlug(parentCat.name);

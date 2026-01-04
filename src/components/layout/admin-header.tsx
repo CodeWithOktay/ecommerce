@@ -25,9 +25,17 @@ interface User {
   lastName?: string | null;
 }
 
-interface AdminHeaderProps {
-  onMenuToggle?: () => void;
-  user?: User;
+/**
+ * Admin Üst Bilgi (Header) Bileşeni
+ * 
+ * Yönetim paneli üst çubuğunu oluşturur.
+ * - Mobil menü tetikleyici
+ * - Bildirim göstergeleri
+ * - Kullanıcı profil menüsü (Dropdown)
+ */
+ interface AdminHeaderProps {
+  onMenuToggle?: () => void; // Mobil menü açma/kapama fonksiyonu
+  user?: User; // Aktif kullanıcı bilgisi
 }
 
 export default function AdminHeader({ onMenuToggle }: AdminHeaderProps) {

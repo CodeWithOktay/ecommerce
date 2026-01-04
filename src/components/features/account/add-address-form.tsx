@@ -6,6 +6,14 @@ import { Save, Loader2, Plus, X } from "lucide-react";
 import toast from "react-hot-toast";
 import { IMaskInput } from "react-imask";
 
+/**
+ * Adres Ekleme Formu
+ * 
+ * Kullanıcının yeni teslimat adresi eklemesini sağlar.
+ * - Modal içinde açılır.
+ * - Telefon numarası için input maskeleme kullanır.
+ * - Form verilerini 'createAddress' server action'ına gönderir.
+ */
 export default function AddAddressForm() {
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);

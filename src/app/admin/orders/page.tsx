@@ -18,6 +18,14 @@ interface AdminOrdersPageProps {
   }>;
 }
 
+/**
+ * Sipariş Yönetimi Sayfası (Server Component)
+ * 
+ * Tüm siparişleri listeler ve temel istatistikleri (Ciro, Bekleyen Sayısı vb.) hesaplar.
+ * - URL parametreleri ile gelişmiş filtreleme (Zaman aralığı, Durum, Arama) yapar.
+ * - Aylık ciro ve sipariş sayılarını veritabanından 'aggregate' ile hesaplar.
+ * - Veriyi client bileşeni (`OrdersClient`) için optimize edilmiş formata dönüştürür.
+ */
 export default async function AdminOrdersPage(props: AdminOrdersPageProps) {
   const searchParams = await props.searchParams;
 

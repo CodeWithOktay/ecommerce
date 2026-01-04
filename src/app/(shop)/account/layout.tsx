@@ -1,6 +1,13 @@
 import Link from "next/link";
 import { User, Package, MapPin, Heart } from "lucide-react";
 
+/**
+ * Kullanıcı Hesap Düzeni
+ * 
+ * Kullanıcı paneli sayfaları (Siparişler, Profil, Adresler vb.) için ortak düzen.
+ * - Sol tarafta sabit bir sidebar menü bulunur.
+ * - Sağ tarafta içerik render edilir.
+ */
 export default function UserLayout({
   children,
 }: {

@@ -86,6 +86,15 @@ interface DashboardClientProps {
   data: DashboardData;
 }
 
+/**
+ * Dashboard Client Bileşeni
+ * 
+ * Yönetim paneli ana sayfasının görsel arayüzünü oluşturur.
+ * - Recharts kütüphanesi ile satış ve kategori dağılım grafiklerini çizer.
+ * - Özet kartları (Ciro, Siparişler vb.) gösterir.
+ * - URL query parametreleri ile (salesYear) filtreleme yapar.
+ * - Son siparişlerin özet tablosunu sunar.
+ */
 export default function DashboardClient({ data }: DashboardClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();

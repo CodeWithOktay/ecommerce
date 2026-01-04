@@ -6,6 +6,12 @@ import {
   ChevronRight,
 } from "lucide-react";
 
+/**
+ * Yetkisiz Erişim Sayfası (403)
+ * 
+ * Kullanıcının yetkisi olmayan bir sayfaya erişmeye çalıştığında yönlendirildiği sayfa.
+ * Genellikle Admin paneline girmeye çalışan normal kullanıcılar için gösterilir.
+ */
 export default function Unauthorized() {
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4 font-sans">

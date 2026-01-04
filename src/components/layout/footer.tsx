@@ -15,6 +15,13 @@ function getSocialUrl(baseUrl: string, input: string | null) {
   return `${baseUrl}${cleanHandle}`;
 }
 
+/**
+ * Web Sitesi Alt Bilgisi (Footer)
+ * 
+ * Veritabanından dinamik site ayarlarını (Logo, Sosyal Medya vb.) çeker.
+ * 
+ * Server Component olduğu için veritabanına doğrudan erişir.
+ */
 export default async function Footer() {
   const settings = await prisma.settings.findUnique({
     where: { id: "general_settings" },

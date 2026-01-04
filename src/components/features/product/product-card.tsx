@@ -1,9 +1,10 @@
 "use client";
 
-import { Check, PackageX, ArrowRight, Star } from "lucide-react";
+import { Check, PackageX, ArrowRight, Star, Ticket } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import React, { useState } from "react";
+// Cart hook
 import useCart from "@/hooks/use-cart";
 import FavoriteButton from "./favorite-button";
 import { useRouter } from "next/navigation";
@@ -15,6 +16,8 @@ interface ProductCardProps {
     name: string;
     description: string | null;
     price: number;
+    categoryId: string; // 🟢 CategoryId eklendi
+    category?: { parentId: string | null }; // 🟢 Hierarchy için
     salePrice?: number | null;
     stock: number;
     images: {
@@ -25,11 +28,31 @@ interface ProductCardProps {
     reviews?: { rating: number }[];
   };
   isFavorited?: boolean;
+  coupons?: { // 🟢 Kuponlar prop'u
+    code: string;
+    type: "PERCENTAGE" | "FIXED";
+    value: number;
+    categoryId: string | null;
+    usageLimit?: number | null;
+    usedCount?: number;
+  }[];
 }
 
+/**
+ * Ürün Kartı Bileşeni
+ * 
+ * Ürün listelerinde (Grid, Slider) kullanılan temel kart.
+ * Özellikler:
+ * - İndirim ve Kargo Bedava rozetleri.
+ * - Stok kontrolü ve "Tükendi" overlay'i.
+ * - Varyant varsa ürün detayına, yoksa doğrudan sepete ekleme.
+ * - Hızlı favoriye ekleme butonu.
+ * - 🟢 Kupon Gösterimi
+ */
 export default function ProductCard({
   product,
   isFavorited = false,
+  coupons = [],
 }: ProductCardProps) {
   const cart = useCart();
   const router = useRouter();
@@ -98,6 +121,42 @@ export default function ProductCard({
               %{discountPercentage} İNDİRİM
             </span>
           )}
+          
+          {/* 🟢 KUPON BADGE */}
+          {(() => {
+             // En avantajlı kuponu bul
+             const validCoupon = coupons
+                .filter(c => {
+                    // 1. Limit Kontrolü
+                    if (c.usageLimit && c.usageLimit > 0) {
+                        if ((c.usedCount || 0) >= c.usageLimit) return false;
+                    }
+                    
+                    // 2. Kategori ve Hiyerarşi Kontrolü
+                    if (!c.categoryId) return true; // Genel kupon
+                    
+                    if (c.categoryId === product.categoryId) return true; // Direkt kategori
+                    
+                    if (product.category?.parentId && c.categoryId === product.category.parentId) return true; // Üst kategori
+                    
+                    return false;
+                })
+                .sort((a,b) => b.value - a.value)[0]; // En yüksek değerliyi al
+                
+             if (validCoupon) {
+                 return (
+                    <span className="bg-white/90 backdrop-blur-sm text-indigo-600 text-[9px] font-bold px-2 py-0.5 rounded shadow-md border border-indigo-100 flex items-center gap-1">
+                        <Ticket size={10} className="fill-indigo-600" />
+                        <span>{validCoupon.code}</span>
+                        <span className="text-[8px] opacity-80 border-l border-indigo-200 pl-1 ml-0.5">
+                            {validCoupon.type === "PERCENTAGE" ? `%${validCoupon.value}` : `-${validCoupon.value}₺`}
+                        </span>
+                    </span>
+                 );
+             }
+             return null;
+          })()}
+
           <span className="bg-gradient-to-r from-[#667EEA] to-[#764BA2] text-white text-[9px] font-bold px-2 py-0.5 rounded shadow-md">
             KARGO BEDAVA
           </span>

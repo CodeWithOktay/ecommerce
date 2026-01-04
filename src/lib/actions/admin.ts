@@ -1,13 +1,27 @@
+/**
+ * Admin Yönetimi Server Actions
+ * 
+ * Bu modül, yönetici hesaplarının yönetimini sağlar:
+ * - Admin oluşturma/silme/güncelleme
+ * - Aktif/Pasif durumu değiştirme
+ * - Süper Admin yetki kontrolleri
+ */
+
 "use server";
 
 import { prisma } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import bcrypt from "bcryptjs";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth/options"; // Auth options yolun neredeyse oradan çek
+import { authOptions } from "@/lib/auth/options";
 import { Role } from "@prisma/client";
 
-// 👮‍♂️ YARDIMCI FONKSİYON: Yetki Kontrolü
+/**
+ * Süper Admin Yetki Kontrolü
+ * 
+ * İşlemi yapan kullanıcının "SUPER_ADMIN" rolüne sahip olup olmadığını kontrol eder.
+ * @returns {Promise<boolean>} Yetkili ise true, değilse false
+ */
 async function checkSuperAdmin() {
   const session = await getServerSession(authOptions);
 
@@ -18,7 +32,14 @@ async function checkSuperAdmin() {
   return true;
 }
 
-// 🟢 Yeni Admin Ekleme (Sadece Süper Admin Yapabilir)
+/**
+ * Yeni Admin Oluşturur (Sadece Süper Admin)
+ * 
+ * Yeni bir yönetici hesabı oluşturur. Varsayılan olarak "ADMIN" rolü atanır.
+ * 
+ * @param formData - Form verileri (firstName, lastName, email, password)
+ * @returns Başarı/hata durumu ve mesajı
+ */
 export async function createAdmin(formData: FormData) {
   // 1. Yetki Kontrolü
   const isSuperAdmin = await checkSuperAdmin();
@@ -58,7 +79,15 @@ export async function createAdmin(formData: FormData) {
   }
 }
 
-// 🔴 Admin Silme (Sadece Süper Admin Yapabilir)
+/**
+ * Admin Siler (Sadece Süper Admin)
+ * 
+ * Belirtilen yönetici hesabını siler.
+ * Kişi kendini silemez.
+ * 
+ * @param userId - Silinecek admin ID'si
+ * @returns Başarı/hata durumu
+ */
 export async function deleteAdmin(userId: string) {
   const isSuperAdmin = await checkSuperAdmin();
   if (!isSuperAdmin) {
@@ -80,7 +109,16 @@ export async function deleteAdmin(userId: string) {
   }
 }
 
-// 🟡 Aktif/Pasif (Sadece Süper Admin)
+/**
+ * Admin Durumunu Değiştirir (Sadece Süper Admin)
+ * 
+ * Admin hesabını aktif veya pasif yapar.
+ * Süper Admin hesabı pasife alınamaz.
+ * 
+ * @param userId - Admin ID'si
+ * @param currentStatus - Mevcut durum
+ * @returns Başarı/hata durumu
+ */
 export async function toggleAdminStatus(
   userId: string,
   currentStatus: boolean
@@ -108,7 +146,15 @@ export async function toggleAdminStatus(
   }
 }
 
-// 🔵 Admin Güncelleme (Sadece Süper Admin)
+/**
+ * Admin Bilgilerini Günceller (Sadece Süper Admin)
+ * 
+ * Adminin ad, soyad, e-posta ve şifresini günceller.
+ * 
+ * @param userId - Admin ID'si
+ * @param formData - Yeni bilgiler
+ * @returns Başarı/hata durumu
+ */
 export async function updateAdmin(userId: string, formData: FormData) {
   const isSuperAdmin = await checkSuperAdmin();
   if (!isSuperAdmin) {

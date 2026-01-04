@@ -49,6 +49,16 @@ interface ProductMainSectionProps {
   isFavorited: boolean;
 }
 
+/**
+ * Ürün Detay Ana Bölümü (Hero Section)
+ * 
+ * Sayfanın en kritik bileşeni. İçerdiği özellikler:
+ * 1. Varyant Seçimi: Renk ve Beden kombinasyonlarını kontrol eder (Stok var mı?).
+ * 2. Dinamik Fiyat: Seçilen varyanta göre fiyatı günceller.
+ * 3. Kuponlar: Ürüne özel kuponları listeler ve kopyalama imkanı sunar.
+ * 4. Etkileşim: Sepete ekle, Paylaş, Favoriye ekle.
+ * 5. Bilgi: Stok durumu, Kargo bilgisi, Taksit seçenekleri.
+ */
 export default function ProductMainSection({
   product,
   reviewStats,
@@ -197,14 +207,14 @@ export default function ProductMainSection({
 
   return (
     <div className="space-y-5">
-      <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-        <div className="flex justify-between items-start">
-          <div>
-            <span className="text-indigo-600 text-lg font-bold mb-1 inline-block">
+      <div className="bg-white/80 backdrop-blur-md p-6 lg:p-8 rounded-2xl border border-white/20 shadow-xl shadow-indigo-100/20">
+        <div className="flex justify-between items-start mb-6">
+          <div className="space-y-2">
+            <span className="text-indigo-600 font-bold tracking-wider text-xs uppercase bg-indigo-50 px-2 py-1 rounded-md">
               {product.brand?.name}
             </span>
 
-            <h1 className="text-2xl md:text-3xl font-normal text-gray-900 leading-tight mb-3">
+            <h1 className="text-3xl md:text-4xl font-black text-gray-900 leading-tight tracking-tight">
               {product.name}
             </h1>
           </div>
@@ -212,13 +222,13 @@ export default function ProductMainSection({
           <ShareButton />
         </div>
 
-        <div className="flex items-center gap-4 border-b border-gray-100 pb-4 mb-4">
+        <div className="flex items-center gap-4 border-b border-gray-100 pb-6 mb-6">
           <div className="flex items-center gap-2">
-            <div className="flex text-yellow-400">
+            <div className="flex text-yellow-500">
               {[1, 2, 3, 4, 5].map((s) => (
                 <Star
                   key={s}
-                  size={18}
+                  size={20}
                   fill={
                     reviewStats.reviewCount > 0 &&
                     s <= Math.round(reviewStats.avgRating)
@@ -229,43 +239,47 @@ export default function ProductMainSection({
                     reviewStats.reviewCount > 0 &&
                     s <= Math.round(reviewStats.avgRating)
                       ? ""
-                      : "text-gray-300"
+                      : "text-gray-200"
                   }
                 />
               ))}
             </div>
 
-            <span className="text-sm font-bold text-gray-700">
+            <span className="text-lg font-bold text-gray-900 ml-1">
               {reviewStats.reviewCount > 0
                 ? reviewStats.avgRating.toFixed(1)
                 : "0.0"}
             </span>
           </div>
 
-          <span className="text-sm text-gray-500 border-l pl-4 border-gray-200">
+          <span className="text-sm font-medium text-gray-500 hover:text-indigo-600 cursor-pointer transition-colors border-l pl-4 border-gray-200">
             {reviewStats.reviewCount > 0
-              ? `(${reviewStats.reviewCount} Değerlendirme)`
+              ? `${reviewStats.reviewCount} Değerlendirme`
               : "Henüz değerlendirilmedi"}
           </span>
         </div>
 
-        <div className="flex items-end gap-3 mb-2">
-          <span className="text-4xl font-bold text-gray-900">
-            {displayPrice.toLocaleString("tr-TR", { minimumFractionDigits: 2 })}{" "}
-            <span className="text-2xl">TL</span>
-          </span>
-
-          {hasDiscount && (
-            <div className="flex flex-col mb-1">
-              <span className="text-sm text-gray-400 line-through">
+        <div className="flex flex-col gap-2 mb-2">
+           <div className="flex items-baseline gap-3">
+            <span className="text-5xl font-black text-gray-900 tracking-tighter">
+                {displayPrice.toLocaleString("tr-TR", { minimumFractionDigits: 2 })}
+                <span className="text-2xl font-bold ml-1 text-gray-500">TL</span>
+            </span>
+            
+            {hasDiscount && (
+                <span className="text-lg text-gray-400 line-through decoration-2 decoration-red-200">
                 {oldPrice?.toLocaleString("tr-TR")} TL
-              </span>
-
-              <span className="text-xs font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded-md">
-                %{discountRate} İndirim
-              </span>
-            </div>
-          )}
+                </span>
+            )}
+           </div>
+           
+           {hasDiscount && (
+             <div className="inline-flex">
+                <span className="text-xs font-bold text-white bg-gradient-to-r from-red-500 to-pink-600 px-3 py-1 rounded-full shadow-sm shadow-red-200 transform -rotate-1">
+                    %{discountRate} Süper İndirim
+                </span>
+             </div>
+           )}
         </div>
 
         {/* 🟢 KUPONLAR ALANI (YENİ EKLENDİ) */}

@@ -3,6 +3,14 @@
 import { getSidebarStats } from "@/lib/actions/sidebar"; // Önceki adımda yazdığımız action
 import AdminLayoutClient from "@/components/features/admin/admin-layout-client"; // Yukarıdaki yeni bileşen
 
+/**
+ * Admin Paneli Düzeni (Server Component)
+ * 
+ * Yönetim panelinin ana iskeletini oluşturur.
+ * - Sidebar menüsündeki canlı sayaçlar (bekleyen sipariş, stok uyarısı vb.) için
+ *   sunucu tarafında veri çeker (`getSidebarStats`).
+ * - Bu verileri `AdminLayoutClient` bileşenine ileterek UI'ı oluşturur.
+ */
 export default async function AdminLayout({
   children,
 }: {

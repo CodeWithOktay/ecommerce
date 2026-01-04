@@ -41,6 +41,18 @@ interface Props {
 
 type Tab = "audit" | "login";
 
+/**
+ * Admin Kayıtları Görüntüleyici (Client Component)
+ * 
+ * İki tür kaydı tek bir arayüzde gösterir:
+ * 1. Audit Logs: Yönetici işlemlerini (oluşturma, silme, güncelleme) takip eder.
+ * 2. Login Logs: Kullanıcı giriş hareketlerini takip eder.
+ * 
+ * Özellikler:
+ * - Client-side arama ve filtreleme
+ * - Sekmeli (Tab) yapı ile geçiş
+ * - Detaylı tablo görünümü
+ */
 export default function AdminLogsClient({ auditLogs, loginLogs }: Props) {
   const [activeTab, setActiveTab] = useState<Tab>("audit");
   const [searchTerm, setSearchTerm] = useState("");
@@ -134,6 +146,12 @@ export default function AdminLogsClient({ auditLogs, loginLogs }: Props) {
 
 // --- SUB COMPONENTS ---
 
+// --- ALT BİLEŞENLER ---
+
+/**
+ * Audit Log Tablosu
+ * Yönetici işlemlerini listeler.
+ */
 function AuditLogTable({ logs }: { logs: AuditLog[] }) {
   if (logs.length === 0) return <EmptyState />;
 
@@ -198,6 +216,10 @@ function AuditLogTable({ logs }: { logs: AuditLog[] }) {
   );
 }
 
+/**
+ * Login Log Tablosu
+ * Kullanıcı girişlerini listeler.
+ */
 function LoginLogTable({ logs }: { logs: LoginLog[] }) {
   if (logs.length === 0) return <EmptyState message="Henüz hiç giriş kaydı yok." />;
 

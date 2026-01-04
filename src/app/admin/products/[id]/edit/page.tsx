@@ -54,6 +54,14 @@ interface FormattedImage {
   isMain: boolean;
 }
 
+/**
+ * Ürün Düzenleme Sayfası (Server Component)
+ * 
+ * Mevcut bir ürünün bilgilerini veritabanından çeker ve düzenlenebilir formatta forma iletir.
+ * - Dynamic route (params.id) ile ürün ID'sini alır.
+ * - Prisma ile ilişkili tüm verileri (varyantlar, resimler, özellikler) çeker.
+ * - Formun beklediği veri yapısına dönüştürme (type casting, decimal to number) işlemi yapar.
+ */
 export default async function EditProductPage({ params }: PageProps) {
   // 🟢 1. ADIM: params'ı await ile çözümlüyoruz
   const { id } = await params;

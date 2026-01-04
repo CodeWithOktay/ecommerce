@@ -3,6 +3,13 @@ import { prisma } from "@/lib/db";
 import { generatePasswordResetToken } from "@/lib/utils/tokens";
 import { sendPasswordResetEmail } from "@/lib/utils/mail";
 
+/**
+ * Şifre Sıfırlama İsteği (API Route)
+ * 
+ * Kullanıcının e-posta adresine şifre sıfırlama linki gönderir.
+ * - E-posta adresinin sistemde kayıtlı olup olmadığını kontrol eder.
+ * - Benzersiz bir token oluşturur ve mail servisini tetikler.
+ */
 export async function POST(req: Request) {
   try {
     const { email } = await req.json();

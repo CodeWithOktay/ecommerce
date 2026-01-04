@@ -27,6 +27,14 @@ function useDebounce<T>(value: T, delay: number): T {
   return debouncedValue;
 }
 
+/**
+ * Yan Menü (Kategori Ağacı)
+ * 
+ * - Tüm kategori hiyerarşisini gösterir.
+ * - İçinde arama yapılabilir (Debounce ile optimize edilmiştir).
+ * - Sayfa URL'i değiştiğinde ilgili kategoriyi otomatik açar (Sync).
+ * - Recursive (iç içe) yapıdadır.
+ */
 export function SideMenu({
   categories = [],
   isMenuOpen,

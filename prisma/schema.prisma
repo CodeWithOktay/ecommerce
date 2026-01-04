@@ -6,31 +6,41 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+// --------------------------------------
+// KULLANICI & KİMLİK DOĞRULAMA MODELLERİ
+// --------------------------------------
+
+/// Kullanıcı Modeli
+/// Sistemdeki müşterileri ve yöneticileri temsil eder.
 model User {
   id            String    @id @default(cuid())
-  firstName     String?
-  lastName      String?
-  email         String?   @unique
-  emailVerified DateTime?
-  image         String?
-  passwordHash  String?
-  role          Role      @default(USER)
+  firstName     String?   // Ad
+  lastName      String?   // Soyad
+  email         String?   @unique // E-posta (Benzersiz)
+  emailVerified DateTime? // E-posta doğrulama tarihi
+  image         String?   // Profil resmi URL'i
+  passwordHash  String?   // Şifrelenmiş parola (bcrypt)
+  role          Role      @default(USER) // Kullanıcı rolü (USER, ADMIN)
   
-  isActive      Boolean   @default(true)
-  userAgreement Boolean   @default(false)
+  isActive      Boolean   @default(true) // Hesap aktif mi?
+  userAgreement Boolean   @default(false) // Kullanıcı sözleşmesi onayı
 
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  phoneNumber   String?
+  createdAt     DateTime  @default(now()) // Kayıt tarihi
+  updatedAt     DateTime  @updatedAt // Güncelleme tarihi
+  phoneNumber   String?   // Telefon numarası
   
-  accounts      Account[]
-  addresses     Address[]
-  favorites     Favorite[]
-  orders        Order[]
-  reviews       Review[]
-  sessions      Session[]
+  // İlişkiler
+  accounts      Account[] // OAuth hesapları (Google, Facebook vb.)
+  addresses     Address[] // Kayıtlı adresler
+  favorites     Favorite[] // Favori ürünler
+  orders        Order[]   // Siparişler
+  reviews       Review[]  // Ürün yorumları
+  sessions      Session[] // Oturum bilgileri
 }
 
+/// OAuth Hesapları
+/// Google, Facebook gibi sağlayıcılar ile giriş yapıldığında oluşur.
 model Account {
   id                String  @id @default(cuid())
   userId            String
@@ -50,6 +60,8 @@ model Account {
   @@unique([provider, providerAccountId])
 }
 
+/// Oturum Modeli
+/// Giriş yapan kullanıcıların oturum bilgilerini tutar.
 model Session {
   id           String   @id @default(cuid())
   sessionToken String   @unique
@@ -58,39 +70,47 @@ model Session {
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
+/// Kullanıcı Adresleri
+/// Teslimat ve fatura adreslerini saklar.
 model Address {
   id          String   @id @default(cuid())
-  title       String
-  firstName   String
-  lastName    String
-  phone       String
-  addressLine String
-  city        String
-  district    String
-  zipCode     String?
-  country     String   @default("Türkiye")
+  title       String   // Adres başlığı (Ev, İş vb.)
+  firstName   String   // Alıcı Adı
+  lastName    String   // Alıcı Soyadı
+  phone       String   // İletişim Telefonu
+  addressLine String   // Açık Adres
+  city        String   // İl
+  district    String   // İlçe
+  zipCode     String?  // Posta Kodu
+  country     String   @default("Türkiye") // Ülke
   userId      String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  isDefault   Boolean  @default(false)
+  isDefault   Boolean  @default(false) // Varsayılan adres mi?
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
+// --------------------------------------
+// ÜRÜN KATALOĞU MODELLERİ
+// --------------------------------------
+
+/// Kategori Modeli
+/// Hiyerarşik kategori yapısını destekler (Giyim -> Erkek -> Gömlek).
 model Category {
   id        String   @id @default(cuid())
-  name      String   @unique
-  slug      String   @unique
+  name      String   @unique // Kategori adı
+  slug      String   @unique // URL dostu isim
   createdAt DateTime @default(now())
-  parentId  String?
+  parentId  String?  // Üst kategori ID'si
   updatedAt DateTime @updatedAt
 
-  attributes Attribute[]
+  attributes Attribute[] // Kategoriye özel özellikler (örn: Beden, Renk)
   
   // Kategori Hiyerarşisi (Alt-Üst Kategori)
   parent   Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
   children Category[] @relation("CategoryHierarchy")
 
-  products Product[]
+  products Product[] // Bu kategorideki ürünler
   
   // Kategori - Marka (Many-to-Many)
   brands   Brand[]    @relation("CategoryToBrand")
@@ -99,125 +119,144 @@ model Category {
   coupons  Coupon[]   
 }
 
+/// Marka Modeli
 model Brand {
   id        String   @id @default(cuid())
-  name      String   @unique
-  slug      String   @unique
-  logo      String?
+  name      String   @unique // Marka adı
+  slug      String   @unique // URL dostu isim
+  logo      String?  // Marka logosu URL'i
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  products   Product[]
-  categories Category[] @relation("CategoryToBrand")
+  products   Product[]  // Markanın ürünleri
+  categories Category[] @relation("CategoryToBrand") // Markanın bulunduğu kategoriler
 }
 
+/// Ürün Modeli
+/// E-ticaret sisteminin temel parçası.
 model Product {
   id          String   @id @default(cuid())
-  name        String
-  description String?
-  price       Decimal  @db.Decimal(10, 2)
-  isActive    Boolean  @default(true)
+  name        String   // Ürün adı
+  description String?  // Detaylı açıklama
+  price       Decimal  @db.Decimal(10, 2) // Satış fiyatı
+  isActive    Boolean  @default(true)     // Yayında mı?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   categoryId  String
   brandId     String?
-  isArchived  Boolean  @default(false)
-  stock       Int      @default(0)
-  salePrice   Decimal? @db.Decimal(10, 2)
+  isArchived  Boolean  @default(false)    // Arşivlendi mi?
+  stock       Int      @default(0)        // Stok adedi
+  salePrice   Decimal? @db.Decimal(10, 2) // İndirimli fiyat
   
   // İlişkiler
-  favoritedBy Favorite[]
+  favoritedBy Favorite[] // Favoriye alan kullanıcılar
   
   // Ana Ürün Miras Özellikleri
   defaultColor String? // Örn: "Kırmızı" veya boş
   defaultSize  String? // Örn: "L" veya "Standart"
   
-  orderItems       OrderItem[]
+  orderItems       OrderItem[]             // Sipariş detayları
   brand            Brand?                  @relation(fields: [brandId], references: [id])
   category         Category                @relation(fields: [categoryId], references: [id])
-  attributeValues  ProductAttributeValue[]
-  images           ProductImage[]
-  variants         ProductVariant[]
-  reviews          Review[]
+  attributeValues  ProductAttributeValue[] // Ürün özellikleri
+  images           ProductImage[]          // Ürün resimleri
+  variants         ProductVariant[]        // Varyantlar (Beden/Renk)
+  reviews          Review[]                // Yorumlar
 }
 
+/// Ürün Resimleri
 model ProductImage {
   id        String  @id @default(cuid())
-  url       String
-  isMain    Boolean @default(false)
+  url       String  // Resim URL'i
+  isMain    Boolean @default(false) // Ana resim mi?
   productId String
   product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 }
 
+/// Ürün Varyantları
+/// Aynı ürünün farklı özelliklere sahip çeşitleri (Renk, Beden vb.)
 model ProductVariant {
   id        String   @id @default(cuid())
   productId String
-  name      String
-  color     String?
-  size      String?
-  stock     Int      @default(0)
-  price     Decimal? @db.Decimal(10, 2)
-  salePrice Decimal? @db.Decimal(10, 2) 
-  image     String?
+  name      String   // Varyant adı "Kırmızı L"
+  color     String?  // Renk kodu veya adı
+  size      String?  // Beden
+  stock     Int      @default(0) // Varyant stoğu
+  price     Decimal? @db.Decimal(10, 2) // Varyanta özel fiyat (varsa)
+  salePrice Decimal? @db.Decimal(10, 2) // Varyanta özel indirimli fiyat
+  image     String?  // Varyanta özel resim
   product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
 }
 
+/// Özellik Tanımları
+/// Kategorilere atanabilen dinamik özellikler (Örn: Ekran Boyutu, Materyal)
 model Attribute {
   id         String                  @id @default(cuid())
-  name       String
+  name       String                  // Özellik adı
   categoryId String
   category   Category                @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  values     ProductAttributeValue[]
+  values     ProductAttributeValue[] // Bu özelliğin aldığı değerler
 }
 
+/// Ürün Özellik Değerleri
+/// Bir ürünün belirli bir özelliğe verdiği değer
 model ProductAttributeValue {
   id          String    @id @default(cuid())
-  value       String
+  value       String    // Değer (örn: "6.1 inç", "Pamuk")
   productId   String
   attributeId String
   attribute   Attribute @relation(fields: [attributeId], references: [id], onDelete: Cascade)
   product     Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
 }
 
+// --------------------------------------
+// SİPARİŞ & ÖZELLİK MODELLERİ
+// --------------------------------------
+
+/// Sipariş Modeli
+/// Müşteri siparişlerini ve durumunu takip eder.
 model Order {
   id           String      @id @default(cuid())
-  userId       String?
-  total        Decimal     @db.Decimal(10, 2)
-  status       OrderStatus @default(PENDING)
-  customerName String
-  customerEmail String
+  userId       String?     // Siparişi veren kullanıcı (Misafir de olabilir)
+  total        Decimal     @db.Decimal(10, 2) // Toplam Tutar
+  status       OrderStatus @default(PENDING) // Sipariş Durumu
+  customerName String      // Müşteri Adı (Snapshot)
+  customerEmail String     // Müşteri E-postası (Snapshot)
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
-  address      String?
-  cancelReason String?
+  address      String?     // Teslimat Adresi (Snapshot)
+  cancelReason String?     // İptal Nedeni
   
   user         User?       @relation(fields: [userId], references: [id])
-  items        OrderItem[]
+  items        OrderItem[] // Sipariş Kalemleri
 }
 
+/// Sipariş Kalemi
+/// Siparişteki her bir ürün satırını ifade eder.
 model OrderItem {
   id        String  @id @default(cuid())
   orderId   String
   productId String
-  variantId String? 
-  quantity  Int
-  price     Decimal @db.Decimal(10, 2)
+  variantId String? // Hangi varyantın alındığı
+  quantity  Int     // Adet
+  price     Decimal @db.Decimal(10, 2) // Satış anındaki birim fiyat (Fiyat değişse bile bu sabit kalmalı)
   
   order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
   product   Product @relation(fields: [productId], references: [id])
 }
 
+/// İndirim Kuponu Modeli
 model Coupon {
   id         String     @id @default(cuid())
-  code       String     @unique
-  type       CouponType @default(PERCENTAGE)
-  value      Decimal    @db.Decimal(10, 2)
-  minAmount  Decimal?   @db.Decimal(10, 2)
+  code       String     @unique // Kupon Kodu (Örn: YAZ50)
+  type       CouponType @default(PERCENTAGE) // İndirim Tipi (Yüzde/Sabit)
+  value      Decimal    @db.Decimal(10, 2)   // Değer (Örn: %10 veya 100TL)
+  minAmount  Decimal?   @db.Decimal(10, 2)   // Minimum Sepet Tutarı
   isActive   Boolean    @default(true)
-  startDate  DateTime?
-  endDate    DateTime?
-  usageLimit Int?
-  usedCount  Int        @default(0)
+  startDate  DateTime?  // Başlangıç Tarihi
+  endDate    DateTime?  // Bitiş Tarihi
+  usageLimit Int?       // Toplam Kullanım Limiti
+  usedCount  Int        @default(0) // Kaç kez kullanıldı?
     
   // Kategori İlişkisi (Hangi kategoride geçerli?)
   categoryId String?
@@ -227,6 +266,7 @@ model Coupon {
   updatedAt  DateTime   @updatedAt
 }
 
+/// Favori Ürünler
 model Favorite {
   id        String   @id @default(cuid())
   userId    String
@@ -239,11 +279,12 @@ model Favorite {
   @@unique([userId, productId])
 }
 
+/// Ürün Yorumları ve Değerlendirmeleri
 model Review {
   id         String   @id @default(cuid())
-  rating     Int      @default(5)
-  comment    String?
-  isApproved Boolean  @default(false)
+  rating     Int      @default(5) // 1-5 arası puan
+  comment    String?  // Yorum metni
+  isApproved Boolean  @default(false) // Admin onayı
   userId     String
   productId  String
   createdAt  DateTime @default(now())
@@ -252,67 +293,86 @@ model Review {
   product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, productId])
+  @@unique([userId, productId]) // Bir kullanıcı bir ürüne tek yorum yapabilir
 }
 
+// --------------------------------------
+// SİSTEM & OPERASYON MODELLERİ
+// --------------------------------------
+
+/// Genel Site Ayarları
+/// Admin panelinden yönetilebilir site konfigürasyonu.
 model Settings {
-  id           String  @id @default("general_settings")
+  id           String  @id @default("general_settings") // Tek bir kayıt olacak
   siteTitle    String  @default("KervanPazar")
-  slogan       String?
-  description  String?
-  contactEmail String?
-  contactPhone String?
-  address      String?
-  instagram    String?
+  slogan       String? // Site sloganı
+  description  String? // SEO açıklaması
+  contactEmail String? // İletişim e-postası
+  contactPhone String? // İletişim telefonu
+  address      String? // Firma adresi
+  instagram    String? // Sosyal medya linkleri
   facebook     String?
   twitter      String?
-  maintenance  Boolean @default(false)
+  maintenance  Boolean @default(false) // Bakım modu
 }
 
+/// Denetim Günlüğü (Audit Logs)
+/// Admin panelinde yapılan önemli işlemlerin kaydı.
 model AuditLog {
   id         String   @id @default(cuid())
-  action     String
-  details    String?
-  adminId    String?
-  adminEmail String?
-  ipAddress  String?
-  userAgent  String?
+  action     String   // İşlem adı (CREATE_PRODUCT vb.)
+  details    String?  // Detaylı açıklama
+  adminId    String?  // İşlemi yapan kullanıcı ID'si aka userId
+  adminEmail String?  // İşlemi yapan kullanıcı E-postası aka email
+  role       String   @default("ADMIN") // Kullanıcı rolü (ADMIN, USER)
+  metadata   Json?    // Ekstra veriler (Hata kodu, tarayıcı detayı vs.)
+  ipAddress  String?  // IP Adresi
+  userAgent  String?  // Tarayıcı bilgisi
   createdAt  DateTime @default(now())
 }
 
+/// Banner Yönetimi
+/// Ana sayfadaki slider ve promosyon alanları için.
 model Banner {
   id          String   @id @default(uuid())
   title       String   
   description String?  
   imageUrl    String   
-  link        String?  
+  link        String?  // Tıklanınca gideceği URL
   isActive    Boolean  @default(true) 
-  order       Int      @default(0)    
+  order       Int      @default(0)    // Gösterim sırası
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
 
+/// Şifre Sıfırlama Tokenları
 model PasswordResetToken {
   id      String   @id @default(cuid())
   email   String
   token   String   @unique
-  expires DateTime
+  expires DateTime // Geçerlilik süresi
 
   @@unique([email, token])
 }
 
 // ✅ YENİ EKLENEN: İade ve Değişim Talepleri
+/// İade Talep Modeli
 model ReturnRequest {
   id          String       @id @default(cuid())
   orderNumber String       // Kullanıcının girdiği sipariş numarası
   email       String       // İletişim e-postası
   reason      String       // İade nedeni (enum veya string tutulabilir, formda selectbox var)
   description String?      // Kullanıcının açıklaması
-  status      ReturnStatus @default(PENDING)
+  status      ReturnStatus @default(PENDING) // Talep durumu
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 }
 
+// --------------------------------------
+// ENUM TANIMLARI (TİPLER)
+// --------------------------------------
+
+/// İade Durumları
 enum ReturnStatus {
   PENDING   // Bekliyor
   APPROVED  // Onaylandı
@@ -320,23 +380,26 @@ enum ReturnStatus {
   COMPLETED // Tamamlandı (Para iadesi yapıldı vb.)
 }
 
+/// Kullanıcı Rolleri
 enum Role {
-  USER
-  ADMIN
-  SUPER_ADMIN // 👑 Patron bu!
+  USER        // Normal Müşteri
+  ADMIN       // Yönetici
+  SUPER_ADMIN // 👑 Patron bu! (Tam yetkili)
 }
 
+/// Kupon Tipleri
 enum CouponType {
-  PERCENTAGE
-  FIXED
+  PERCENTAGE // Yüzde İndirim (%)
+  FIXED      // Sabit Tutar (TL)
 }
 
+/// Sipariş Durumları
 enum OrderStatus {
-  PENDING
-  PROCESSING
-  PAID
-  SHIPPED
-  DELIVERED
-  CANCELLED
-  REFUNDED
+  PENDING     // Beklemede (Ödeme bekliyor veya onay bekliyor)
+  PROCESSING  // Hazırlanıyor
+  PAID        // Ödendi
+  SHIPPED     // Kargolandı
+  DELIVERED   // Teslim Edildi
+  CANCELLED   // İptal Edildi
+  REFUNDED    // İade Edildi
 }

@@ -11,6 +11,12 @@ interface UpdateAddressButtonProps {
   status: string;
 }
 
+/**
+ * Sipariş Adresi Güncelleme Butonu
+ * 
+ * Henüz kargoya verilmemiş (PENDING) siparişlerin adresini günceller.
+ * Modal içinde text-area ile düzenleme imkanı sunar.
+ */
 export default function UpdateAddressButton({
   orderId,
   currentAddress,

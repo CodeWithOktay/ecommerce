@@ -13,6 +13,13 @@ import Image from "next/image";
 import Link from "next/link";
 import CancelOrderButton from "@/components/features/order/cancel-order-btn";
 
+/**
+ * Siparişlerim Sayfası
+ * 
+ * Kullanıcının geçmiş siparişlerini listeler.
+ * - Her siparişin durumu (Hazırlanıyor, Kargolandı vb.) renkli rozetlerle gösterilir.
+ * - Sipariş iptali ve detay sayfasına gitme aksiyonları mevcuttur.
+ */
 export default async function OrdersPage() {
   const orders = await getUserOrders();
 

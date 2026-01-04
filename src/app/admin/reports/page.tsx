@@ -18,6 +18,14 @@ type OrderWithRelations = Prisma.OrderGetPayload<{
   };
 }>;
 
+/**
+ * Raporlar Sayfası (Server Component)
+ * 
+ * Detaylı satış raporlarını ve sipariş listesini hazırlar.
+ * - Müşteri adı veya e-postasına göre filtreleme yapabilir (searchParams).
+ * - Toplam ciro (revenue) ve sipariş sayısını hesaplar.
+ * - Raporlama için gerekli olan düzleştirilmiş veri setini (flat dataset) oluşturur.
+ */
 export default async function ReportsPage(props: {
   searchParams: Promise<{ customer?: string; start?: string; end?: string }>;
 }) {

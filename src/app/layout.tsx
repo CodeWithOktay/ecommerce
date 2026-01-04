@@ -17,6 +17,14 @@ export const metadata: Metadata = {
   description: "İpek Yolu'nun Dijital Hali",
 };
 
+/**
+ * Kök Düzen (Root Layout)
+ * 
+ * Tüm uygulamanın ana iskeletini oluşturur.
+ * - Global CSS (Tailwind) yükler.
+ * - Font yapılandırması (Geist).
+ * - AuthProvider ve Toast bildirimlerini sarar.
+ */
 export default async function RootLayout({
   children,
 }: {
@@ -25,7 +33,7 @@ export default async function RootLayout({
   const session = await getServerSession(authOptions);
 
   return (
-    <html>
+    <html suppressHydrationWarning={true}>
       <body id="top" className={`${geist.variable}`}>
         <AuthProvider session={session}>
           {children}

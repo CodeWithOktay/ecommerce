@@ -102,6 +102,13 @@ interface SelectOption {
 }
 
 // 🔥 ARAMALI SEÇİM KUTUSU BİLEŞENİ
+/**
+ * Aranabilir Seçim Kutusu (Combobox)
+ * 
+ * Uzun listeler içinde (Kategori, Marka vb.) arama yaparak seçim yapmayı sağlar.
+ * - Klavye dostu değil (basit implementasyon) ama işlevsel.
+ * - Focus olduğunda açılır, dışarı tıklandığında kapanır.
+ */
 export function SearchableSelect({
   label,
   options,
@@ -210,6 +217,17 @@ export function SearchableSelect({
 }
 
 // --- ANA COMPONENT ---
+/**
+ * Ana Ürün Formu Bileşeni
+ * 
+ * Ürün oluşturma ve düzenleme işlemlerini yöneten kapsamlı form.
+ * 
+ * Temel Özellikler:
+ * 1. Dinamik Varyant Üretimi: Renk/Beden kombinasyonları oluşturur.
+ * 2. Kategori Bazlı Özellikler: Seçilen kategoriye göre dinamik attribute inputları açar.
+ * 3. Görsel Yönetimi: Çoklu görsel yükleme, önizleme ve kapak fotoğrafı seçimi.
+ * 4. Stok/Fiyat Yönetimi: Varyant bazlı veya toplu güncelleme.
+ */
 export default function ProductForm({
   categories,
   brands,
@@ -220,6 +238,7 @@ export default function ProductForm({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // --- 1. ANA FORM STATE ---
+  // Formun temel alanlarını (isim, fiyat vb.) tutar.
   const [formData, setFormData] = useState({
     name: initialData?.name || "",
     brandId: initialData?.brandId || "",
@@ -384,6 +403,7 @@ export default function ProductForm({
     return { color: "Renk", size: "Beden", hasSize: true, hasColor: true };
   }, [categories, formData.categoryId]);
 
+  // Dosya seçimi işleyici (Base64 çevrimi yapar)
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
@@ -391,12 +411,13 @@ export default function ProductForm({
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       if (!file.type.startsWith("image/")) continue;
+      // Client-side base64 çevrimi (Büyük dosyalar için optimizasyon gerekebilir)
       const base64 = await toBase64(file);
       newImages.push({
         id: crypto.randomUUID(),
         file: file,
         previewUrl: base64,
-        isMain: selectedImages.length === 0 && i === 0,
+        isMain: selectedImages.length === 0 && i === 0, // İlk resim otomatik kapak olur
       });
     }
     setSelectedImages([...selectedImages, ...newImages]);
@@ -416,6 +437,7 @@ export default function ProductForm({
     });
   };
 
+  // Varyantları otomatik oluşturma (Sihirbaz)
   const handleGenerateVariants = () => {
     if (!genColors && !genSizes) return;
     const colors = genColors
@@ -434,6 +456,7 @@ export default function ProductForm({
         ? Number(formData.salePrice)
         : null;
 
+    // Kombinasyon mantığı: Renk X Beden
     if (colors.length > 0 && sizes.length > 0) {
       colors.forEach((color) => {
         sizes.forEach((size) => {
@@ -441,13 +464,14 @@ export default function ProductForm({
             id: crypto.randomUUID(),
             color,
             size,
-            stock: 10,
+            stock: 10, // Varsayılan stok
             priceDiff: defaultPrice,
             salePrice: defaultSalePrice,
           });
         });
       });
     } else if (colors.length > 0) {
+      // Sadece Renk
       colors.forEach((color) => {
         newVariants.push({
           id: crypto.randomUUID(),
@@ -459,6 +483,7 @@ export default function ProductForm({
         });
       });
     } else if (sizes.length > 0) {
+      // Sadece Beden
       sizes.forEach((size) => {
         newVariants.push({
           id: crypto.randomUUID(),

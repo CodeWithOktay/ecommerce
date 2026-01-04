@@ -1,6 +1,13 @@
 import { NextResponse } from "next/server";
 import { sendContactEmail } from "@/lib/utils/mail";
 
+/**
+ * İletişim Formu (API Route)
+ * 
+ * Ziyaretçilerin gönderdiği iletişim mesajlarını işler.
+ * - Form verilerini doğrular.
+ * - Admin'e e-posta olarak iletir.
+ */
 export async function POST(req: Request) {
   try {
     const body = await req.json();

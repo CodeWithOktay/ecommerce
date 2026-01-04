@@ -5,6 +5,13 @@ import { ArrowLeft } from "lucide-react";
 import RestoreProductButton from "@/components/features/admin/products/product-actions";
 import DeleteProductButton from "@/components/features/admin/products/product-actions";
 
+/**
+ * Arşiv (Çöp Kutusu) Sayfası
+ * 
+ * Soft-delete mantığıyla arşivlenmiş (isActive=false) ürünleri listeler.
+ * - Ürünleri geri yükleme (Restore) veya kalıcı olarak silme seçenekleri sunar.
+ * - Ürün resimlerini soluk (grayscale) göstererek arşiv durumunu vurgular.
+ */
 export default async function ArchivePage() {
   // Veritabanından sadece PASİF (Arşivlenmiş) ürünleri çekiyoruz
   // İlişkili tabloları (category ve images) include etmeyi unutmuyoruz

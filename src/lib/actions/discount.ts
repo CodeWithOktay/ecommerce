@@ -1,3 +1,12 @@
+/**
+ * İndirim ve Kampanya Yönetimi
+ * 
+ * Bu modül, kupon ve toplu kampanya yönetimini sağlar:
+ * - Kupon oluşturma ve silme
+ * - Belirli kategori veya markalara toplu indirim uygulama
+ * - Ham SQL sorguları ile performanslı fiyat güncellemeleri
+ */
+
 "use server";
 
 import { prisma } from "@/lib/db";
@@ -6,8 +15,14 @@ import { revalidatePath } from "next/cache";
 import { CouponType } from "@prisma/client";
 import { createLog } from "@/lib/logger";
 
-// --- 1. KUPON İŞLEMLERİ (AYNI KALIYOR) ---
+// --- 1. KUPON İŞLEMLERİ ---
 
+/**
+ * Yeni İndirim Kuponu Oluşturur
+ * 
+ * @param data - Kupon detayları (kod, oran/miktar, süre, kısıtlamalar)
+ * @returns Başarı/hata durumu
+ */
 export async function createCoupon(data: {
   code: string;
   type: CouponType;
@@ -54,6 +69,12 @@ export async function createCoupon(data: {
   }
 }
 
+/**
+ * Kuponu Siler
+ * 
+ * @param id - Silinecek kuponun ID'si
+ * @returns Başarı/hata durumu
+ */
 export async function deleteCoupon(id: string) {
   try {
     await prisma.coupon.delete({ where: { id } });
@@ -64,8 +85,19 @@ export async function deleteCoupon(id: string) {
   }
 }
 
-// --- 2. TOPLU İNDİRİM (KAMPANYA) MOTORU - VARYANT GÜNCELLEMELİ 🚀 ---
+// --- 2. TOPLU İNDİRİM (KAMPANYA) MOTORU  ---
 
+/**
+ * Toplu İndirim Uygular (Kampanya Başlatır)
+ * 
+ * Seçilen kategoriye veya markaya (veya tüm mağazaya) yüzde bazlı indirim uygular.
+ * Performans için Prisma '$executeRaw' ile doğrudan SQL UPDATE çalıştırır.
+ * Hem ana ürünlerin (Product) hem de varyantların (ProductVariant) fiyatlarını günceller.
+ * 
+ * @param categoryId - Kategori ID'si veya "all"
+ * @param percentage - İndirim yüzdesi (Örn: 20 için %20)
+ * @param brandId - Marka ID'si veya "all"
+ */
 export async function applyBulkDiscount(
   categoryId: string | "all",
   percentage: number,
@@ -196,6 +228,15 @@ export async function applyBulkDiscount(
   }
 }
 
+/**
+ * Kampanyayı/İndirimleri Kaldırır
+ * 
+ * Seçilen kapsamdaki ürünlerin indirimli fiyatlarını (salePrice) sıfırlar.
+ * Hem ana ürünler hem de varyantlar için geçerlidir.
+ * 
+ * @param categoryId - Kategori ID'si veya "all"
+ * @param brandId - Marka ID'si veya "all"
+ */
 export async function removeBulkDiscount(
   categoryId: string | "all",
   brandId?: string | "all"

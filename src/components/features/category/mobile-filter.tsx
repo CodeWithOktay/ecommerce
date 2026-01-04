@@ -23,6 +23,13 @@ interface MobileFilterProps {
   brands: Brand[];
 }
 
+/**
+ * Mobil Filtreleme Menüsü
+ * 
+ * Mobil cihazlarda filtreleri bir "Drawer" (çekmece) içinde gösterir.
+ * - Kategoriler ve Markalar için filtreleme seçenekleri sunar.
+ * - Overlay (Backdrop) ile dışarı tıklayınca kapanır.
+ */
 export default function MobileFilter({ category, brands }: MobileFilterProps) {
   const [isOpen, setIsOpen] = useState(false);
 

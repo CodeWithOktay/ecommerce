@@ -4,6 +4,13 @@ import { DefaultSession, DefaultUser } from "next-auth";
 // 'JWT' importunu sildik çünkü kullanmıyoruz.
 import { DefaultJWT } from "next-auth/jwt";
 
+/**
+ * NextAuth Tip Genişletmesi
+ * 
+ * Varsayılan NextAuth session ve user tiplerini genişleterek
+ * projemize özgü alanları (role, id, firstName vb.) ekler.
+ * Böylece `useSession` hook'u ile bu verilere type-safe erişebiliriz.
+ */
 declare module "next-auth" {
   interface Session {
     user: {

@@ -1,9 +1,29 @@
+/**
+ * Kategori Yönetimi Server Actions
+ * 
+ * Bu modül, ürün kategorilerinin yönetimini sağlar:
+ * - Kategori oluşturma, güncelleme, silme
+ * - Hiyerarşik kategori yapısı (ana/alt kategoriler)
+ * - Kategori özellikleri (attributes) yönetimi
+ * - Marka-kategori ilişkilendirme
+ */
+
 "use server";
 
 import { prisma } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 
-// --- KATEGORİ OLUŞTURMA ---
+/**
+ * Yeni Kategori Oluşturur
+ * 
+ * Kategori adından otomatik slug oluşturur (Türkçe karakter desteği ile).
+ * İsteğe bağlı olarak ana kategori ve özellikler eklenebilir.
+ * 
+ * @param name - Kategori adı
+ * @param parentId - Ana kategori ID'si (opsiyonel)
+ * @param attributes - Kategori özellikleri (opsiyonel)
+ * @returns Başarı/hata durumu
+ */
 export async function createCategory(
   name: string,
   parentId?: string,
@@ -59,7 +79,16 @@ export async function createCategory(
   }
 }
 
-// --- KATEGORİ SİLME ---
+/**
+ * Kategori Siler
+ * 
+ * Güvenlik kontrolleri:
+ * - Alt kategorisi varsa silinemez
+ * - Ürünü varsa silinemez
+ * 
+ * @param id - Silinecek kategori ID'si
+ * @returns Başarı/hata durumu
+ */
 export async function deleteCategory(id: string) {
   try {
     const category = await prisma.category.findUnique({
@@ -102,7 +131,18 @@ export async function deleteCategory(id: string) {
   }
 }
 
-// --- KATEGORİ GÜNCELLEME ---
+/**
+ * Kategori Günceller
+ * 
+ * Kategori adı, ana kategorisi ve özelliklerini günceller.
+ * Özellikler senkronize edilir (eski silinir, yeni eklenir).
+ * 
+ * @param id - Güncellenecek kategori ID'si
+ * @param name - Yeni kategori adı
+ * @param parentId - Yeni ana kategori ID'si (opsiyonel)
+ * @param attributes - Yeni özellikler listesi
+ * @returns Başarı/hata durumu
+ */
 export async function updateCategory(
   id: string,
   name: string,
@@ -147,6 +187,14 @@ export async function updateCategory(
   }
 }
 
+/**
+ * Türkçe Karakterleri Destekleyen Slug Oluşturucu
+ * 
+ * Metni URL-dostu slug formatına dönüştürür.
+ * 
+ * @param text - Slug'a dönüştürülecek metin
+ * @returns URL-dostu slug
+ */
 function slugify(text: string) {
   return text
     .toString()
@@ -163,6 +211,15 @@ function slugify(text: string) {
     .replace(/\-\-+/g, "-");
 }
 
+/**
+ * Kategoriye Marka Ekler
+ * 
+ * Eğer marka zaten varsa kategoriye bağlanır, yoksa yeni oluşturulur.
+ * 
+ * @param categoryId - Kategori ID'si
+ * @param brandName - Eklenecek marka adı
+ * @returns Başarı/hata durumu
+ */
 export async function addBrandToCategory(
   categoryId: string,
   brandName: string
@@ -220,6 +277,15 @@ export async function addBrandToCategory(
   }
 }
 
+/**
+ * Kategoriden Marka Kaldırır
+ * 
+ * Eğer markaya bağlı ürün varsa kaldırma işlemi başarısız olur.
+ * 
+ * @param categoryId - Kategori ID'si
+ * @param brandId - Kaldırılacak marka ID'si
+ * @returns Başarı/hata durumu
+ */
 export async function deleteBrandFromCategory(
   categoryId: string,
   brandId: string

@@ -3,6 +3,11 @@
 import { Settings } from "@prisma/client";
 import { Globe, Type, FileText, AlignLeft } from "lucide-react";
 
+/**
+ * Genel Ayarlar Formu
+ * 
+ * Sitenin temel SEO ve kimlik bilgilerini (Başlık, Slogan, Açıklama) yönetir.
+ */
 export default function GeneralSettingsForm({
   initialData,
 }: {

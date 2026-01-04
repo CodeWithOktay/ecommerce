@@ -32,6 +32,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
+/**
+ * Kategori Sayfası
+ * 
+ * Belirli bir kategorideki ürünleri listeler.
+ * - Dinamik slug yapısı ile çalışır.
+ * - Alt kategorileri recursive (iç içe) olarak bulur.
+ * - Filtreleme (Marka) ve Sıralama (Fiyat) özelliklerini barındırır.
+ */
 export default async function CategoryPage({ params, searchParams }: Props) {
   const rawSlug = (await params).slug[(await params).slug.length - 1];
   const categorySlug = decodeURIComponent(rawSlug);
@@ -53,6 +61,8 @@ export default async function CategoryPage({ params, searchParams }: Props) {
   }
 
   // 2. ID Listesi Oluşturma (Recursive mantık)
+  // Kategori ağacındaki tüm alt kategorilerin ID'lerini toplar.
+  // Böylece "Elektronik" seçildiğinde altındaki "Telefon" kategorisindeki ürünler de gelir.
   const allCategoryIds = [category.id];
   if (category.children) {
     category.children.forEach((child) => {
@@ -127,9 +137,28 @@ export default async function CategoryPage({ params, searchParams }: Props) {
     include: {
       images: true,
       variants: true,
+      category: { select: { parentId: true } }, // 🟢 Hiyerarşi için gerekli
     },
     orderBy: orderBy,
   });
+
+  // 6. Kuponları Çek (YENİ)
+  const rawCoupons = await prisma.coupon.findMany({
+    where: {
+      isActive: true,
+      OR: [{ startDate: null }, { startDate: { lte: new Date() } }],
+      AND: [{ OR: [{ endDate: null }, { endDate: { gte: new Date() } }] }],
+    },
+    orderBy: { value: "desc" },
+  });
+
+  const activeCoupons = rawCoupons.map((c) => ({
+    ...c,
+    value: Number(c.value),
+    minAmount: Number(c.minAmount),
+    usageLimit: c.usageLimit ? Number(c.usageLimit) : null,
+    usedCount: c.usedCount || 0,
+  }));
 
   // 5. Veri Dönüşümü
   const products = rawProducts.map((p) => ({
@@ -295,7 +324,9 @@ export default async function CategoryPage({ params, searchParams }: Props) {
                           price: v.price ? Number(v.price) : null,
                           salePrice: v.salePrice ? Number(v.salePrice) : null,
                         })) || [],
+                      category: product.category, // 🟢 Hiyerarşi parentId
                     }}
+                    coupons={activeCoupons} // 🟢 Kuponlar
                   />
                 ))}
               </div>

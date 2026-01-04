@@ -14,13 +14,32 @@ interface ProductType {
   salePrice: number | null;
   images: { url: string; isMain: boolean }[];
   stock: number;
+  categoryId: string; // 🟢 CategoryId eklendi
+  category: { parentId: string | null };
+}
+
+interface CouponType {
+  code: string;
+  type: "PERCENTAGE" | "FIXED";
+  value: number;
+  categoryId: string | null;
+  usageLimit?: number | null;
+  usedCount?: number;
 }
 
 interface Props {
   products: ProductType[];
+  coupons?: CouponType[]; // 🟢 Kuponlar eklendi
 }
 
-export default function RelatedProductsCarousel({ products }: Props) {
+/**
+ * İlgili Ürünler Kaydırıcısı (Carousel)
+ * 
+ * - Mouse ve dokunmatik ile kaydırılabilir yatay liste.
+ * - Navigasyon okları ile kontrol edilebilir.
+ * - "Sepete Ekle" butonu entegreli ürün kartları içerir.
+ */
+export default function RelatedProductsCarousel({ products, coupons = [] }: Props) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Kaydırma Fonksiyonu
@@ -76,6 +95,25 @@ export default function RelatedProductsCarousel({ products }: Props) {
             ? Math.round(((rawPrice - rawSalePrice!) / rawPrice) * 100)
             : 0;
 
+          // 🟢 Kupon Hesaplama (En iyisini bul)
+          const validCoupon = coupons
+             .filter(c => {
+                 // 1. Limit Kontrolü
+                 if (c.usageLimit && c.usageLimit > 0) {
+                     if ((c.usedCount || 0) >= c.usageLimit) return false;
+                 }
+                 
+                 // 2. Kategori ve Hiyerarşi Kontrolü
+                 if (!c.categoryId) return true; // Genel kupon
+                 
+                 if (c.categoryId === item.categoryId) return true; // Direkt kategori
+                 
+                 if (item.category?.parentId && c.categoryId === item.category.parentId) return true; // Üst kategori
+                 
+                 return false;
+             })
+             .sort((a,b) => b.value - a.value)[0];
+
           // Sepete ekle butonu için veri
           const cartProductData = {
             id: item.id,
@@ -108,12 +146,24 @@ export default function RelatedProductsCarousel({ products }: Props) {
                   />
                 </Link>
 
-                {/* İndirim Rozeti */}
-                {hasDiscount && (
-                  <span className="absolute top-2 left-2 bg-gradient-to-r from-[#764BA2] to-[#ff4757] text-white text-[10px] font-extrabold px-2 py-0.5 rounded shadow-sm animate-pulse">
-                    %{discountRate}
-                  </span>
-                )}
+                {/* İndirim ve Kupon Rozeti */}
+                <div className="absolute top-2 left-2 flex flex-col gap-1 items-start">
+                    {hasDiscount && (
+                    <span className="bg-gradient-to-r from-[#764BA2] to-[#ff4757] text-white text-[10px] font-extrabold px-2 py-0.5 rounded shadow-sm animate-pulse">
+                        %{discountRate}
+                    </span>
+                    )}
+                    
+                    {/* 🟢 Kupon Badge */}
+                    {validCoupon && (
+                        <span className="bg-white/95 backdrop-blur-sm text-indigo-600 text-[9px] font-bold px-1.5 py-0.5 rounded shadow-md border border-indigo-100 border-dashed flex items-center gap-1">
+                             <span>{validCoupon.code}</span>
+                             <span className="text-[8px] opacity-80 border-l border-indigo-200 pl-1">
+                                {validCoupon.type === "PERCENTAGE" ? `%${validCoupon.value}` : `-${validCoupon.value}₺`}
+                             </span>
+                        </span>
+                    )}
+                </div>
               </div>
 
               {/* Bilgi Alanı */}

@@ -3,6 +3,13 @@ import ProductForm from "@/components/features/admin/products/product-form";
 
 export const dynamic = "force-dynamic";
 
+/**
+ * Yeni Ürün Ekleme Sayfası
+ * 
+ * Yeni bir ürün oluşturmak için gerekli formu gösterir.
+ * - Kategori ve marka verilerini veritabanından çekerek forma (`ProductForm`) iletir.
+ * - İç içe geçmiş kategori yapısını (children, attributes) dahil eder.
+ */
 export default async function NewProductPage() {
   const categories = await prisma.category.findMany({
     where: { parentId: null },

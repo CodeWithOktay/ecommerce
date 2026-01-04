@@ -9,6 +9,17 @@ import CartButton from "../features/cart/cart-button";
 import CategoryHeader from "../features/category/category-header";
 import { Heart } from "lucide-react";
 
+/**
+ * Web Sitesi Üst Bilgisi (Header)
+ * 
+ * - Logo
+ * - Arama Çubuğu
+ * - Kullanıcı Menüsü
+ * - Sepet Butonu
+ * - Kategori Navigasyonu (Alt Katman)
+ * 
+ * Veritabanından ana kategorileri çeker ve CategoryHeader'a iletir.
+ */
 export default async function Header() {
   const categories = await prisma.category.findMany({
     where: { parentId: null },

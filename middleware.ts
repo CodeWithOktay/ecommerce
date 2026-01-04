@@ -1,3 +1,12 @@
+/**
+ * Next.js Middleware
+ * 
+ * Bu dosya, tüm HTTP isteklerini karşılar ve yönlendirme kurallarını uygular:
+ * - Kimlik doğrulama kontrolü (Oturum var mı?)
+ * - Rol tabanlı erişim kontrolü (Admin mi?)
+ * - Sayfa koruması (Giriş yapmamış kullanıcıyı login'e yönlendirme)
+ */
+
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
@@ -5,6 +14,7 @@ import { getToken } from "next-auth/jwt";
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
+  // JWT Token'ı güvenli şekilde al
   const token = await getToken({
     req,
     secret: process.env.NEXTAUTH_SECRET,

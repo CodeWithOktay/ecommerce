@@ -1,5 +1,11 @@
 import type { NextConfig } from "next";
 
+/**
+ * Next.js Konfigürasyonu
+ * 
+ * - Resim alan adları (remotePatterns)
+ * - Deneysel özellikler (Server Actions limitleri)
+ */
 const nextConfig: NextConfig = {
   /* config options here */
   images: {

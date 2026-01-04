@@ -1,37 +1,56 @@
+/**
+ * Admin Dashboard Veri Servisi
+ * 
+ * Bu modül, admin paneli için gerekli tüm istatistiklerin hesaplanmasını sağlar:
+ * - Toplam gelir, sipariş ve kullanıcı sayıları
+ * - Aylık değişim oranları (Büyüme metrikleri)
+ * - Son siparişler ve kategori dağılımı
+ * - Satış grafiği verileri
+ */
+
 "use server";
 
 import { prisma } from "@/lib/db";
 
 /**
- * Helper function to calculate percentage change
- * İki değer arasındaki yüzdelik değişimi hesaplar.
- * Örn: Geçen ay 100, Bu ay 120 -> %20 artış.
+ * Yüzdelik Değişim Hesaplayıcı
+ * 
+ * İki periyot arasındaki değişimi yüzde olarak hesaplar.
+ * @param current - Şimdiki değer
+ * @param previous - Önceki değer
+ * @returns Yüzdelik değişim oranı
  */
 function calculatePercentageChange(current: number, previous: number): number {
   if (previous === 0) return current === 0 ? 0 : 100;
   return ((current - previous) / previous) * 100;
 }
 
+/**
+ * Dashboard Verilerini Getirir
+ * 
+ * Tek bir sunucu isteğiyle tüm panel verilerini toplayıp döner.
+ * Performans için Promise.all ile paralel sorgular çalıştırır.
+ */
 export async function getDashboardData() {
   const now = new Date();
 
-  // Define date ranges for Current Month and Previous Month
-  // Bu ayın başlangıç (1'i) ve bitiş (30/31'i) tarihleri
+  // --- TARİH ARALIKLARI ---
+  // Bu ayın başlangıç ve bitişi
   const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
   const currentMonthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
 
-  // Geçen ayın başlangıç ve bitiş tarihleri
+  // Geçen ayın başlangıç ve bitişi
   const prevMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
   const prevMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
 
-  // --- 1. REVENUE METRICS (GELİR) ---
+  // --- 1. GELİR METRİKLERİ (REVENUE) ---
   const revenueQueries = await Promise.all([
-    // Total Revenue (Lifetime)
+    // Toplam Gelir (İptal edilmemiş tüm siparişler)
     prisma.order.aggregate({
       _sum: { total: true },
       where: { status: { not: "CANCELLED" } },
     }),
-    // Current Month Revenue
+    // Bu Ayın Geliri
     prisma.order.aggregate({
       _sum: { total: true },
       where: {
@@ -39,7 +58,7 @@ export async function getDashboardData() {
         createdAt: { gte: currentMonthStart, lte: currentMonthEnd },
       },
     }),
-    // Previous Month Revenue
+    // Geçen Ayın Geliri
     prisma.order.aggregate({
       _sum: { total: true },
       where: {
@@ -53,15 +72,15 @@ export async function getDashboardData() {
   const currentMonthRevenue = Number(revenueQueries[1]._sum.total) || 0;
   const prevMonthRevenue = Number(revenueQueries[2]._sum.total) || 0;
 
-  // --- 2. ORDERS METRICS (SİPARİŞLER) ---
+  // --- 2. SİPARİŞ METRİKLERİ (ORDERS) ---
   const orderQueries = await Promise.all([
-    // Total Orders
+    // Toplam Sipariş
     prisma.order.count(),
-    // Current Month Orders
+    // Bu Ayın Siparişleri
     prisma.order.count({
       where: { createdAt: { gte: currentMonthStart, lte: currentMonthEnd } },
     }),
-    // Previous Month Orders
+    // Geçen Ayın Siparişleri
     prisma.order.count({
       where: { createdAt: { gte: prevMonthStart, lte: prevMonthEnd } },
     }),
@@ -71,7 +90,7 @@ export async function getDashboardData() {
   const currentMonthOrders = orderQueries[1];
   const prevMonthOrders = orderQueries[2];
 
-  // --- 3. USER METRICS (KULLANICILAR) ---
+  // --- 3. KULLANICI METRİKLERİ (USERS) ---
   const userQueries = await Promise.all([
     prisma.user.count(),
     prisma.user.count({
@@ -86,16 +105,15 @@ export async function getDashboardData() {
   const currentMonthUsers = userQueries[1];
   const prevMonthUsers = userQueries[2];
 
-  // --- 4. PRODUCT METRICS (ÜRÜNLER) ---
-  // Note: We sum 'quantity' from OrderItem, excluding cancelled orders
-  // İptal edilmemiş siparişlerin ürün adetlerini topluyoruz
+  // --- 4. ÜRÜN METRİKLERİ (PRODUCTS SOLD) ---
+  // İptal edilmemiş siparişlerde satılan toplam ürün adedi
   const productQueries = await Promise.all([
-    // Total Products Sold
+    // Toplam Satılan Ürün
     prisma.orderItem.aggregate({
       _sum: { quantity: true },
       where: { order: { status: { not: "CANCELLED" } } },
     }),
-    // Current Month Products Sold
+    // Bu Ay Satılan
     prisma.orderItem.aggregate({
       _sum: { quantity: true },
       where: {
@@ -105,7 +123,7 @@ export async function getDashboardData() {
         },
       },
     }),
-    // Previous Month Products Sold
+    // Geçen Ay Satılan
     prisma.orderItem.aggregate({
       _sum: { quantity: true },
       where: {
@@ -121,7 +139,7 @@ export async function getDashboardData() {
   const currentProductsSold = Number(productQueries[1]._sum.quantity) || 0;
   const prevProductsSold = Number(productQueries[2]._sum.quantity) || 0;
 
-  // --- 5. ORDER STATUS COUNTS ---
+  // --- 5. SİPARİŞ DURUM DAĞILIMI ---
   const orderStatusCounts = await prisma.order.groupBy({
     by: ["status"],
     _count: { _all: true },
@@ -134,8 +152,8 @@ export async function getDashboardData() {
   const cancelledCount =
     orderStatusCounts.find((c) => c.status === "CANCELLED")?._count?._all || 0;
 
-  // --- 6. AVAILABLE YEARS ---
-  // Get distinct years from orders for the year filter
+  // --- 6. FİLTRELEME İÇİN YILLAR ---
+  // Sipariş verilerinden mevcut yılları çeker
   const orderYears = await prisma.$queryRaw<{ year: number }[]>`
     SELECT DISTINCT EXTRACT(YEAR FROM "createdAt") as year 
     FROM "Order"
@@ -144,7 +162,7 @@ export async function getDashboardData() {
 
   const availableYears = orderYears.map((item) => Number(item.year));
   if (availableYears.length === 0) {
-    availableYears.push(new Date().getFullYear()); // Add current year if no orders exist
+    availableYears.push(new Date().getFullYear());
   }
 
   // --- 7. CHARTS & LISTS DATA ---

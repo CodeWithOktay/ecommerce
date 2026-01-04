@@ -14,6 +14,12 @@ interface CategoryHeaderProps {
   categories: CategoryWithChildren[];
 }
 
+/**
+ * Kategori Üst Bilgisi (Header)
+ * 
+ * Tüm kategorilerin listelendiği ana navigasyon barıdır.
+ * Sadece belirli sayfalarda (sepet, checkout hariç) görünür.
+ */
 export default function CategoryHeader({ categories }: CategoryHeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const pathname = usePathname(); // 👈 Mevcut sayfayı öğreniyoruz

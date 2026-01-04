@@ -3,6 +3,12 @@
 import { Settings } from "@prisma/client";
 import { Phone, Mail, MapPin } from "lucide-react";
 
+/**
+ * İletişim Ayarları Formu
+ * 
+ * Sitenin iletişim bilgilerini (E-posta, Telefon, Adres) düzenler.
+ * SettingsTabs bileşeni tarafından render edilir.
+ */
 export default function ContactSettingsForm({
   initialData,
 }: {

@@ -10,6 +10,14 @@ export const metadata = {
   title: "Favorilerim | KervanPazar",
 };
 
+/**
+ * Favorilerim Sayfası
+ * 
+ * Kullanıcının beğendiği ürünleri listeler.
+ * - Server-side rendering ile favorileri çeker.
+ * - Ürün kartlarını yeniden kullanarak tutarlı bir görünüm sağlar.
+ * - Kalp ikonunu manuel olarak dolu (isFavorited=true) gönderir.
+ */
 export default async function FavoritesPage() {
   const session = await getServerSession(authOptions);
 
@@ -28,6 +36,7 @@ export default async function FavoritesPage() {
         include: {
           images: true,
           reviews: { select: { rating: true } }, // 🟢 Yıldızlar için gerekli
+          category: { select: { parentId: true } }, // 🟢 Hiyerarşi için gerekli
         },
       },
     },
@@ -46,6 +55,8 @@ export default async function FavoritesPage() {
       price: Number(p.price),
       salePrice: p.salePrice ? Number(p.salePrice) : null,
       stock: p.stock,
+      categoryId: p.categoryId, // 🟢 Eklendi
+      category: p.category, // 🟢 Eklendi
       images: p.images.map((img) => ({
         url: img.url,
         isMain: img.isMain,

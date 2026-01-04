@@ -7,6 +7,12 @@ interface Props {
   text: string | null;
 }
 
+/**
+ * Ürün Açıklama Bileşeni
+ * 
+ * Uzun açıklamaları otomatik olarak kısaltır (Truncate).
+ * "Daha Fazla Göster" butonu ile tamamını açar.
+ */
 export default function ProductDescription({ text }: Props) {
   const [isExpanded, setIsExpanded] = useState(false);
   

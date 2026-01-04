@@ -20,6 +20,13 @@ const statusMap: Record<string, { label: string; color: string }> = {
   CANCELLED: { label: "İptal Edildi", color: "bg-red-50 text-red-700" },
 };
 
+/**
+ * Sipariş Durumu Güncelleyici (Admin)
+ * 
+ * Siparişin durumunu (Bekliyor, Hazırlanıyor vb.) değiştirir.
+ * - useTransition hook'u ile iyimser (optimistic) güncelleme yapar.
+ * - İşlem sırasında UI donmaz, arka planda günceller.
+ */
 export default function OrderStatusUpdater({
   orderId,
   currentStatus,

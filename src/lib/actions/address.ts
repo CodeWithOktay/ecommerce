@@ -1,3 +1,12 @@
+/**
+ * Adres Yönetimi Server Actions
+ * 
+ * Bu modül, kullanıcı adreslerinin yönetimini sağlar:
+ * - Yeni adres ekleme
+ * - Adres silme
+ * - Varsayılan adres belirleme
+ */
+
 "use server";
 
 import { getServerSession } from "next-auth";
@@ -5,11 +14,26 @@ import { authOptions } from "@/lib/actions/auth";
 import { prisma } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 
+/**
+ * Metin Düzenleyici
+ * 
+ * Girilen metni büyük harflere çevirir (Türkçe karakter desteği ile).
+ * Örn: "istanbul" -> "İSTANBUL"
+ */
 function capitalizeText(text: string) {
   if (!text) return "";
   return text.toLocaleUpperCase("tr-TR");
 }
 
+/**
+ * Yeni Adres Oluşturur
+ * 
+ * Kullanıcı için yeni bir teslimat adresi ekler.
+ * İlk eklenen adres otomatik olarak varsayılan seçilir.
+ * 
+ * @param formData - Adres formu verileri
+ * @returns Başarı/hata durumu
+ */
 export async function createAddress(formData: FormData) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return { success: false, message: "Oturum açın." };
@@ -50,6 +74,15 @@ export async function createAddress(formData: FormData) {
   }
 }
 
+/**
+ * Adres Siler
+ * 
+ * Belirtilen adresi siler. 
+ * Eğer varsayılan adres silinirse, kalan en yeni adres varsayılan yapılır.
+ * 
+ * @param addressId - Silinecek adres ID'si
+ * @returns Başarı/hata durumu
+ */
 export async function deleteAddress(addressId: string) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return { success: false, message: "Yetkisiz işlem." };
@@ -91,6 +124,14 @@ export async function deleteAddress(addressId: string) {
   }
 }
 
+/**
+ * Varsayılan Adresi Değiştirir
+ * 
+ * Seçilen adresi varsayılan yapar, diğerlerini pasif duruma getirir.
+ * 
+ * @param addressId - Yeni varsayılan adres ID'si
+ * @returns Başarı/hata durumu
+ */
 export async function setDefaultAddress(addressId: string) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return { success: false, message: "Oturum açın." };

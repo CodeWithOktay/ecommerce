@@ -1,5 +1,6 @@
 "use client";
 
+// Cart hook
 import useCart, { Product } from "@/hooks/use-cart";
 import { ShoppingCart } from "lucide-react";
 import { MouseEventHandler } from "react";
@@ -11,6 +12,14 @@ interface AddToCartButtonProps {
   className?: string;
 }
 
+/**
+ * Sepete Ekle Butonu
+ * 
+ * Basit ama şık bir buton bileşeni.
+ * - Opsiyonel metin gösterimi (showText).
+ * - Dışarıdan className ile stil özelleştirme.
+ * - useCart hook'u ile sepete ürün ekler.
+ */
 export default function AddToCartButton({
   product,
   showText = true,

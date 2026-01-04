@@ -16,6 +16,16 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 
+/**
+ * Yönetim Paneli Kenar Çubuğu
+ * 
+ * Navigasyon linklerini ve özet istatistikleri (badge) içerir.
+ * Mobil cihazlarda overlay menü olarak, masaüstünde sabit sidebar olarak çalışır.
+ * 
+ * @param isOpen - Mobil menünün açık olup olmadığı
+ * @param onClose - Menüyü kapatma fonksiyonu
+ * @param stats - Sidebar'da gösterilecek dinamik sayılar (Sipariş, Stok vb.)
+ */
 interface AdminSidebarProps {
   isOpen: boolean;
   onClose: () => void;
@@ -31,10 +41,10 @@ interface AdminSidebarProps {
 }
 
 interface MenuItem {
-  href: string;
-  icon: React.ComponentType<{ className?: string }>;
-  label: string;
-  badge?: number;
+  href: string; // Link adresi
+  icon: React.ComponentType<{ className?: string }>; // İkon bileşeni
+  label: string; // Görünen isim
+  badge?: number; // Varsa bildirim sayısı
 }
 
 export default function AdminSidebar({

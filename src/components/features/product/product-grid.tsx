@@ -12,6 +12,13 @@ interface ProductGridProps {
   products: ProductWithImages[];
 }
 
+/**
+ * Ürün Grid Listesi
+ * 
+ * - Ürünleri responsive grid yapısında listeler.
+ * - Client-side sıralama (Fiyat, İsim) özelliği sunar.
+ * - Ürün bulunamadığında bilgilendirme mesajı gösterir.
+ */
 export function ProductGrid({ products }: ProductGridProps) {
   const [sortOrder, setSortOrder] = useState("default");
 

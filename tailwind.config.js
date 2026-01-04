@@ -1,4 +1,12 @@
 /** @type {import('tailwindcss').Config} */
+
+/**
+ * Tailwind CSS Konfigürasyonu
+ * 
+ * - Özel renk paleti (CSS değişkenleri üzerinden)
+ * - Animasyonlar (fadeIn, slideUp vb.)
+ * - Özel gölgeler ve blur efektleri
+ */
 const config = {
   content: [
     "./src/**/*.{js,ts,jsx,tsx,mdx}",

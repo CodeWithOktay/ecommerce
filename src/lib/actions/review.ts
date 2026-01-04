@@ -1,9 +1,24 @@
+/**
+ * Ürün Değerlendirme Sistemi Actions
+ * 
+ * Kullanıcıların satın aldıkları ürünlere yorum ve puan vermesini sağlar.
+ */
+
 "use server";
 
 import { prisma } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import { getServerSession } from "next-auth";
 
+/**
+ * Yorum Oluştur veya Güncelle
+ * 
+ * - Kullanıcının ürünü satın alıp teslim aldığını doğrular.
+ * - Varsa eski yorumu günceller, yoksa yeni oluşturur (Upsert).
+ * - Yorumlar varsayılan olarak onaysız (isApproved: false) oluşturulur.
+ * 
+ * @param formData - Yorum verileri (productId, rating, comment)
+ */
 export async function createOrUpdateReviewAction(formData: FormData) {
   const session = await getServerSession();
 

@@ -33,6 +33,15 @@ interface Address {
   addressLine: string;
 }
 
+/**
+ * Ödeme Sayfası (Checkout)
+ * 
+ * 2 Adımlı ödeme süreci:
+ * 1. Adres Seçimi: Kayıtlı adreslerden seçim veya yeni adres ekleme.
+ * 2. Ödeme Bilgileri: Kredi kartı form simülasyonu.
+ * 
+ * Son adımda `createOrder` action'ı çağrılarak sipariş oluşturulur.
+ */
 export default function CheckoutPage() {
   const cart = useCart();
   const router = useRouter();
@@ -65,6 +74,7 @@ export default function CheckoutPage() {
   });
 
   // 🟢 SAYFA YÜKLENİRKEN ADRESLERİ ÇEK
+  // Session üzerinden kullanıcının kayıtlı adreslerini getiri.
   useEffect(() => {
     setMounted(true);
     async function fetchAddresses() {
@@ -137,10 +147,13 @@ export default function CheckoutPage() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  // FİNAL ONAYLAMA
+  // Adres ve ödeme bilgileri alındıktan sonra siparişi oluşturur.
   const handleFinalSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
+    // Adresi tek bir string formatına getir (Veritabanı yapısına göre değişebilir)
     const formattedAddress = `
       ${addressData.title ? `(${addressData.title}) ` : ""}
       ${addressData.fullAddress}

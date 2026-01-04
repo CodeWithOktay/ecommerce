@@ -28,6 +28,12 @@ const newPasswordSchema = z
 
 type NewPasswordFormValues = z.infer<typeof newPasswordSchema>;
 
+/**
+ * Yeni Şifre Belirleme Formu
+ * 
+ * Şifre sıfırlama linkine tıklandıktan sonra açılan sayfa.
+ * URL'deki token'ı alarak backend'e doğrulamaya gönderir.
+ */
 function NewPasswordForm() {
   const searchParams = useSearchParams();
   const token = searchParams.get("token");

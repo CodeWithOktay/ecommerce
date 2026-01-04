@@ -3,6 +3,12 @@
 import { Settings } from "@prisma/client";
 import { Instagram, Facebook, Twitter, Link as LinkIcon } from "lucide-react";
 
+/**
+ * Sosyal Medya Ayarları Formu
+ * 
+ * Instagram, Facebook ve Twitter bağlantılarını yönetir.
+ * Kullanıcı adı veya tam URL desteği input açıklamalarında belirtilmiştir.
+ */
 export default function SocialSettingsForm({
   initialData,
 }: {

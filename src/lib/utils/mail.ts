@@ -1,8 +1,19 @@
+/**
+ * E-posta Gönderme Servisi
+ * 
+ * Bu modül, uygulama genelinde e-posta gönderme işlemlerini yönetir.
+ * Nodemailer kullanarak Gmail SMTP üzerinden e-posta gönderir.
+ */
+
 import nodemailer from "nodemailer";
 
-// Ortam değişkeninden domaini al
+// Uygulama domain'i (production veya local)
 const domain = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
+/**
+ * Nodemailer SMTP Transporter
+ * Gmail servisi üzerinden e-posta göndermek için yapılandırılmıştır
+ */
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
@@ -11,9 +22,20 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+
+/**
+ * Şifre Sıfırlama E-postası Gönderir
+ * 
+ * Kullanıcıya şifre sıfırlama bağlantısı içeren HTML formatlı e-posta gönderir.
+ * E-posta, KervanPazar branding'i ile profesyonel bir tasarıma sahiptir.
+ * 
+ * @param email - Alıcı e-posta adresi
+ * @param token - Şifre sıfırlama token'ı
+ */
 export const sendPasswordResetEmail = async (email: string, token: string) => {
   const resetLink = `${domain}/new-password?token=${token}`;
 
+  // Logo URL'i (localhost için placeholder, production için gerçek logo)
   const logoUrl = domain.includes("localhost")
     ? "https://cdn-icons-png.flaticon.com/512/3081/3081329.png"
     : `${domain}/kervanpazar-logo.png`;
@@ -88,8 +110,15 @@ export const sendPasswordResetEmail = async (email: string, token: string) => {
   });
 };
 
-// lib/mail.ts dosyasının en altına ekle:
 
+/**
+ * İletişim Formu E-postası Gönderir
+ * 
+ * Kullanıcıların gönderdiği iletişim formu mesajlarını admin e-postasına iletir.
+ * Gönderen bilgileri ve mesaj içeriği düzenli bir HTML formatında sunulur.
+ * 
+ * @param data - İletişim formu verileri (isim, email, konu, mesaj)
+ */
 export const sendContactEmail = async (data: {
   name: string;
   email: string;

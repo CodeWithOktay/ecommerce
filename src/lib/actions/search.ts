@@ -1,7 +1,19 @@
+/**
+ * Ürün Arama Servisi
+ * 
+ * Veritabanında ürün isminde veya açıklamasında arama yapar.
+ */
+
 "use server";
 
 import { prisma } from "@/lib/db";
 
+/**
+ * Veritabanında Ürün Arar
+ * 
+ * @param query - Arama metni
+ * @returns Eşleşen ürünlerin listesi (Serileştirilmiş formatta)
+ */
 export async function searchProductsInDb(query: string) {
   try {
     if (!query) return [];

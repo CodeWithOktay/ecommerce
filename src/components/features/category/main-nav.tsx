@@ -11,6 +11,14 @@ interface MainNavProps {
   onShowAllClick: () => void;
 }
 
+/**
+ * Ana Navigasyon Çubuğu
+ * 
+ * Kategorileri yatay olarak listeler.
+ * - "Tüm Kategoriler" butonu ile yan menüyü açar.
+ * - Mobilde yatay kaydırma (horizontal scroll) desteği vardır.
+ * - SEO dostu URL yapısı kullanır (/category/[slug]).
+ */
 export function MainNav({ categories, onShowAllClick }: MainNavProps) {
   const [hoveredCategory, setHoveredCategory] = useState<string | null>(null);
 

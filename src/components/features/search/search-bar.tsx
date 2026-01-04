@@ -9,6 +9,13 @@ interface SearchBarProps {
   onSearch?: (query: string) => void;
 }
 
+/**
+ * Arama Çubuğu Bileşeni
+ * 
+ * - Kullanıcıyı '/search' sayfasına yönlendirir.
+ * - URL query parametresi olarak arama metnini gönderir.
+ * - Mobil cihazlarda form gönderilince klavyeyi otomatik kapatır.
+ */
 export function SearchBar({ onSearch }: SearchBarProps) {
   const [value, setValue] = useState("");
   const router = useRouter();

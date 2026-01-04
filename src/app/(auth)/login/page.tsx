@@ -21,6 +21,14 @@ const loginSchema = z.object({
 // Şemadan tip türetme
 type LoginFormValues = z.infer<typeof loginSchema>;
 
+/**
+ * Giriş Sayfası
+ * 
+ * Kullanıcıların e-posta ve şifre ile sisteme giriş yapmasını sağlar.
+ * - React Hook Form ve Zod ile validasyon.
+ * - NextAuth `signIn` fonksiyonu ile kimlik doğrulama.
+ * - Başarılı girişte role göre (Admin/User) yönlendirme.
+ */
 export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();

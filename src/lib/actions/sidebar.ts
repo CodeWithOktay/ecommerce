@@ -1,7 +1,19 @@
+/**
+ * Admin Sidebar İstatistikleri
+ * 
+ * Admin panelinin kenar çubuğunda gösterilen özet sayıları getirir.
+ * (Bekleyen sipariş, Kritik stok vb.)
+ */
+
 "use server";
 
 import { prisma } from "@/lib/db";
 
+/**
+ * Kenar Çubuğu İstatistiklerini Getir
+ * 
+ * @returns {Promise<Object>} İstatistik sayıları
+ */
 export async function getSidebarStats() {
   // Tüm sorguları aynı anda (paralel) çalıştırıyoruz, performans artışı için
   const [

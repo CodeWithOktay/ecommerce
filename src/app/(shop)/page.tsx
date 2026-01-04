@@ -1,3 +1,4 @@
+import { Coupon } from "@prisma/client";
 import { Lock, Star, Truck, AlertCircle } from "lucide-react";
 import { prisma } from "@/lib/db";
 import ProductCard from "@/components/features/product/product-card";
@@ -8,15 +9,23 @@ import HeroSlider from "@/components/features/banner/banner-slider"; // 🟢 1. 
 // Ensure the page fetches fresh data on every request
 export const revalidate = 0;
 
+/**
+ * Ana Sayfa
+ * 
+ * Mağazanın açılış sayfası.
+ * - Server Componenet olarak çalışır.
+ * - Paralel veri çekme (Promise.all) ile performans optimize edilmiştir.
+ * - Ürünler, bannerlar ve favoriler eş zamanlı yüklenir.
+ */
 export default async function HomePage() {
-  // --- USER SESSION CHECK ---
+  // --- KULLANICI OTURUM KONTROLÜ ---
   const session = await getServerSession(authOptions);
   const userId = session?.user?.id;
 
-  // --- PARALLEL DATA FETCHING ---
-  // We use Promise.all to fetch products, banners, and favorites simultaneously for better performance.
-  const [favorites, rawProducts, banners] = await Promise.all([
-    // 1. Fetch Favorites (if user is logged in)
+  // --- PARALEL VERİ ÇEKME ---
+  // Promise.all kullanarak ürünleri, bannerları ve favorileri aynı anda çekeriz.
+  const [favorites, rawProducts, banners, rawCoupons] = await Promise.all([
+    // 1. Favorileri Getir (Kullanıcı giriş yaptıysa)
     userId
       ? prisma.favorite.findMany({
           where: { userId: userId },
@@ -24,7 +33,7 @@ export default async function HomePage() {
         })
       : Promise.resolve([]),
 
-    // 2. Fetch Products
+    // 2. Ürünleri Getir (Aktif ve arşivlenmemiş olanlar)
     prisma.product.findMany({
       where: {
         isActive: true,
@@ -35,12 +44,12 @@ export default async function HomePage() {
         category: true,
         brand: true,
         variants: true,
-        reviews: { select: { rating: true } }, // Include reviews for star ratings
+        reviews: { select: { rating: true } }, // Yıldız oylaması için yorumlar
       },
       orderBy: {
-        createdAt: "desc",
+        createdAt: "desc", // En yeniden eskiye
       },
-      take: 12,
+      take: 12, // İlk 12 ürün
     }),
 
     // 3. 🟢 Fetch Active Banners
@@ -48,12 +57,32 @@ export default async function HomePage() {
       where: { isActive: true },
       orderBy: { order: "asc" },
     }),
+
+    // 4. 🟢 Fetch Active Coupons
+    prisma.coupon.findMany({
+      where: {
+        isActive: true,
+        OR: [{ startDate: null }, { startDate: { lte: new Date() } }],
+        AND: [{ OR: [{ endDate: null }, { endDate: { gte: new Date() } }] }],
+      },
+      orderBy: { value: "desc" },
+    }),
   ]);
 
-  // Extract favorite IDs
+  // Favori ID'lerini listeye çevir
   const favoriteIds = favorites.map((fav) => fav.productId);
 
-  // 4. Data Transformation (Decimal -> Number)
+  // 🟢 Kupon verilerini dönüştür (Decimal -> Number)
+  const activeCoupons = (rawCoupons || []).map((c: Coupon) => ({
+    ...c,
+    value: Number(c.value),
+    minAmount: Number(c.minAmount),
+    usageLimit: c.usageLimit ? Number(c.usageLimit) : null,
+    usedCount: c.usedCount || 0
+  }));
+
+  // 4. Veri Dönüştürme (Decimal -> Number)
+  // Prisma Decimal tiplerini frontend'de kullanmak için number'a çeviriyoruz.
   const products = rawProducts.map((product) => ({
     ...product,
     price: Number(product.price),
@@ -95,6 +124,7 @@ export default async function HomePage() {
                     key={product.id}
                     product={product}
                     isFavorited={isFav}
+                    coupons={activeCoupons} // 🟢 Kuponlar gönderiliyor
                   />
                 );
               })}

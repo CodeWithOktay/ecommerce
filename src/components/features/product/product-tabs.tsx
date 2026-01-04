@@ -37,6 +37,15 @@ interface Props {
   isUserBought?: boolean;
 }
 
+/**
+ * Ürün Detay Sekmeleri (Tabs)
+ * 
+ * Ürünle ilgili detaylı bilgileri kategorize eder:
+ * 1. Açıklama: HTML/Text içeriği.
+ * 2. Özellikler: Teknik detay tablosu.
+ * 3. Değerlendirmeler: Yorumlar ve puanlar.
+ * 4. İade & Teslimat: Statik bilgilendirme metni.
+ */
 export default function ProductTabs({
   description,
   attributes,

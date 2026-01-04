@@ -21,6 +21,15 @@ interface AdminLayoutClientProps {
   };
 }
 
+/**
+ * Admin Layout (Client Side)
+ * 
+ * Yönetim panelinin ana iskelet yapısıdır.
+ * Şunları yönetir:
+ * 1. Kimlik Doğrulama: Sadece ADMIN/SUPER_ADMIN yetkisi olanları içeri alır.
+ * 2. Yönlendirme: Yetkisiz girişleri login veya unauthorized sayfasına atar.
+ * 3. Yapı: Sidebar, Header ve içerik alanını birleştirir.
+ */
 export default function AdminLayoutClient({
   children,
   stats,

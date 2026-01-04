@@ -7,6 +7,13 @@ import DeleteAddressBtn from "@/components/features/account/delete-address-btn";
 import SetDefaultBtn from "@/components/features/account/set-default-btn"; // 👈 Yeni buton
 import { MapPin, Phone, User } from "lucide-react";
 
+/**
+ * Adreslerim Sayfası
+ * 
+ * Kullanıcının kayıtlı adreslerini listeler.
+ * - Varsayılan adres en üstte ve yeşil çerçeve ile gösterilir.
+ * - Yeni adres ekleme, silme ve varsayılan yapma işlemleri yapılabilir.
+ */
 export default async function AddressesPage() {
   const session = await getServerSession(authOptions);
 

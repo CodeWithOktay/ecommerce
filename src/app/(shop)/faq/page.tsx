@@ -75,6 +75,13 @@ const categories = [
   ...new Set(faqs.map((faq) => faq.category)),
 ];
 
+/**
+ * Sıkça Sorulan Sorular Sayfası
+ * 
+ * - Kategorize edilmiş soru-cevap listesi.
+ * - Client-side arama ve filtreleme.
+ * - Akordeon (Accordion) yapı ile açılır/kapanır cevaplar.
+ */
 export default function FAQPage() {
   // DÜZELTME: Index yerine sorunun kendisini (string) tutuyoruz.
   // Bu sayede filtreleme yapıldığında karışıklık olmaz.

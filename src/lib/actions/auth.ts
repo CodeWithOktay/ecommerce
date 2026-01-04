@@ -1,3 +1,13 @@
+/**
+ * NextAuth Yapılandırması
+ * 
+ * Bu dosya, uygulamanın kimlik doğrulama sistemini yönetir.
+ * - Rol tabanlı erişim kontrolü (ADMIN/USER)
+ * - Şifre doğrulama ve güvenlik
+ * - Denetim günlüğü (audit log) entegrasyonu
+ * - JWT token yönetimi
+ */
+
 import { Role } from "@prisma/client";
 import bcrypt from "bcrypt";
 import { NextAuthOptions } from "next-auth";
@@ -5,6 +15,9 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "../db";
 import { createLog } from "@/lib/logger"; 
 
+/**
+ * NextAuth Yapılandırma Seçenekleri
+ */
 export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
@@ -12,8 +25,17 @@ export const authOptions: NextAuthOptions = {
       credentials: {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
-        loginType: { label: "Login Type", type: "text" },
+        loginType: { label: "Login Type", type: "text" }, // "USER" veya "ADMIN"
       },
+      /**
+       * Kullanıcı Kimlik Doğrulama Fonksiyonu
+       * 
+       * Giriş bilgilerini doğrular ve güvenlik kontrollerini yapar:
+       * 1. Kullanıcı var mı kontrol eder
+       * 2. Admin/User portal ayrımını kontrol eder
+       * 3. Şifre doğrulaması yapar
+       * 4. Tüm işlemleri audit log'a kaydeder
+       */
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
           throw new Error("E-posta ve şifre gereklidir.");
@@ -26,7 +48,7 @@ export const authOptions: NextAuthOptions = {
             where: { email },
           });
 
-          // 🚨 1. KULLANICI BULUNAMADI
+          // 1. Kullanıcı Bulunamadı Kontrolü
           if (!user || !user.passwordHash) {
             await createLog({
               action: "LOGIN_FAILED",
@@ -36,10 +58,10 @@ export const authOptions: NextAuthOptions = {
             throw new Error("Kullanıcı bulunamadı.");
           }
 
-          // 🚨 2. ADMIN GİZLİLİĞİ (Admin, Müşteri Girişinden Giremesin)
+          // 2. Admin Gizliliği Kontrolü
+          // Admin kullanıcılar müşteri portalından giriş yapamaz
           if (credentials.loginType === "USER") {
             if (user.role === "ADMIN") {
-              // Admin müşteri kapısından girmeye çalışırsa logla ama kullanıcıya belli etme
               await createLog({
                 action: "WRONG_PORTAL",
                 details: `Admin hesabı (${email}) müşteri panelinden girmeye çalıştı.`,
@@ -49,7 +71,8 @@ export const authOptions: NextAuthOptions = {
             }
           }
 
-          // 🚨 3. YETKİSİZ GİRİŞ (Müşteri, Admin Paneline Giremesin)
+          // 3. Yetkisiz Erişim Kontrolü
+          // Normal kullanıcılar admin paneline erişemez
           if (credentials.loginType === "ADMIN") {
             if (user.role !== "ADMIN") {
               await createLog({
@@ -61,12 +84,12 @@ export const authOptions: NextAuthOptions = {
             }
           }
 
+          // 4. Şifre Doğrulama
           const isPasswordValid = await bcrypt.compare(
             credentials.password,
             user.passwordHash
           );
 
-          // 🚨 4. HATALI ŞİFRE
           if (!isPasswordValid) {
             await createLog({
               action: "LOGIN_FAILED",
@@ -76,7 +99,7 @@ export const authOptions: NextAuthOptions = {
             throw new Error("Geçersiz şifre.");
           }
 
-          // Giriş Başarılı (Burada loglamıyoruz, events kısmında logluyoruz)
+          // Giriş Başarılı - Kullanıcı bilgilerini döndür
           return {
             id: user.id,
             email: user.email,
@@ -90,15 +113,22 @@ export const authOptions: NextAuthOptions = {
             lastName: user.lastName || undefined,
           };
         } catch (error) {
-          // Hataları olduğu gibi fırlat (NextAuth yakalasın diye)
+          // Hataları NextAuth'a ilet
           throw error;
         }
       },
     }),
   ],
 
-  // ✅ EVENTLER: Başarılı işlemler burada loglanır (Token oluştuğunda)
+  /**
+   * NextAuth Olayları (Events)
+   * Başarılı giriş/çıkış işlemlerini audit log'a kaydeder
+   */
   events: {
+    /**
+     * Giriş Başarılı Olayı
+     * Kullanıcı başarıyla giriş yaptığında tetiklenir
+     */
     async signIn({ user }) {
       const role = user.role;
       const action = role === "ADMIN" ? "ADMIN_LOGIN" : "USER_LOGIN";
@@ -109,6 +139,10 @@ export const authOptions: NextAuthOptions = {
         success: true,
       });
     },
+    /**
+     * Çıkış Olayı
+     * Kullanıcı çıkış yaptığında tetiklenir
+     */
     async signOut({ token }) {
       await createLog({
         action: "LOGOUT",
@@ -118,7 +152,15 @@ export const authOptions: NextAuthOptions = {
     },
   },
 
+  /**
+   * NextAuth Callback Fonksiyonları
+   * JWT token ve session yönetimi
+   */
   callbacks: {
+    /**
+     * JWT Callback
+     * Token oluşturulurken kullanıcı bilgilerini token'a ekler
+     */
     jwt: async ({ token, user }) => {
       if (user) {
         token.role = user.role;
@@ -130,6 +172,10 @@ export const authOptions: NextAuthOptions = {
       return token;
     },
 
+    /**
+     * Session Callback
+     * Client tarafında kullanılacak session nesnesini oluşturur
+     */
     session: async ({ session, token }) => {
       if (token && session.user) {
         session.user.id = token.id as string;
@@ -142,14 +188,25 @@ export const authOptions: NextAuthOptions = {
     },
   },
 
+  /**
+   * Özel Sayfa Yönlendirmeleri
+   */
   pages: {
-    signIn: "/login",
-    error: "/login",
+    signIn: "/login",      // Giriş sayfası
+    error: "/login",       // Hata sayfası
   },
 
+  /**
+   * Session Yapılandırması
+   * JWT stratejisi kullanılır (veritabanı session'ı yerine)
+   */
   session: {
     strategy: "jwt",
   },
 
+  /**
+   * NextAuth Gizli Anahtarı
+   * Token şifreleme için kullanılır
+   */
   secret: process.env.NEXTAUTH_SECRET,
 };

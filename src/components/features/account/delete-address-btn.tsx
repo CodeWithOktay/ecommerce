@@ -5,6 +5,12 @@ import { Trash2, Loader2 } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 
+/**
+ * Adres Silme Butonu
+ * 
+ * Kullanıcı onayından sonra adresi siler.
+ * Yüklenme durumunda (loading) ikonu değiştirir.
+ */
 export default function DeleteAddressBtn({ id }: { id: string }) {
   const [loading, setLoading] = useState(false);
 

@@ -33,6 +33,14 @@ interface ProfileFormProps {
   };
 }
 
+/**
+ * Profil Düzenleme Formu
+ * 
+ * Kullanıcı bilgilerini ve şifresini güncellemek için kullanılır.
+ * - Server Action (`updateUserProfile`) ile iletişim kurar.
+ * - Şifre değişimi için mevcut şifre zorunluluğu ve yeni şifre eşleşme kontrolü yapar.
+ * - Telefon numarası formatlama mantığı içerir.
+ */
 export default function ProfileForm({ user, address }: ProfileFormProps) {
   const [loading, setLoading] = useState(false);
   const [phone, setPhone] = useState(user.phoneNumber || "");
@@ -81,6 +89,7 @@ export default function ProfileForm({ user, address }: ProfileFormProps) {
     }
   }
 
+  // Telefon numarası formatlama (05XX XXX XX XX)
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let val = e.target.value.replace(/\D/g, "");
     if (val.length > 11) val = val.slice(0, 11);

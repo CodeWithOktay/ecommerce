@@ -14,6 +14,13 @@ import {
   User as UserIcon,
 } from "lucide-react";
 
+/**
+ * Profil Sayfası
+ * 
+ * Kullanıcının kişisel bilgilerini görüntüler ve düzenlemesine olanak tanır.
+ * - Üst kısımda görsel, rol ve özet bilgiler (Sipariş sayısı, Üyelik tarihi) yer alır.
+ * - Alt kısımda düzenlenebilir form ve iletişim bilgileri bulunur.
+ */
 export default async function ProfilePage() {
   const session = await getServerSession(authOptions);
 

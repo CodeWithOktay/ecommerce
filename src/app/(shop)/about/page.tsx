@@ -8,6 +8,11 @@ export const metadata: Metadata = {
     "KervanPazar'ın misyonu, vizyonu ve değerleri. Güven ve kalite üzerine kurulu e-ticaret yolculuğumuzu keşfedin.",
 };
 
+/**
+ * Hakkımızda Sayfası
+ * 
+ * Marka hikayesi, misyon, vizyon ve değerlerin anlatıldığı statik bilgilendirme sayfası.
+ */
 const AboutPage = () => {
   return (
     <main className="bg-gray-50">

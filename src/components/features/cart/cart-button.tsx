@@ -1,10 +1,17 @@
 "use client";
 
+// Zustand hook for cart state
 import useCart from "@/hooks/use-cart";
 import { ShoppingCart } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
+/**
+ * Sepet Butonu
+ * 
+ * Header'da sepet ikonunu ve toplam ürün sayısını gösterir.
+ * Client-side veri (zustand) kullandığı için hydration kontrolü yapar.
+ */
 export default function CartButton() {
   const { getTotalItems } = useCart();
 

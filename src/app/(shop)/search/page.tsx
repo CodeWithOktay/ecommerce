@@ -6,6 +6,13 @@ import { ProductGrid } from "@/components/features/product/product-grid";
 import { useEffect } from "react";
 import { useSearchStore } from "@/hooks/use-search-store";
 
+/**
+ * Arama Sayfası
+ * 
+ * Kullanıcının arama sorgusuna göre ürünleri listeler.
+ * - URL query parametresini dinler.
+ * - `useSearchStore` hook'u ile client-side arama yapar.
+ */
 export default function SearchPage() {
   const searchParams = useSearchParams();
   const query = searchParams.get("query") || "";

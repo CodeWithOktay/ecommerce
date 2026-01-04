@@ -5,6 +5,12 @@ import { ShoppingBag } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
+/**
+ * Navbar Sepet Aksiyonları
+ * 
+ * Sepetteki ürün sayısını gösteren ve sepete gitmeyi sağlayan buton.
+ * Client-side hook (useCart) kullandığı için hydration (isMounted) kontrolü yapar.
+ */
 export default function NavbarCartActions() {
   const [isMounted, setIsMounted] = useState(false);
   const cart = useCart();

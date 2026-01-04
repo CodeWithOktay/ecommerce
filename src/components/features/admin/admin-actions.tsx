@@ -20,9 +20,13 @@ import {
   Lock,
 } from "lucide-react";
 
-// ==========================================
-//  1. MODAL: Yönetici Düzenleme (Şifre Destekli)
-// ==========================================
+/**
+ * Admin Düzenleme Modalı
+ * 
+ * Yöneticilerin bilgilerini düzenlemek için kullanılan pop-up.
+ * - Ad, Soyad, Email ve Şifre güncellemelerini yönetir.
+ * - Şifre alanı opsiyoneldir, boş bırakılırsa değişmez.
+ */
 function EditAdminModal({
   user,
   isOpen,
@@ -150,9 +154,14 @@ function EditAdminModal({
   );
 }
 
-// ==========================================
-//  2. BİLEŞEN: Tablo Satır Aksiyonları (Düzenle, Sil, Durum)
-// ==========================================
+/**
+ * Admin Tablo Satır İşlemleri
+ * 
+ * Tablo üzerindeki hızlı aksiyon butonları:
+ * - Düzenle: Modalı açar.
+ * - Durum Değiştir: Aktif/Pasif yapar.
+ * - Sil: Yöneticiyi siler.
+ */
 export function AdminRowActions({ user }: { user: User }) {
   const [loading, setLoading] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -231,9 +240,12 @@ export function AdminRowActions({ user }: { user: User }) {
   );
 }
 
-// ==========================================
-//  3. BİLEŞEN: Yeni Yönetici Ekle Butonu & Modalı
-// ==========================================
+/**
+ * Yeni Admin Ekleme Butonu
+ * 
+ * Yeni yönetici oluşturma formunu içeren modalı açar.
+ * Başarılı işlem sonrası formu sıfırlar ve modalı kapatır.
+ */
 export function CreateAdminButton() {
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);

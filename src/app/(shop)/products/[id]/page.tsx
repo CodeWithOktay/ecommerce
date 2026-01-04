@@ -9,6 +9,15 @@ import ProductTabs from "@/components/features/product/product-tabs";
 import ProductMainSection from "@/components/features/product/product-main-section";
 import { authOptions } from "@/lib/auth/options";
 
+/**
+ * Ürün Detay Sayfası
+ * 
+ * Dinamik olarak tek bir ürünün detaylarını gösterir.
+ * - Server Component olarak çalışır.
+ * - Prisma ile ilişkisel veri (Kategori, Marka, Yorumlar, Varyantlar) çekilir.
+ * - Kullanıcı oturumu varsa favori durumu ve satın alma geçmişi kontrol edilir.
+ * - Ürüne özel aktif kuponları listeler.
+ */
 export default async function ProductDetailPage({
   params,
 }: {
@@ -52,7 +61,16 @@ export default async function ProductDetailPage({
     isFavorited = !!favorite;
   }
 
-  // 🟢 3. KUPONLARI ÇEK (YENİ EKLENDİ)
+  // 3. KUPONLARI ÇEK (YENİ EKLENDİ)
+  // Ürün kategorisine özel veya genel aktif kuponları bul.
+  // Tarih, aktiflik ve stok kontrolü yapılır.
+  
+  // Kategori hiyerarşisini kontrol et (Parent ID varsa onu da ekle)
+  const categoryIds = [product.categoryId];
+  if (product.category.parentId) {
+    categoryIds.push(product.category.parentId);
+  }
+
   const now = new Date();
   const rawCoupons = await prisma.coupon.findMany({
     where: {
@@ -60,14 +78,27 @@ export default async function ProductDetailPage({
       OR: [{ startDate: null }, { startDate: { lte: now } }],
       AND: [
         { OR: [{ endDate: null }, { endDate: { gte: now } }] },
-        { OR: [{ categoryId: null }, { categoryId: product.categoryId }] },
+        { 
+          OR: [
+            { categoryId: null }, 
+            { categoryId: { in: categoryIds } } // 🟢 Hiyerarşik kontrol
+          ] 
+        },
       ],
     },
-    orderBy: { value: "desc" },
+    orderBy: { value: "desc" }, // En yüksek indirim en üstte
   });
 
-  // Decimal objelerini Number'a çeviriyoruz (Hatanın ilacı burası)
-  const availableCoupons = rawCoupons.map((coupon) => ({
+  // Decimal objelerini Number'a çeviriyoruz ve limiti kontrol ediyoruz
+  const availableCoupons = rawCoupons
+    .filter(c => {
+       // 🟢 Kullanım limiti kontrolü
+       if (c.usageLimit && c.usageLimit > 0) {
+          return c.usedCount < c.usageLimit;
+       }
+       return true;
+    })
+    .map((coupon) => ({
     ...coupon,
     value: Number(coupon.value),
     minAmount: Number(coupon.minAmount),
@@ -89,6 +120,8 @@ export default async function ProductDetailPage({
       : 0;
 
   // 5. SATIN ALMA KONTROLÜ
+  // Kullanıcı bu ürünü daha önce satın almış mı?
+  // Bu bilgi, yorum yapma yetkisi veya "Satın aldınız" rozeti için kullanılır.
   const hasBought = session?.user?.email
     ? await prisma.order.findFirst({
         where: {
@@ -137,32 +170,33 @@ export default async function ProductDetailPage({
       <div className="container mx-auto px-4 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* --- SOL KOLON (Görseller) --- */}
-          <div className="lg:col-span-5">
-            <div className="bg-white rounded-xl border border-gray-200 p-4 sticky top-4">
-              <div className="relative aspect-square w-full rounded-lg overflow-hidden bg-white mb-4 group">
+          <div className="lg:col-span-12 xl:col-span-5">
+            <div className="sticky top-6">
+              <div className="relative aspect-square w-full rounded-2xl overflow-hidden bg-white/50 border-2 border-white shadow-2xl shadow-indigo-100/50 group">
                 {/* İNDİRİM ROZETİ */}
                 {hasDiscount && (
-                  <div className="absolute top-3 right-3 z-10 bg-red-600 text-white text-sm font-bold px-3 py-1 rounded-full shadow-md">
+                  <div className="absolute top-4 right-4 z-10 bg-white/90 backdrop-blur text-red-600 border border-red-100 text-sm font-bold px-4 py-1.5 rounded-full shadow-lg">
                     %{discountRate} İndirim
                   </div>
                 )}
 
+                {/* Ana Görsel */}
                 <Image
-                  src={mainImage?.url || "/placeholder.png"}
+                  src={mainImage?.url || "/placeholder.svg"}
                   alt={product.name}
                   fill
-                  className="object-contain hover:scale-105 transition-transform duration-500"
+                  className="object-contain p-8 hover:scale-105 transition-transform duration-700 ease-in-out"
                   priority
                 />
               </div>
 
               {/* KÜÇÜK RESİMLER */}
               {product.images.length > 1 && (
-                <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                <div className="flex gap-4 mt-6 overflow-x-auto pb-4 scrollbar-hide justify-center">
                   {product.images.map((img) => (
                     <div
                       key={img.id}
-                      className="relative w-16 h-16 flex-shrink-0 border rounded-lg overflow-hidden border-gray-200"
+                      className="relative w-20 h-20 flex-shrink-0 border-2 border-white bg-white rounded-xl overflow-hidden shadow-md cursor-pointer hover:border-indigo-400 transition-colors"
                     >
                       <Image
                         src={img.url}

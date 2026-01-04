@@ -12,6 +12,13 @@ interface BrandFilterProps {
   }[];
 }
 
+/**
+ * Marka Filtresi Bileşeni
+ * 
+ * Ürün listeleme sayfalarında markalara göre filtreleme yapar.
+ * Seçimleri URL query parametresi olarak saklar (?brands=1,2,3).
+ * Sayfa yenilenmeden filtreleme yapılmasını destekler.
+ */
 export default function BrandFilter({ brands }: BrandFilterProps) {
   const router = useRouter();
   const searchParams = useSearchParams();

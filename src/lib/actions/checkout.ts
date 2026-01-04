@@ -1,14 +1,37 @@
+/**
+ * Ödeme Sistemi Server Actions
+ * 
+ * Bu modül, sipariş oluşturma (checkout) süreçlerini yönetir:
+ * - Sepet kontrolü ve stok doğrulama
+ * - Stok düşümü ve sipariş oluşturma (Transaction ile atomik işlem)
+ */
+
 "use server";
 
 import {prisma} from "@/lib/db";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/actions/auth";
 
+/**
+ * Sepet Öğesi Tipi
+ */
 interface CartItemInput {
   productId: string;
   quantity: number;
 }
 
+/**
+ * Sipariş Oluşturur (Checkout)
+ * 
+ * 1. Kullanıcı oturumunu kontrol eder.
+ * 2. Sepetteki ürünlerin stoğunu veritabanından doğrular.
+ * 3. Yeterli stok varsa, stoktan düşer ve siparişi oluşturur.
+ * 4. Tüm bu işlemleri bir "Transaction" içinde yapar (Hepsi ya olur, ya hiçbiri olmaz).
+ * 
+ * @param cartItems - Sepetteki ürünler ve adetleri
+ * @param address - Seçilen teslimat adresi
+ * @returns Başarı durumu ve Sipariş ID'si
+ */
 export async function createOrder(cartItems: CartItemInput[], address: string) {
   const session = await getServerSession(authOptions);
 
@@ -26,6 +49,7 @@ export async function createOrder(cartItems: CartItemInput[], address: string) {
       const orderItemsData = [];
 
       for (const item of cartItems) {
+        // Ürünü veritabanından güncel haliyle çek
         const product = await tx.product.findUnique({
           where: { id: item.productId },
         });
@@ -34,6 +58,7 @@ export async function createOrder(cartItems: CartItemInput[], address: string) {
           throw new Error(`Ürün bulunamadı: ${item.productId}`);
         }
 
+        // Stok kontrolü
         if (product.stock < item.quantity) {
           throw new Error(`Stok yetersiz: ${product.name}`);
         }
@@ -47,12 +72,14 @@ export async function createOrder(cartItems: CartItemInput[], address: string) {
           price: product.price,
         });
 
+        // Stoktan düş
         await tx.product.update({
           where: { id: product.id },
           data: { stock: { decrement: item.quantity } },
         });
       }
 
+      // Siparişi kaydet
       const order = await tx.order.create({
         data: {
           userId: session.user.id,

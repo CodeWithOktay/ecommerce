@@ -11,9 +11,17 @@ interface Props {
   user: UserType;
 }
 
+/**
+ * Müşteri Düzenleme Formu
+ * 
+ * Yöneticinin müşteri bilgilerini düzenlemesini sağlar.
+ * - Ad, Soyad, Email ve Telefon bilgilerini yönetir.
+ * - useTransition ve optimistic UI güncellemelerini kullanır.
+ * - Server Action (updateUserProfile) ile iletişim kurar.
+ */
 export default function CustomerEditForm({ user }: Props) {
   const [isPending, startTransition] = useTransition();
-  const router = useRouter(); // 🟢 2. Router'ı tanımladık
+  const router = useRouter();
 
   const handleSubmit = (formData: FormData) => {
     startTransition(async () => {
@@ -21,11 +29,9 @@ export default function CustomerEditForm({ user }: Props) {
 
       if (result.success) {
         toast.success(result.message);
-        // 🟢 3. Başarılıysa 1 saniye sonra listeye geri gönder
-        // (Hemen gönderirsek toast mesajı okunmadan kaybolabilir)
         setTimeout(() => {
           router.push("/admin/customers");
-          router.refresh(); // Listeyi de tazele
+          router.refresh();
         }, 1000);
       } else {
         toast.error(result.message);
@@ -34,19 +40,7 @@ export default function CustomerEditForm({ user }: Props) {
   };
 
   return (
-    <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
-      <h3 className="font-bold text-lg text-gray-900 mb-6 pb-4 border-b border-gray-100 flex justify-between items-center">
-        <span>Hesap Bilgileri</span>
-        {/* İsteğe bağlı: Vazgeç butonu */}
-        <button
-          type="button"
-          onClick={() => router.back()}
-          className="text-xs text-gray-500 hover:text-gray-900 flex items-center gap-1"
-        >
-          <ArrowLeft size={12} /> Vazgeç
-        </button>
-      </h3>
-
+    <div className="space-y-6">
       <form action={handleSubmit} className="space-y-6">
         <input type="hidden" name="id" value={user.id} />
         <input type="hidden" name="role" value={user.role} />
@@ -58,116 +52,94 @@ export default function CustomerEditForm({ user }: Props) {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* AD */}
-          <div>
-            <label className="block text-xs font-bold text-gray-500 uppercase mb-2">
-              Ad
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+               Ad
             </label>
             <div className="relative">
-              <User
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-                size={18}
-              />
+              <User className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
               <input
                 name="firstName"
                 defaultValue={user.firstName || ""}
                 required
-                className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                className="w-full pl-11 pr-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all placeholder:text-gray-400 font-medium text-gray-900"
               />
             </div>
           </div>
 
           {/* SOYAD */}
-          <div>
-            <label className="block text-xs font-bold text-gray-500 uppercase mb-2">
-              Soyad
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+               Soyad
             </label>
             <div className="relative">
-              <User
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-                size={18}
-              />
+              <User className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
               <input
                 name="lastName"
                 defaultValue={user.lastName || ""}
                 required
-                className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                className="w-full pl-11 pr-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all placeholder:text-gray-400 font-medium text-gray-900"
               />
             </div>
           </div>
         </div>
 
         {/* EMAIL */}
-        <div>
-          <label className="block text-xs font-bold text-gray-500 uppercase mb-2">
-            Email
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+             Email Adresi
           </label>
           <div className="relative">
-            <Mail
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-              size={18}
-            />
+            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
             <input
               name="email"
               type="email"
               defaultValue={user.email || ""}
               required
-              className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+              className="w-full pl-11 pr-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all placeholder:text-gray-400 font-medium text-gray-900"
             />
           </div>
         </div>
 
         {/* TELEFON */}
-        <div>
-          <label className="block text-xs font-bold text-gray-500 uppercase mb-2">
-            Telefon
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+             Telefon Numarası
           </label>
           <div className="relative">
-            <Phone
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-              size={18}
-            />
+            <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
             <input
               name="phoneNumber"
-              type="tel" // Mobilde sayısal klavye açar
-              maxLength={11} // 11'den fazla basamaz
+              type="tel"
+              maxLength={11}
               defaultValue={user.phoneNumber || ""}
               placeholder="05xxxxxxxxx"
-              className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
-              // 👇 SİHİRLİ KOD: Sadece rakam girmesine izin verir ve 11'de keser
+              className="w-full pl-11 pr-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all placeholder:text-gray-400 font-medium text-gray-900"
               onInput={(e) => {
                 const target = e.target as HTMLInputElement;
-                // Rakam dışındaki her şeyi sil
                 target.value = target.value.replace(/[^0-9]/g, "");
               }}
             />
           </div>
-          <p className="text-[10px] text-gray-400 mt-1 ml-1">
-            Örn: 05xxxxxxxxx (11 Hane)
+          <p className="text-xs text-gray-400 pl-1">
+             Başına 0 ekleyerek 11 hane giriniz.
           </p>
         </div>
 
         {/* KAYDET BUTONU */}
-        <div className="pt-4 flex gap-3">
-          <button
-            type="button"
-            onClick={() => router.back()}
-            className="flex-1 py-3 rounded-xl font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 transition-all"
-          >
-            Vazgeç
-          </button>
-
+        <div className="pt-6 flex gap-4 border-t border-gray-100 mt-8">
           <button
             type="submit"
             disabled={isPending}
-            className="flex-[2] flex items-center justify-center gap-2 bg-indigo-600 text-white py-3 rounded-xl font-bold hover:bg-indigo-700 transition-all active:scale-95 shadow-lg shadow-indigo-200 disabled:opacity-70 disabled:cursor-not-allowed"
+            className="flex-1 bg-gray-900 text-white px-8 py-3.5 rounded-xl font-medium hover:bg-black disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-all shadow-xl shadow-gray-200 hover:shadow-2xl hover:-translate-y-0.5 active:translate-y-0"
           >
             {isPending ? (
               <>
-                <Loader2 size={18} className="animate-spin" /> Kaydediliyor...
+                 <Loader2 size={18} className="animate-spin" /> Kaydediliyor...
               </>
             ) : (
               <>
-                <Save size={18} /> Kaydet ve Çık
+                 <Save size={18} /> Değişiklikleri Kaydet
               </>
             )}
           </button>

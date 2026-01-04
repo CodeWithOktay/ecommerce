@@ -12,6 +12,14 @@ interface Props {
   isArchived: boolean;
 }
 
+/**
+ * Ürün İşlem Butonları
+ * 
+ * Tablo satırlarında her ürün için işlem yapmayı sağlar:
+ * - Düzenle (Edit): Ürün detay sayfasına yönlendirir.
+ * - Arşivle/Yayına Al: Ürün durumunu değiştirir.
+ * - Sil: Ürünü kalıcı olarak siler.
+ */
 export default function ProductActions({ id, isArchived }: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();

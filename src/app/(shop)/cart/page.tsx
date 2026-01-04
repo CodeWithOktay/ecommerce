@@ -24,6 +24,15 @@ import Image from "next/image";
 import Link from "next/link";
 import { slugify } from "@/lib/utils/utils";
 
+/**
+ * Sepet Sayfası
+ * 
+ * - Kullanıcının eklediği ürünleri listeler.
+ * - Miktar artırma/azaltma ve silme işlemleri.
+ * - İndirim ve kupon hesaplamaları.
+ * - Ödeme adımına yönlendirme.
+ * - Zustand (useCart) ile global state yönetimi.
+ */
 export default function CartPage() {
   const { items, removeItem, updateQuantity, removeAll, getTotalItems } =
     useCart();
@@ -44,6 +53,8 @@ export default function CartPage() {
   const isAdmin = session?.user?.role === "ADMIN";
 
   // --- KRİTİK HESAPLAMALAR ---
+  // Sepet toplamını frontend tarafında anlık hesaplar.
+  // Güvenlik notu: Gerçek ödeme sırasında bu hesaplamalar backend'de tekrar doğrulanmalıdır.
   const calculations = items.reduce(
     (acc, item) => {
       // 1. Ürünün Satış Fiyatı (İndirim varsa o, yoksa normal fiyat)
@@ -75,6 +86,7 @@ export default function CartPage() {
   const totalSavings = productSavings + couponDiscount;
 
   // --- KUPON İŞLEMLERİ (SİMÜLASYON) ---
+  // Gerçek bir uygulamada burası backend API'ye istek atmalıdır.
   const handleApplyCoupon = async () => {
     if (!couponCode.trim()) return;
     setIsCouponLoading(true);

@@ -8,6 +8,13 @@ interface OrderDetailPageProps {
   }>;
 }
 
+/**
+ * Sipariş Detay Sayfası
+ * 
+ * Belirli bir siparişin tüm detaylarını (ürünler, müşteri, adres vb.) veritabanından çeker.
+ * - Prisma ile ilişkili dataları (User, OrderItem, Product, Image) derinlemesine include eder.
+ * - Decimal tiplerini (fiyat, tutar) client component'e göndermeden önce number'a çevirir.
+ */
 export default async function OrderDetailPage(props: OrderDetailPageProps) {
   const params = await props.params;
   const order = await prisma.order.findUnique({

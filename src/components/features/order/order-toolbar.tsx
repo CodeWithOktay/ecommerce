@@ -16,6 +16,17 @@ interface OrderToolbarProps {
   availableYears?: number[];
 }
 
+/**
+ * Sipariş Araç Çubuğu (Admin)
+ * 
+ * Siparişleri filtrelemek ve aramak için gelişmiş araç seti.
+ * - Metin arama (Debounce ile)
+ * - Yıl ve Ay filtresi
+ * - Tarih aralığı filtresi
+ * - Statü filtresi
+ * 
+ * Tüm state URL query parametrelerinde saklanır (Bookmark paylaşılabilir).
+ */
 export default function OrderToolbar({
   availableYears = [],
 }: OrderToolbarProps) {

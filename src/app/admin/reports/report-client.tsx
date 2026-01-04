@@ -32,6 +32,13 @@ interface ReportsClientProps {
   };
 }
 
+/**
+ * Raporlar Client Bileşeni
+ * 
+ * Sipariş raporlarını tablo halinde görüntüler ve Excel'e dışa aktarma (Export) imkanı sunar.
+ * - 'xlsx' kütüphanesi kullanarak tarayıcı tabanlı Excel dosyası oluşturur.
+ * - Tabloda sipariş detaylarını, müşteri iletişim bilgilerini ve tutarları listeler.
+ */
 export default function ReportsClient({ data }: ReportsClientProps) {
   const router = useRouter();
 

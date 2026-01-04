@@ -18,6 +18,14 @@ interface ProductGalleryProps {
   discountRate?: number;
 }
 
+/**
+ * Ürün Galeri Bileşeni
+ * 
+ * - Ana görsel ve küçük resimler (thumbnails).
+ * - Zoom özelliği (mouse üzerine gelince).
+ * - Klavye ve buton ile resim değiştirme.
+ * - İndirim oranını köşe rozetinde gösterir.
+ */
 export default function ProductGallery({
   images,
   productName,

@@ -19,6 +19,14 @@ import SocialSettingsForm from "./social-settings-form";
 
 type Tab = "general" | "contact" | "social";
 
+/**
+ * Ayarlar Sekme Yöneticisi
+ * 
+ * Tüm ayar formlarını (Genel, İletişim, Sosyal) tek bir çatı altında toplar.
+ * - Client-side tab geçişleri sağlar.
+ * - Tek bir "Kaydet" butonu ile tüm form verilerini (hangi tabda olursa olsun) sunucuya gönderir.
+ * - Server Action: updateSettings
+ */
 export default function SettingsTabs({
   initialData,
 }: {

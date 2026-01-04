@@ -10,6 +10,12 @@ interface SetDefaultBtnProps {
   isDefault: boolean;
 }
 
+/**
+ * Varsayılan Adres Ayarlama Butonu
+ * 
+ * Seçili adresi kullanıcının varsayılan teslimat adresi yapar.
+ * Eğer zaten varsayalansa, sadece salt okunur bir etiket (badge) gösterir.
+ */
 export default function SetDefaultBtn({ id, isDefault }: SetDefaultBtnProps) {
   const [loading, setLoading] = useState(false);
 

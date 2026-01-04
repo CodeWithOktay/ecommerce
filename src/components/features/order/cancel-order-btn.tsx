@@ -21,6 +21,13 @@ const REASONS = [
   "Kargo adresini değiştirmek istiyorum",
 ];
 
+/**
+ * Sipariş İptal Butonu
+ * 
+ * Kullanıcının siparişi iptal etmesini sağlar.
+ * - Bir neden seçilmesini zorunlu kılar.
+ * - Sadece 'PENDING' (Bekleyen) durumundaki siparişlerde çalışır.
+ */
 export default function CancelOrderButton({
   orderId,
   status,

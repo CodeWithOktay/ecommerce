@@ -1,3 +1,10 @@
+/**
+ * Favori İşlemleri Server Actions
+ * 
+ * Kullanıcıların ürünleri favorilerine ekleyip çıkarmasını sağlar.
+ * Toggle mantığı ile çalışır (Ekliyse çıkarır, değilse ekler).
+ */
+
 "use server";
 
 import { getServerSession } from "next-auth";
@@ -5,6 +12,12 @@ import { authOptions } from "@/lib/actions/auth";
 import { prisma } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 
+/**
+ * Favori Durumunu Değiştir (Ekle/Çıkar)
+ * 
+ * @param productId - Ürün ID'si
+ * @returns Yeni durum (isFavorited: true/false) ve mesaj
+ */
 export async function toggleFavorite(productId: string) {
   const session = await getServerSession(authOptions);
 

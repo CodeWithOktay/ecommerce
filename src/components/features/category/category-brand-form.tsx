@@ -9,6 +9,12 @@ interface Props {
   categoryId: string;
 }
 
+/**
+ * Kategoriye Marka Ekleme Formu
+ * 
+ * Admin panelinde kategori detayında kullanılır.
+ * Hızlıca yeni marka ekleyip listeyi günceller (router.refresh).
+ */
 export const CategoryBrandForm = ({ categoryId }: Props) => {
   const router = useRouter(); // 👈 2. Hook'u başlat
   const [name, setName] = useState("");

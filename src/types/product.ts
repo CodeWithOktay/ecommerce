@@ -6,6 +6,12 @@ import {
   Prisma,
 } from "@prisma/client";
 
+/**
+ * İlişkili Ürün Tipi
+ * 
+ * Prisma'dan çekilen ham Ürün verisinin, ilişkili tablolarla (Category, Image, Variant)
+ * birleştirilmiş halini temsil eder. Frontend'de ürün detaylarını göstermek için kullanılır.
+ */
 export type ProductWithRelations = Product & {
   categories: Category[];
   images: ProductImage[];
@@ -15,6 +21,13 @@ export type ProductWithRelations = Product & {
   })[];
 };
 
+/**
+ * Ürün Form Değerleri
+ * 
+ * Ürün ekleme/düzenleme formlarında kullanılan veri yapısı.
+ * - Prisma'nın otomatik ürettiği alanları (id, createdAt vb.) hariç tutar.
+ * - Resim, Kategori ve Varyant gibi ilişkisel verileri form formatına uygun hale getirir.
+ */
 export type ProductFormValues = Omit<
   Prisma.ProductCreateInput,
   "id" | "createdAt" | "updatedAt" | "images" | "variants" | "categories"

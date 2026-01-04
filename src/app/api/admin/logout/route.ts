@@ -20,7 +20,8 @@ export async function POST() {
      * - secure: Production'da HTTPS gerektirir
      * - sameSite: CSRF saldırılarına karşı koruma
      * - maxAge: 0 - cookie'yi hemen sonlandır
-     * - path: Sadece /admin/login path'inde geçerli
+     * - path: /login olarak ayarlanmış ama genel çıkış için path '/' daha sağlıklı olabilir, 
+     *   ancak mevcut yapı korunuyor.
      */
     response.cookies.set("admin-token", "", {
       httpOnly: true,

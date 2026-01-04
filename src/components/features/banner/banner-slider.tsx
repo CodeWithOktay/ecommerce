@@ -10,6 +10,14 @@ interface HeroSliderProps {
   banners: Banner[];
 }
 
+/**
+ * Ana Sayfa Banner Slider
+ * 
+ * - Otomatik geçiş özelliği (5 saniye)
+ * - Manuel navigasyon (oklar ve noktalar)
+ * - Yumuşak geçiş efektleri (fade/opacity transition)
+ * - Responsive görsel yönetimi (Next/Image fill)
+ */
 export default function HeroSlider({ banners = [] }: HeroSliderProps) {
   const [current, setCurrent] = useState(0);
 
@@ -53,7 +61,7 @@ export default function HeroSlider({ banners = [] }: HeroSliderProps) {
           </div>
 
           {/* Yazı İçeriği - SADECE BUTON KALDI */}
-          <div className="absolute inset-0 flex items-end justify-start px-8 md:px-16 pb-12 md:pb-16">
+          <div className="absolute inset-0 flex items-end justify-center px-8 md:px-16 pb-12 md:pb-16">
             <div className="max-w-xl text-white space-y-4">
               {/* Sadece Link Varsa Buton Göster */}
               {banner.link && (

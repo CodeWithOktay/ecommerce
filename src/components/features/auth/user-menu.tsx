@@ -12,6 +12,15 @@ import {
   ChevronDown,
 } from "lucide-react";
 
+/**
+ * Kullanıcı Menüsü Bileşeni
+ * 
+ * Header'da yer alan, kullanıcının oturum durumuna göre şekillenen menü.
+ * 3 farklı durumu yönetir:
+ * 1. Misafir (Giriş yapmamış): Giriş/Kayıt butonlarını gösterir.
+ * 2. Admin: Yönetim paneline hızlı erişim sağlar.
+ * 3. Müşteri (User): Profil, siparişler ve çıkış yap seçeneklerini sunar.
+ */
 export default function UserMenu() {
   const { data: session } = useSession();
 

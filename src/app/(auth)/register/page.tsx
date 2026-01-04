@@ -35,6 +35,14 @@ const registerSchema = z
 // Şemadan tip türetme (TypeScript gücü)
 type RegisterFormValues = z.infer<typeof registerSchema>;
 
+/**
+ * Kayıt Sayfası
+ * 
+ * Yeni kullanıcı oluşturma formu.
+ * - Ad, Soyad, E-posta ve Şifre alanları.
+ * - Şifre eşleşme kontrolü (Zod refine).
+ * - /api/register endpoint'ine POST isteği atar.
+ */
 export default function RegisterPage() {
   const router = useRouter();
   const [serverError, setServerError] = useState("");

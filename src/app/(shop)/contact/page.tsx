@@ -6,6 +6,12 @@ export const metadata = {
   description: "Bizimle iletişime geçin.",
 };
 
+/**
+ * İletişim Sayfası (Server Component)
+ * 
+ * Veritabanından site ayarlarını (telefon, adres, email) çeker 
+ * ve bunları ContactClient bileşenine iletir.
+ */
 export default async function ContactPage() {
   // Veritabanından ilk ayar kaydını çek
   const settings = await prisma.settings.findFirst();
