@@ -1,98 +1,123 @@
 <h1 align="center">KervanPazar: KOBİ'ler İçin Modern E-ticaret Platformu</h1>
 
-<img width="1830" height="896" alt="resim" src="https://github.com/user-attachments/assets/c1aa26d6-3f14-4f95-b9c6-9116e08eb303" />
+<div align="center">
+  <img width="1830" height="896" alt="KervanPazar Ekran Görüntüsü" src="https://github.com/user-attachments/assets/c1aa26d6-3f14-4f95-b9c6-9116e08eb303" />
+</div>
 
-  <br>
-  <em></em>
-</p>
+<br>
 
-##  Proje Hakkında
+## 🚀 Proje Hakkında
 
-**KervanPazar**, küçük ve orta ölçekli işletmeler (KOBİ'ler) için tasarlanmış, **SEO dostu** ve **ölçeklenebilir** bir e-ticaret platformudur. İşletmelerin dijital dünyaya kolayca adım atmalarını ve ürünlerini geniş kitlelere ulaştırmalarını sağlamayı hedefler. Modern web teknolojileriyle geliştirilmiş olup, hem kullanıcı dostu bir arayüz hem de güçlü bir altyapı sunar.
+**KervanPazar**, küçük ve orta ölçekli işletmeler (KOBİ'ler) için tasarlanmış, **modern**, **performanslı** ve **ölçeklenebilir** bir e-ticaret platformudur. 
 
-##  Teknolojiler
+En güncel web teknolojileri kullanılarak geliştirilen bu proje, işletmelerin dijital dönüşüm süreçlerini hızlandırmayı, ürünlerini kolayca yönetmelerini ve güvenli bir alışveriş deneyimi sunmalarını amaçlar. Hem müşteriler hem de yöneticiler için sezgisel ve premium bir kullanıcı arayüzü sunar.
 
-Bu proje, modern JavaScript ekosisteminin güçlü araçlarıyla geliştirilmiştir:
+## 🛠️ Teknolojiler ve Altyapı
 
-**Frontend:**
-* **React / Next.js:** Hızlı ve dinamik kullanıcı arayüzleri için.
-* **Tailwind CSS:** Hızlı ve esnek UI geliştirme için Utility-First CSS framework'ü.
-* **JavaScript (ES6+)**: Frontend mantığı ve etkileşimler için.
+Bu proje, performans ve geliştirici deneyimini en üst düzeye çıkaran modern bir **Fullstack** yapısı üzerine kurulmuştur:
 
-**Backend:**
-* **Node.js / Express.js:** Güçlü, ölçeklenebilir ve hızlı API servisleri için.
-* **MongoDB (Mongoose ile):** NoSQL veritabanı, esnek şema yapısı ve yüksek performans için.
-    * *(Alternatif olarak: **PostgreSQL (Sequelize/Prisma ile):** İlişkisel veriler için güçlü ve güvenilir bir seçenek.)*
+### Frontend & Core
+*   **[Next.js 15 (App Router)](https://nextjs.org/):** React tabanlı, sunucu taraflı işleme (SSR) ve statik site oluşturma (SSG) özellikleriyle güçlendirilmiş framework.
+*   **[TypeScript](https://www.typescriptlang.org/):** Tip güvenliği ve daha iyi kod kalitesi için.
+*   **[Tailwind CSS](https://tailwindcss.com/):** Hızlı, esnek ve modern UI tasarımı için utility-first CSS framework'ü.
+*   **[Zustand](https://github.com/pmndrs/zustand):** Hafif ve basit global durum (state) yönetimi.
+*   **[React Hook Form](https://react-hook-form.com/) & [Zod](https://zod.dev/):** Güçlü form yönetimi ve şema doğrulama.
 
-**Diğer:**
-* **Git / GitHub:** Versiyon kontrolü ve takım çalışması için.
-* **Stripe / Iyzico:** Güvenli ödeme entegrasyonları için.
-* **JWT (JSON Web Tokens):** Kullanıcı kimlik doğrulama ve yetkilendirme için.
-* **Cloudinary / AWS S3:** Güvenli ve ölçeklenebilir dosya (ürün görselleri vb.) depolama için.
-* **NPM / Yarn:** Paket yönetimi için.
+### Backend & Veritabanı
+*   **[Node.js](https://nodejs.org/) & Next.js API Routes:** Sunucu tarafı mantığı ve API endpoint'leri için.
+*   **[Prisma ORM](https://www.prisma.io/):** Type-safe veritabanı erişimi ve şema yönetimi.
+*   **[PostgreSQL](https://www.postgresql.org/):** Güvenilir, açık kaynaklı ilişkisel veritabanı.
 
-##  Mevcut Durum & Özellikler (Beta Geliştirmesinde)
+### Diğer Araçlar & Servisler
+*   **[NextAuth.js](https://next-auth.js.org/):** Güvenli kimlik doğrulama (JWT, OAuth) yönetimi.
+*   **bcryptjs:** Şifreleme işlemleri.
+*   **Nodemailer:** E-posta gönderim servisi.
+*   **React Hot Toast / React Toastify:** Kullanıcı bildirimleri.
 
-Proje aktif olarak geliştirme aşamasındadır. Şu anki temel özellikler ve üzerinde çalıştığım alanlar:
+## ✨ Öne Çıkan Özellikler
 
-* **Kullanıcı Kimlik Doğrulama:** JWT ile güvenli kayıt ve giriş sistemi.
-* **Ürün Yönetimi:** Ürün ekleme, güncelleme, silme ve listeleme (admin paneli).
-* **Kategori Yönetimi:** Ürünlerin kategorilere ayrılması.
-* **Sepet & Sipariş Sistemi:** Kullanıcıların sepetine ürün ekleyip sipariş oluşturabilmesi.
-* **Güvenli Ödeme Entegrasyonu:** (Stripe/Iyzico entegrasyonu devam ediyor.)
-* **Arama & Filtreleme:** Kullanıcıların ürünleri kolayca bulabilmesi için.
-* **Responsive Tasarım:** Tüm cihazlarda sorunsuz bir kullanıcı deneyimi.
-* **Durum Yönetimi:** Redux Toolkit / React Context API ile merkezi state yönetimi.
-* **API Endpointleri:** Ürün, kullanıcı, sipariş yönetimi için RESTful API'ler.
+*   **🔐 Güvenli Kimlik Doğrulama:** NextAuth.js ile rol tabanlı (Müşteri, Admin) giriş sistemi.
+*   **📦 Gelişmiş Ürün Yönetimi:** Stok takibi, varyantlar (renk/beden), resim galerisi ve detaylı açıklamalar.
+*   **🛒 Sepet ve Sipariş:** Kesintisiz alışveriş deneyimi, sipariş takibi ve geçmişi.
+*   **⚙️ Admin Paneli:** 
+    *   Dashboard ve analizler.
+    *   Kategori, marka ve özellik yönetimi.
+    *   Kullanıcı ve sipariş yönetimi.
+    *   İade ve değişim talepleri takibi.
+    *   İndirim kuponları ve kampanya yönetimi.
+    *   Sistem logları (Audit Logs).
+*   **💅 Modern UI/UX:** Responsive tasarım, dark mode uyumluluğu ve premium bileşenler.
+*   **🔍 SEO Dostu:** Next.js sayesinde arama motorları için optimize edilmiş yapı.
 
-##  Yerel Ortamda Çalıştırma
+## 🏁 Kurulum ve Çalıştırma
 
-Projeyi kendi bilgisayarınızda çalıştırmak için aşağıdaki adımları takip edin:
+Projeyi yerel ortamınızda çalıştırmak için aşağıdaki adımları izleyin:
 
-1.  **Depoyu Klonlayın:**
-    ```bash
-    git clone [https://github.com/CodeWithOktay/KervanPazar.git](https://github.com/CodeWithOktay/KervanPazar.git)
-    cd KervanPazar
-    ```
-2.  **Bağımlılıkları Yükleyin:**
-    ```bash
-    npm install  # veya yarn install
-    ```
-3.  **Ortam Değişkenlerini Ayarlayın:**
-    * `.env.example` dosyasını `backend/.env` (veya projenin root'unda) olarak kopyalayın.
-    * Gerekli API anahtarlarını, veritabanı bağlantı bilgilerini vb. kendi değerlerinizle doldurun.
-        ```
-        MONGO_URI=your_mongodb_connection_string
-        JWT_SECRET=your_jwt_secret
-        # ... diğer değişkenler ...
-        ```
-4.  **Uygulamayı Başlatın:**
-    * Backend için ayrı bir terminalde:
-        ```bash
-        cd backend
-        npm start # veya node server.js
-        ```
-    * Frontend için ayrı bir terminalde:
-        ```bash
-        cd frontend
-        npm start # veya npm run dev (Next.js ise)
-        ```
-    Proje genellikle `http://localhost:3000` (frontend) ve `http://localhost:5000` (backend) adreslerinde çalışacaktır.
+### Gereksinimler
+*   Node.js (LTS sürümü önerilir)
+*   PostgreSQL veritabanı
 
-##  Katkıda Bulunma
+### 1. Depoyu Klonlayın
+```bash
+git clone https://github.com/CodeWithOktay/KervanPazar.git
+cd KervanPazar
+```
 
-Açık kaynak projelerine katkıda bulunmaya her zaman açığım! Eğer bu projeye katkıda bulunmak isterseniz:
+### 2. Bağımlılıkları Yükleyin
+```bash
+npm install
+```
+
+### 3. Çevresel Değişkenleri Ayarlayın
+Kök dizinde `.env` dosyası oluşturun ve aşağıdaki örnekteki gibi yapılandırın:
+
+```env
+# Veritabanı Bağlantısı
+DATABASE_URL="postgresql://kullanici:sifre@localhost:5432/kervanpazar?schema=public"
+
+# NextAuth Ayarları
+NEXTAUTH_URL="http://localhost:3000"
+NEXTAUTH_SECRET="super-gizli-rastgele-bir-string" # openssl rand -base64 32 ile üretebilirsiniz
+
+# E-posta Ayarları (Opsiyonel - Şifre sıfırlama vb. için)
+SMTP_HOST="smtp.ornek.com"
+SMTP_PORT=587
+SMTP_USER="user@ornek.com"
+SMTP_PASS="sifreniz"
+EMAIL_FROM="destek@kervanpazar.com"
+```
+
+### 4. Veritabanını Hazırlayın
+Prisma şemasını veritabanına uygulayın ve seed verilerini (varsa) yükleyin:
+
+```bash
+# Veritabanı tablolarını oluştur
+npx prisma db push
+
+# (Opsiyonel) Client'ı yeniden oluştur
+npx prisma generate
+
+# (Opsiyonel) Başlangıç verilerini yükle
+npx prisma db seed
+```
+
+### 5. Uygulamayı Başlatın
+Geliştirme sunucusunu başlatın:
+
+```bash
+npm run dev
+```
+
+Tarayıcınızda [http://localhost:3000](http://localhost:3000) adresine giderek uygulamayı görüntüleyebilirsiniz.
+
+## 🤝 Katkıda Bulunma
 
 1.  Depoyu forklayın.
-2.  Yeni bir dal (branch) oluşturun: `git checkout -b feature/YeniOzellik`
-3.  Değişikliklerinizi yapın ve commit'leyin: `git commit -m 'feat: Yeni özellik eklendi'`
-4.  Dalı push'layın: `git push origin feature/YeniOzellik`
-5.  Bir Pull Request (PR) açın.
+2.  Yeni bir feature branch oluşturun (`git checkout -b feature/YeniOzellik`).
+3.  Değişikliklerinizi commit'leyin (`git commit -m 'feat: Yeni özellik eklendi'`).
+4.  Branch'inizi push'layın (`git push origin feature/YeniOzellik`).
+5.  Bir Pull Request oluşturun.
 
-##  İletişim
+## 📄 Lisans
 
-Sorularınız veya işbirliği teklifleriniz için bana ulaşmaktan çekinmeyin:
-
-* **E-posta:** Oktayyorulmaz89@gmail.com
-## Lisans
-Bu proje **MIT** Lisansı ile lisanslanmıştır.
+Bu proje **MIT Lisansı** ile lisanslanmıştır.
