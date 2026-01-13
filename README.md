@@ -4,7 +4,6 @@
 
 <img width="1920" height="1080" alt="Screenshot from 2026-01-13 14-26-31" src="https://github.com/user-attachments/assets/3d7c7342-f78b-48e2-8766-a6977624e1c0" />
 
-<img width="1920" height="1080" alt="Screenshot from 2026-01-13 14-27-38" src="https://github.com/user-attachments/assets/720090e0-5286-4f21-9ef3-8299beccaad3" />
 
 <img width="1920" height="1080" alt="Screenshot from 2026-01-13 14-27-31" src="https://github.com/user-attachments/assets/1aea320f-f86e-4237-bb70-0497c21564d7" />
 
