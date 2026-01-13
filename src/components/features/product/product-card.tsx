@@ -87,7 +87,9 @@ export default function ProductCard({
     e.preventDefault();
     e.stopPropagation();
 
-    if (isAdmin) return;
+    if (isAdmin) {
+        return;
+    }
 
     if (hasVariants) {
       router.push(`/products/${product.id}`);
@@ -100,7 +102,7 @@ export default function ProductCard({
       price: currentPrice,
       imageUrl,
     });
-
+    
     setIsAdded(true);
     setTimeout(() => setIsAdded(false), 2000);
   };
@@ -109,11 +111,12 @@ export default function ProductCard({
     <div className="group relative flex flex-col h-full bg-white rounded-xl border border-gray-100 hover:shadow-xl hover:shadow-[#667EEA]/10 hover:-translate-y-1 transition-all duration-300 overflow-hidden">
       {/* IMAGE SECTION - KARE FORMAT (Daha kısa) */}
       <div className="relative aspect-square bg-gray-50 border-b overflow-hidden">
-        <Link href={`/products/${product.id}`} className="block w-full h-full">
+        <Link href={`/products/${product.id}`} className="block w-full h-full relative">
           <Image
             src={imageUrl}
             alt={product.name}
             fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             className={`object-contain p-4 transition-transform duration-500 group-hover:scale-105 ${
               product.stock <= 0 ? "opacity-60 grayscale" : ""
             }`}

@@ -6,6 +6,7 @@ import { ShoppingCart } from "lucide-react";
 import { MouseEventHandler } from "react";
 import { cn } from "@/lib/utils/utils";
 import { useSession } from "next-auth/react";
+import toast from "react-hot-toast";
 
 interface AddToCartButtonProps {
   product: Product;
@@ -33,7 +34,10 @@ export default function AddToCartButton({
 
   const onAddToCart: MouseEventHandler<HTMLButtonElement> = (e) => {
     e.stopPropagation();
-    if (isAdmin) return; // Fail-safe
+    if (isAdmin) {
+        toast.error("Yöneticiler alışveriş yapamaz");
+        return;
+    }
     cart.addItem(product);
   };
 
@@ -53,7 +57,7 @@ export default function AddToCartButton({
     <button
       onClick={onAddToCart}
       className={cn(
-        `relative flex items-center justify-center gap-32
+        `relative flex items-center justify-center gap-2
         rounded-lg font-bold overflow-hidden
         text-white transition-all duration-300
         active:scale-100
@@ -64,7 +68,7 @@ export default function AddToCartButton({
         `,
         // Eğer dışarıdan className gelmezse varsayılan boyutlar:
         !className &&
-          (showText ? " gap-32 py-4 px-20 w-full" : "gap-32 py-4 px-20 w-full"),
+          (showText ? " gap-2 py-4 px-8 w-full" : "gap-2 py-4 px-8 w-full"),
         // Dışarıdan gelen className (boyut vb.) en sona eklenir:
         className
       )}

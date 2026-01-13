@@ -117,6 +117,14 @@ install_app() {
         log_warning "Node.js kuruluyor..."
         curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
         sudo apt-get install -y nodejs
+    else
+        # Sürüm kontrolü
+        NODE_VER=$(node -v | cut -d. -f1 | sed 's/^v//')
+        if [ "$NODE_VER" -lt 20 ]; then
+            log_warning "Node.js sürümü eski ($NODE_VER). v20'ye güncelleniyor..."
+            curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+            sudo apt-get install -y nodejs
+        fi
     fi
     if [ "$ENABLE_PM2" = true ] && ! command -v pm2 &> /dev/null; then
         sudo npm install -g pm2
@@ -157,8 +165,8 @@ EOL
     docker compose up -d postgres
     sleep 8
     
-    ADMIN_PASSWORD="${ADMIN_PASSWORD}" npx prisma db push
-    ADMIN_PASSWORD="${ADMIN_PASSWORD}" npm run prisma:seed
+    ADMIN_PASSWORD="${ADMIN_PASSWORD}" npx prisma db push --schema prisma/schema.prisma
+    ADMIN_PASSWORD="${ADMIN_PASSWORD}" npx prisma db seed
 
     log_info "Build alınıyor..."
     npm run build >> "$LOG_FILE" 2>&1

@@ -14,10 +14,25 @@ if ! command -v docker &> /dev/null; then
     sudo usermod -aG docker $USER || true
 fi
 
-if ! command -v node &> /dev/null; then
-    echo "Node.js bulunamadı, kuruluyor..."
-    curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-    sudo apt-get install -y nodejs
+# Node.js Sürüm Kontrolü
+REQUIRED_NODE_MAJOR=20
+CURRENT_NODE_VERSION=$(node -v 2>/dev/null || echo "v0.0.0")
+CURRENT_NODE_MAJOR=$(echo "$CURRENT_NODE_VERSION" | cut -d. -f1 | sed 's/^v//')
+
+if [ "$CURRENT_NODE_MAJOR" -lt "$REQUIRED_NODE_MAJOR" ]; then
+    echo "❌ HATA: Node.js sürümü $REQUIRED_NODE_MAJOR veya üzeri olmalıdır. (Mevcut: $CURRENT_NODE_VERSION)"
+    echo "Lütfen Node.js sürümünüzü güncelleyin veya şu komutu çalıştırarak kurulumu deneyin:"
+    echo "curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash - && sudo apt-get install -y nodejs"
+    
+    # Otomatik güncelleme denemesi (Sudo varsa)
+    if sudo -n true 2>/dev/null; then
+        echo "🔄 Otomatik Node.js güncellemesi deneniyor..."
+        curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+        sudo apt-get install -y nodejs
+    else
+        echo "Root yetkisi olmadığı için otomatik güncelleme yapılamadı."
+        exit 1
+    fi
 fi
 
 # 2. Çevresel Değişkenlerin (.env) Ayarlanması
@@ -25,7 +40,7 @@ echo "[2/5] Yapılandırma dosyası (.env) kontrol ediliyor..."
 if [ ! -f .env ]; then
     NEXTAUTH_SECRET=$(openssl rand -base64 32)
     cat > .env << EOL
-DATABASE_URL="postgresql://mark:my.passwd@localhost:5432/KervanDB?schema=public"
+DATABASE_URL="postgresql://mark:my.passwd@localhost:5432/TestDB?schema=public"
 NEXTAUTH_URL="http://localhost:3000"
 NEXTAUTH_SECRET="${NEXTAUTH_SECRET}"
 SMTP_EMAIL=""
@@ -57,10 +72,11 @@ if grep -q "ADMIN_PASSWORD" .env; then
 fi
 
 echo "Veritabanı şeması gönderiliyor..."
-npx prisma db push
+npx prisma db push --schema prisma/schema.prisma
 
 echo "Örnek veriler yükleniyor..."
-npm run prisma:seed
+npm install tsx --no-save
+npx prisma db seed
 
 # 5. Derleme (Build)
 echo "[5/5] Uygulama derleniyor (npm run build)..."

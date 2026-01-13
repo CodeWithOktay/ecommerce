@@ -76,19 +76,15 @@ const useCart = create(
       addItem: (data: Product, quantity = 1) => {
         const currentItems = get().items;
 
-        // Benzersiz sepet ID'si oluştur
-        // Örnek: Kırmızı-M ve Kırmızı-L farklı satırlar olur
         const cartItemId = data.variantId
           ? `${data.id}-${data.variantId}`
           : data.id;
 
-        // Bu varyant sepette var mı kontrol et
         const existingItem = currentItems.find(
           (item) => item.id === cartItemId
         );
 
         if (existingItem) {
-          // Ürün (veya aynı varyant) zaten varsa miktarını artır
           set({
             items: currentItems.map((item) =>
               item.id === cartItemId
@@ -96,60 +92,68 @@ const useCart = create(
                 : item
             ),
           });
-          // Ürün yoksa yeni ekle
-          set({
+          toast.success("Sepet güncellendi");
+          return;
+        }
+
+        set({
             items: [
               ...get().items,
               {
                 ...data,
-                id: cartItemId,        // Sepet için benzersiz ID
-                productId: data.id,    // Orijinal ürün ID'si (link için)
+                id: cartItemId,
+                productId: data.id,
                 quantity,
               },
             ],
           });
           
-          toast.custom((t) => (
-             <div className={`${
-               t.visible ? 'animate-enter' : 'animate-leave'
-             } max-w-md w-full bg-white shadow-lg rounded-lg pointer-events-auto flex ring-1 ring-black ring-opacity-5`}>
-               <div className="flex-1 w-0 p-4">
-                 <div className="flex items-start">
-                   <div className="flex-shrink-0 pt-0.5">
-                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                     <img
-                       className="h-10 w-10 rounded-md object-cover"
-                       src={data.imageUrl || "/placeholder.svg"}
-                       alt=""
-                     />
-                   </div>
-                   <div className="ml-3 flex-1">
-                     <p className="text-sm font-medium text-gray-900">
-                       Ürününüz sepete eklendi
-                     </p>
-                     <p className="mt-1 text-sm text-gray-500 line-clamp-1">
-                       {data.name}
-                     </p>
-                     {data.color && (
-                         <p className="mt-1 text-xs text-gray-400">
-                            {data.color} {data.size && ` - ${data.size}`}
-                         </p>
-                     )}
-                   </div>
+        toast.custom((t) => (
+           <div className={`${
+             t.visible ? 'animate-enter' : 'animate-leave'
+           } max-w-sm w-full bg-white shadow-xl rounded-2xl pointer-events-auto flex ring-1 ring-black ring-opacity-5 overflow-hidden`}>
+             <div className="flex-1 w-0 p-4">
+               <div className="flex items-start">
+                 <div className="flex-shrink-0 pt-0.5">
+                   {/* eslint-disable-next-line @next/next/no-img-element */}
+                   <img
+                     className="h-12 w-12 rounded-xl object-cover border border-gray-100"
+                     src={data.imageUrl || "/placeholder.svg"}
+                     alt={data.name}
+                   />
+                 </div>
+                 <div className="ml-4 flex-1">
+                   <p className="text-sm font-bold text-gray-900">
+                     Ürün Sepete Eklendi! 🚀
+                   </p>
+                   <p className="mt-1 text-sm text-gray-500 line-clamp-1">
+                     {data.name}
+                   </p>
+                   {data.color && (
+                       <p className="mt-0.5 text-xs text-gray-400 font-medium">
+                          {data.color} {data.size && ` • ${data.size}`}
+                       </p>
+                   )}
                  </div>
                </div>
-               <div className="flex border-l border-gray-200">
-                 <a
-                    href="/cart"
-                    className="w-full border border-transparent rounded-none rounded-r-lg p-4 flex items-center justify-center text-sm font-medium text-indigo-600 hover:text-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    onClick={() => toast.dismiss(t.id)}
-                 >
-                   Sepetime Git
-                 </a>
-               </div>
              </div>
-          ));
-        }
+             <div className="flex flex-col border-l border-gray-100 bg-gray-50">
+               <a
+                  href="/cart"
+                  className="w-full flex-1 border-b border-gray-100 p-4 flex items-center justify-center text-sm font-bold text-[#667EEA] hover:text-[#5a6fd6] hover:bg-gray-100 transition-colors focus:outline-none"
+                  onClick={() => toast.dismiss(t.id)}
+               >
+                 Sepet
+               </a>
+               <button
+                  className="w-full flex-1 p-4 flex items-center justify-center text-sm font-medium text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors focus:outline-none"
+                  onClick={() => toast.dismiss(t.id)}
+               >
+                 Kapat
+               </button>
+             </div>
+           </div>
+        ));
       },
 
       /**

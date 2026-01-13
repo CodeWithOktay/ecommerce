@@ -4,7 +4,7 @@ import { useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import AddToCartButton from "@/components/features/product/add-to-card-button";
+import AddToCartButton from "@/components/features/product/add-to-cart-button";
 
 // Ürün verisinin tipini tanımlayalım
 interface ProductType {
@@ -136,12 +136,13 @@ export default function RelatedProductsCarousel({ products, coupons = [] }: Prop
               <div className="relative aspect-square bg-gray-50 border-b overflow-hidden">
                 <Link
                   href={`/products/${item.id}`}
-                  className="block w-full h-full"
+                  className="block w-full h-full relative"
                 >
                   <Image
                     src={mainImg?.url || "/placeholder.png"}
                     alt={item.name}
                     fill
+                    sizes="(max-width: 768px) 50vw, 20vw"
                     className="object-contain p-4 transition-transform duration-500 group-hover:scale-105"
                   />
                 </Link>

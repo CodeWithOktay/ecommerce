@@ -17,7 +17,7 @@ import {
   Ticket,
   Copy,
 } from "lucide-react";
-import AddToCartButton from "@/components/features/product/add-to-card-button";
+import AddToCartButton from "@/components/features/product/add-to-cart-button";
 import ShareButton from "@/components/features/product/share-button";
 import { cn } from "@/lib/utils/utils";
 import toast from "react-hot-toast";
