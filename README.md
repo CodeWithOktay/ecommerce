@@ -8,6 +8,7 @@
 <img width="1920" height="1080" alt="Screenshot from 2026-01-13 14-27-31" src="https://github.com/user-attachments/assets/1aea320f-f86e-4237-bb70-0497c21564d7" />
 
 <br>
+**Bu sitede yer alan marka adı, ürün isimleri ve içerikleri yalnızca demo ve görsel amaçlı kullanılmıştır. Logo ve tüm tasarımlar tarafıma aittir. Site ticari amaç taşımamaktadır ve marka sahibiyle herhangi bir bağlantı, ortaklık veya sponsorluk bulunmamaktadır.**
 
 ## 🚀 Proje Hakkında
 
